@@ -204,36 +204,39 @@ void WorldSocket::InitializeHandler(boost::system::error_code error, std::size_t
 bool WorldSocket::Update()
 {
     EncryptablePacket* queued;
-    MessageBuffer buffer(_sendBufferSize);
-    while (_bufferQueue.Dequeue(queued))
+    if (_bufferQueue.Dequeue(queued))
     {
-
-        uint32 packetSize = queued->size();
-        if (packetSize > MinSizeForCompression && queued->NeedsEncryption())
-            packetSize = compressBound(packetSize) + sizeof(CompressedWorldPacket);
-
-        if (buffer.GetRemainingSpace() < SizeOfHeader + packetSize)
+        // Allocate buffer only when it's needed but not on every Update() call.
+        MessageBuffer buffer(_sendBufferSize);
+        do
         {
+            uint32 packetSize = queued->size();
+            if (packetSize > MinSizeForCompression && queued->NeedsEncryption())
+                packetSize = compressBound(packetSize) + sizeof(CompressedWorldPacket);
+
+            if (buffer.GetRemainingSpace() < SizeOfHeader + packetSize)
+            {
+                QueuePacket(std::move(buffer));
+                buffer.Resize(_sendBufferSize);
+            }
+
+            if (buffer.GetRemainingSpace() >=  SizeOfHeader + packetSize)
+            {
+                WritePacketToBuffer(*queued, buffer);
+            }
+            else    // single packet larger than 4096 bytes
+            {
+                MessageBuffer packetBuffer(SizeOfHeader + packetSize);
+                WritePacketToBuffer(*queued, packetBuffer);
+                QueuePacket(std::move(packetBuffer));
+            }
+
+            delete queued;
+        } while (_bufferQueue.Dequeue(queued));
+
+        if (buffer.GetActiveSize() > 0)
             QueuePacket(std::move(buffer));
-            buffer.Resize(_sendBufferSize);
-        }
-
-        if (buffer.GetRemainingSpace() >=  SizeOfHeader + packetSize)
-        {
-            WritePacketToBuffer(*queued, buffer);
-        }
-        else    // single packet larger than 4096 bytes
-        {
-            MessageBuffer packetBuffer(SizeOfHeader + packetSize);
-            WritePacketToBuffer(*queued, packetBuffer);
-            QueuePacket(std::move(packetBuffer));
-        }
-
-        delete queued;
     }
-
-    if (buffer.GetActiveSize() > 0)
-        QueuePacket(std::move(buffer));
 
     if (!BaseSocket::Update())
         return false;

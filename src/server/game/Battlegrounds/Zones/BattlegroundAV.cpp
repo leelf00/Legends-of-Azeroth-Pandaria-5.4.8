@@ -315,7 +315,7 @@ Creature* BattlegroundAV::AddAVCreature(uint16 cinfoid, uint16 type)
         auto copy = *creature->GetCreatureTemplate();
         copy.minlevel = info->MinLevel + m_maxLevel - 60;
         copy.maxlevel = info->MaxLevel + m_maxLevel - 60;
-        creature->SelectLevel(&copy); // HP and damage here.
+        creature->SelectLevel(); // HP and damage here.
     }
 
     uint32 triggerSpawnID = 0;

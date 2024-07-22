@@ -2156,7 +2156,7 @@ class spell_sha_purification : public AuraScript
     {
         int32 amount = CalculatePct(eventInfo.GetHealInfo()->GetHeal(), 10);
         Unit* target = eventInfo.GetActionTarget();
-        int32 max = (target->GetMaxHealth() / target->GetModifierValue(UNIT_MOD_HEALTH, TOTAL_PCT) - target->GetModifierValue(UNIT_MOD_HEALTH, TOTAL_VALUE)) * 0.1f;
+        int32 max = (target->GetMaxHealth() / target->GetPctModifierValue(UNIT_MOD_HEALTH, TOTAL_PCT) - target->GetFlatModifierValue(UNIT_MOD_HEALTH, TOTAL_VALUE)) * 0.1f;
         amount = std::min(max, amount);
         if (AuraEffect* existing = target->GetAuraEffect(SPELL_SHA_ANCESTRAL_VIGOR, EFFECT_0))
         {

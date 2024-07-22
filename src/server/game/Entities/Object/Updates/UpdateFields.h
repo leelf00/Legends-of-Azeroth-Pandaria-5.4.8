@@ -211,7 +211,7 @@ enum EPlayerFields
     PLAYER_FIELD_REST_STATE_BONUS_POOL                       = UNIT_END + 0x683, // Size: 1, Flags: UF_FLAG_PRIVATE
     PLAYER_FIELD_MOD_DAMAGE_DONE_POS                         = UNIT_END + 0x684, // Size: 7, Flags: UF_FLAG_PRIVATE
     PLAYER_FIELD_MOD_DAMAGE_DONE_NEG                         = UNIT_END + 0x68B, // Size: 7, Flags: UF_FLAG_PRIVATE
-    PLAYER_FIELD_MOD_DAMAGE_DONE_PERCENT                     = UNIT_END + 0x692, // Size: 7, Flags: UF_FLAG_PRIVATE
+    PLAYER_FIELD_MOD_DAMAGE_DONE_PCT                         = UNIT_END + 0x692, // Size: 7, Flags: UF_FLAG_PRIVATE
     PLAYER_FIELD_MOD_HEALING_DONE_POS                        = UNIT_END + 0x699, // Size: 1, Flags: UF_FLAG_PRIVATE
     PLAYER_FIELD_MOD_HEALING_PERCENT                         = UNIT_END + 0x69A, // Size: 1, Flags: UF_FLAG_PRIVATE
     PLAYER_FIELD_MOD_HEALING_DONE_PERCENT                    = UNIT_END + 0x69B, // Size: 1, Flags: UF_FLAG_PRIVATE

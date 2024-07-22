@@ -37,6 +37,20 @@
 
 #define WORLD_TRIGGER   12999
 
+enum UnitModifierFlatType
+{
+    BASE_VALUE = 0,
+    TOTAL_VALUE = 1,
+    MODIFIER_TYPE_FLAT_END = 2
+};
+
+enum UnitModifierPctType
+{
+    BASE_PCT = 0,
+    TOTAL_PCT = 1,
+    MODIFIER_TYPE_PCT_END = 2
+};
+
 enum SpellModOp
 {
     SPELLMOD_DAMAGE = 0,
@@ -290,14 +304,14 @@ struct SpellImmune
 
 typedef std::list<SpellImmune> SpellImmuneList;
 
-enum UnitModifierType
-{
-    BASE_VALUE = 0,
-    BASE_PCT = 1,
-    TOTAL_VALUE = 2,
-    TOTAL_PCT = 3,
-    MODIFIER_TYPE_END = 4
-};
+// enum UnitModifierType
+// {
+//     BASE_VALUE = 0,
+//     BASE_PCT = 1,
+//     TOTAL_VALUE = 2,
+//     TOTAL_PCT = 3,
+//     MODIFIER_TYPE_END = 4
+// };
 
 enum WeaponDamageRange
 {
@@ -361,7 +375,7 @@ enum UnitMods
     UNIT_MOD_RAGE,
     UNIT_MOD_FOCUS,
     UNIT_MOD_ENERGY,
-    UNIT_MOD_UNUSED,                                        // Old UNIT_MOD_HAPPINESS
+    UNIT_MOD_HAPPINESS,                                     // Old UNIT_MOD_HAPPINESS
     UNIT_MOD_RUNE,
     UNIT_MOD_RUNIC_POWER,
     UNIT_MOD_SOUL_SHARDS,
@@ -1229,15 +1243,9 @@ public:
     {
         return m_attackTimer [type] == 0;
     }
-    bool HasOffhandWeapon() const;
-    bool CanDualWield() const
-    {
-        return m_canDualWield;
-    }
-    void SetCanDualWield(bool value)
-    {
-        m_canDualWield = value;
-    }
+    bool haveOffhandWeapon() const;
+    bool CanDualWield() const { return m_canDualWield; }
+    virtual void SetCanDualWield(bool value) { m_canDualWield = value; }
     float GetCombatReach() const override { return m_floatValues [UNIT_FIELD_COMBAT_REACH]; }
     float GetMeleeReach() const;
     bool IsWithinCombatRange(const Unit* obj, float dist2compare) const;
@@ -1400,6 +1408,7 @@ public:
     }
     void SetPower(Powers power, int32 val);
     void SetMaxPower(Powers power, int32 val);
+    inline void SetFullPower(Powers power) { SetPower(power, GetMaxPower(power)); }
     // returns the change in power
     int32 ModifyPower(Powers power, int32 val);
     int32 ModifyPowerPct(Powers power, float pct, bool apply = true);
@@ -2027,6 +2036,8 @@ public:
     int32 GetMaxPositiveAuraModifierByAffectMask(AuraType auratype, SpellInfo const* affectedSpell) const;
     int32 GetMaxNegativeAuraModifierByAffectMask(AuraType auratype, SpellInfo const* affectedSpell) const;
 
+    void UpdateResistanceBuffModsMod(SpellSchools school);
+
     template <class Cond>
     float GetTotalAuraMultiplier(AuraType auraType, Cond cond) const;
     template <class Cond>
@@ -2063,6 +2074,7 @@ public:
     }
     uint32 GetPowerIndex(uint32 powerType) const;
     int32 GetCreatePowers(Powers power) const;
+    uint32 GetCreatePowerValue(Powers power) const;
     float GetPosStat(Stats stat) const
     {
         return GetFloatValue(UNIT_FIELD_STAT_POS_BUFF + stat);
@@ -2134,25 +2146,33 @@ public:
     void Schedule(TimeValue const& timer, std::function<void(Unit*)> const& func) { m_Events.Schedule(timer.ToMilliseconds(), std::bind(func, this)); }
 
     // stat system
-    bool HandleStatModifier(UnitMods unitMod, UnitModifierType modifierType, float amount, bool apply);
-    void SetModifierValue(UnitMods unitMod, UnitModifierType modifierType, float value)
-    {
-        m_auraModifiersGroup [unitMod] [modifierType] = value;
-    }
-    float GetModifierValue(UnitMods unitMod, UnitModifierType modifierType) const;
+    void HandleStatFlatModifier(UnitMods unitMod, UnitModifierFlatType modifierType, float amount, bool apply);
+    void ApplyStatPctModifier(UnitMods unitMod, UnitModifierPctType modifierType, float amount);
+
+    void SetStatFlatModifier(UnitMods unitMod, UnitModifierFlatType modifierType, float val);
+    void SetStatPctModifier(UnitMods unitMod, UnitModifierPctType modifierType, float val);
+
+    float GetFlatModifierValue(UnitMods unitMod, UnitModifierFlatType modifierType) const;
+    float GetPctModifierValue(UnitMods unitMod, UnitModifierPctType modifierType) const;
+
+    void UpdateUnitMod(UnitMods unitMod);
+
+    // only players have item requirements
+    virtual bool CheckAttackFitToAuraRequirement(WeaponAttackType /*attackType*/, AuraEffect const* /*aurEff*/) const { return true; }
+
+    virtual void UpdateDamageDoneMods(WeaponAttackType attackType, int32 skipEnchantSlot = -1);
+    void UpdateAllDamageDoneMods();
+
+    void UpdateDamagePctDoneMods(WeaponAttackType attackType);
+    void UpdateAllDamagePctDoneMods();
+
     float GetTotalStatValue(Stats stat) const;
     float GetTotalAuraModValue(UnitMods unitMod) const;
     SpellSchools GetSpellSchoolByAuraGroup(UnitMods unitMod) const;
     Stats GetStatByAuraGroup(UnitMods unitMod) const;
     Powers GetPowerTypeByAuraGroup(UnitMods unitMod) const;
-    bool CanModifyStats() const
-    {
-        return m_canModifyStats;
-    }
-    void SetCanModifyStats(bool modifyStats)
-    {
-        m_canModifyStats = modifyStats;
-    }
+    bool CanModifyStats() const { return m_canModifyStats; }
+    void SetCanModifyStats(bool modifyStats) { m_canModifyStats = modifyStats; }
     virtual bool UpdateStats(Stats stat) = 0;
     virtual bool UpdateAllStats() = 0;
     virtual void UpdateResistances(uint32 school) = 0;
@@ -2160,7 +2180,15 @@ public:
     virtual void UpdateMaxHealth() = 0;
     virtual void UpdateMaxPower(Powers power) = 0;
     virtual void UpdateAttackPowerAndDamage(bool ranged = false) = 0;
-    virtual void UpdateDamagePhysical(WeaponAttackType attType) = 0;
+    void SetAttackPower(int32 attackPower) { SetInt32Value(UNIT_FIELD_ATTACK_POWER, attackPower); }
+    void SetAttackPowerModPos(int32 attackPowerMod) { SetInt16Value(UNIT_FIELD_ATTACK_POWER_MOD_POS, 0, attackPowerMod); }
+    void SetAttackPowerModNeg(int32 attackPowerMod) { SetInt16Value(UNIT_FIELD_ATTACK_POWER_MOD_NEG, 0, attackPowerMod); }
+    void SetAttackPowerMultiplier(float attackPowerMult) { SetFloatValue(UNIT_FIELD_ATTACK_POWER_MULTIPLIER, attackPowerMult); }
+    void SetRangedAttackPower(int32 attackPower) { SetInt32Value(UNIT_FIELD_RANGED_ATTACK_POWER, attackPower); }
+    void SetRangedAttackPowerModPos(int32 attackPowerMod) { SetInt16Value(UNIT_FIELD_RANGED_ATTACK_POWER_MOD_POS, 0, attackPowerMod); }
+    void SetRangedAttackPowerModNeg(int32 attackPowerMod) { SetInt16Value(UNIT_FIELD_RANGED_ATTACK_POWER_MOD_NEG, 0, attackPowerMod); }
+    void SetRangedAttackPowerMultiplier(float attackPowerMult) { SetFloatValue(UNIT_FIELD_RANGED_ATTACK_POWER_MULTIPLIER, attackPowerMult); }    
+    virtual void UpdateDamagePhysical(WeaponAttackType attType);
     void UpdateCastingSpeed();
     void UpdateAttackSpeed(WeaponAttackType att);
     void UpdateHasteRegen();
@@ -2168,12 +2196,10 @@ public:
     // "True" haste. Used for power regen, rppm and global/normal cooldown modifications
     float GetHasteMultiplier() const;
     float GetTotalAttackPowerValue(WeaponAttackType attType) const;
-    float GetWeaponDamageRange(WeaponAttackType attType, WeaponDamageRange type) const;
-    void SetBaseWeaponDamage(WeaponAttackType attType, WeaponDamageRange damageRange, float value)
-    {
-        m_weaponDamage [attType] [damageRange] = value;
-    }
-
+    float GetWeaponDamageRange(WeaponAttackType attType, WeaponDamageRange type, uint8 damageIndex = 0) const;
+    void SetBaseWeaponDamage(WeaponAttackType attType, WeaponDamageRange damageRange, float value) { m_weaponDamage [attType] [damageRange] = value; }
+    virtual void CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, bool addTotalPct, float& minDamage, float& maxDamage, uint8 damageIndex) const = 0;
+    
     bool isInFrontInMap(Unit const* target, float distance, float arc = M_PI) const;
     bool isInBackInMap(Unit const* target, float distance, float arc = M_PI) const;
 
@@ -2284,8 +2310,8 @@ public:
     void RemoveGameObject(uint32 spellid, bool del);
     void RemoveAllGameObjects();
 
-    uint32 CalculateDamage(WeaponAttackType attType, bool normalized, bool addTotalPct);
-    float GetAPMultiplier(WeaponAttackType attType, bool normalized);
+    uint32 CalculateDamage(WeaponAttackType attType, bool normalized, bool addTotalPct, uint8 itemDamagesMask = 0) const;
+    float GetAPMultiplier(WeaponAttackType attType, bool normalized) const;
     void ModifyAuraState(AuraStateType flag, bool apply);
     uint32 BuildAuraStateUpdateForTarget(Unit* target) const;
     bool HasAuraState(AuraStateType flag, SpellInfo const* spellProto = NULL, Unit const* Caster = NULL) const;
@@ -2365,14 +2391,8 @@ public:
     static Player* GetPlayer(WorldObject& object, ObjectGuid guid);
     static Creature* GetCreature(WorldObject& object, ObjectGuid guid);
 
-    MotionMaster* GetMotionMaster()
-    {
-        return i_motionMaster;
-    }
-    const MotionMaster* GetMotionMaster() const
-    {
-        return i_motionMaster;
-    }
+    MotionMaster* GetMotionMaster() { return i_motionMaster; }
+    MotionMaster const* GetMotionMaster() const { return i_motionMaster; }
 
     bool IsStopped() const { return !(HasUnitState(UNIT_STATE_MOVING)); }
     void StopMoving();
@@ -2680,7 +2700,8 @@ protected:
     std::map<AuraType, float> m_totalAuraEffectValue;
     flag64 m_interruptMask;
 
-    float m_auraModifiersGroup [UNIT_MOD_END] [MODIFIER_TYPE_END];
+    float m_auraFlatModifiersGroup[UNIT_MOD_END][MODIFIER_TYPE_FLAT_END];
+    float m_auraPctModifiersGroup[UNIT_MOD_END][MODIFIER_TYPE_PCT_END];    
     float m_weaponDamage [MAX_ATTACK] [2];
     bool m_canModifyStats;
     VisibleAuraMap m_visibleAuras;

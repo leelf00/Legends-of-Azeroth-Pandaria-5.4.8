@@ -61,7 +61,7 @@ void UnitAI::DoMeleeAttackIfReady(bool ignoreLos)
         me->AttackerStateUpdate(victim, ignoreLos);
         me->resetAttackTimer();
     }
-    if (me->HasOffhandWeapon() && me->isAttackReady(OFF_ATTACK))
+    if (me->haveOffhandWeapon() && me->isAttackReady(OFF_ATTACK))
     {
         me->AttackerStateUpdate(victim, ignoreLos, OFF_ATTACK);
         me->resetAttackTimer(OFF_ATTACK);

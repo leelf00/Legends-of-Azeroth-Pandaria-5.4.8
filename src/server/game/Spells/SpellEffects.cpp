@@ -3757,7 +3757,7 @@ void Spell::EffectWeaponDmg(SpellEffIndex effIndex)
         float weapon_total_pct = 1.0f;
         if (m_spellInfo->SchoolMask & SPELL_SCHOOL_MASK_NORMAL)
         {
-            weapon_total_pct = m_caster->GetModifierValue(unitMod, TOTAL_PCT);
+            weapon_total_pct = m_caster->GetPctModifierValue(unitMod, TOTAL_PCT);
             weapon_total_pct *= m_caster->GetTotalAuraEffectValue(SPELL_AURA_MOD_DAMAGE_PERCENT_DONE);
             weapon_total_pct *= m_caster->GetScallingDamageMod();
             // Bonus weapon damage should not be subject to 50% off-hand damage penalty
