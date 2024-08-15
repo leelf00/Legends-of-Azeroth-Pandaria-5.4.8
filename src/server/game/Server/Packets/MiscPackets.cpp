@@ -46,6 +46,28 @@ WorldPacket const* WorldPackets::Misc::CorpseReclaimDelay::Write()
     return &_worldPacket;
 }
 
+WorldPacket const* WorldPackets::Misc::Dismount::Write()
+{
+    _worldPacket.WriteBit(Guid [6]);
+    _worldPacket.WriteBit(Guid [3]);
+    _worldPacket.WriteBit(Guid [0]);
+    _worldPacket.WriteBit(Guid [7]);
+    _worldPacket.WriteBit(Guid [1]);
+    _worldPacket.WriteBit(Guid [2]);
+    _worldPacket.WriteBit(Guid [5]);
+    _worldPacket.WriteBit(Guid [4]);
+
+    _worldPacket.WriteByteSeq(Guid [3]);
+    _worldPacket.WriteByteSeq(Guid [6]);
+    _worldPacket.WriteByteSeq(Guid [7]);
+    _worldPacket.WriteByteSeq(Guid [5]);
+    _worldPacket.WriteByteSeq(Guid [1]);
+    _worldPacket.WriteByteSeq(Guid [4]);
+    _worldPacket.WriteByteSeq(Guid [2]);
+    _worldPacket.WriteByteSeq(Guid [0]);
+    return &_worldPacket;
+}
+
 void WorldPackets::Misc::FarSight::Read()
 {
     Enable = _worldPacket.ReadBit();

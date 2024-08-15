@@ -59,6 +59,7 @@
 #include "Vehicle.h"
 #include "World.h"
 #include "WorldPacket.h"
+#include "MiscPackets.h"
 #include "MovementStructures.h"
 #include "MovementPacketBuilder.h"
 #include "WorldSession.h"
@@ -11545,6 +11546,9 @@ void Unit::Dismount()
     data.WriteByteSeq(guid [0]);
 
     SendMessageToSet(&data, true);
+    // WorldPackets::Misc::Dismount packet;
+    // packet.Guid = GetGUID();
+    // SendMessageToSet(packet.Write(), IsPlayer());
 
     // dismount as a vehicle
     if (GetTypeId() == TYPEID_PLAYER && GetVehicleKit())

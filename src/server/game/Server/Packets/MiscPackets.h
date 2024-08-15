@@ -53,6 +53,16 @@ namespace WorldPackets
             uint32 Timer = 0;
         };
 
+        class Dismount final : public ServerPacket
+        {
+        public:
+            Dismount() : ServerPacket(SMSG_DISMOUNT, 8) { }
+
+            WorldPacket const* Write() override;
+
+            ObjectGuid Guid;
+        };
+
         class CorpseReclaimDelay : public ServerPacket
         {
         public:
