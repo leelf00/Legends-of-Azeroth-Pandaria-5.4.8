@@ -3,6 +3,10 @@ DELETE FROM `phase_area` WHERE `AreaId`=5853 AND `PhaseId`=1685;
 INSERT INTO `phase_area` (`AreaId`, `PhaseId`, `Comment`) 
 VALUES (5853, 1685, 'Cosmetic - Jade Forest - Paw\'don Village - Doors Closed');
 
+DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId`=29 AND `SourceEntry`=1074;
+INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry`, `SourceId`, `ElseGroup`, `ConditionTypeOrReference`, `ConditionTarget`, `ConditionValue1`, `ConditionValue2`, `ConditionValue3`, `NegativeCondition`, `ErrorType`, `ErrorTextId`, `ScriptName`, `Comment`) VALUES 
+(29, 0, 1074, 0, 0, 8, 0, 29548, 0, 0, 1, 0, 0, '', 'Player has not quest The Mission (29548) rewarded');
+-- 1074 wrong
 -- gossip_menu
 ALTER TABLE `gossip_menu` 
 MODIFY COLUMN `VerifiedBuild` int NOT NULL DEFAULT 0 AFTER `TextID`;
@@ -14,7 +18,7 @@ DELETE FROM `npc_text` WHERE `ID` IN (18718,18720);
 INSERT INTO `npc_text` (`ID`, `Probability0`, `Probability1`, `Probability2`, `Probability3`, `Probability4`, `Probability5`, `Probability6`, `Probability7`, `BroadcastTextID0`, `BroadcastTextID1`, `BroadcastTextID2`, `BroadcastTextID3`, `BroadcastTextID4`, `BroadcastTextID5`, `BroadcastTextID6`, `BroadcastTextID7`, `VerifiedBuild`) VALUES 
 (18718, 1, 1, 1, 1, 1, 1, 0, 0, 55214, 55215, 55216, 55217, 55218, 55219, 0, 0, 55960),
 (18720, 1, 1, 1, 0, 0, 0, 0, 0, 55228, 55229, 55230, 0, 0, 0, 0, 0, 55960);
-DELETE FROM `gossip_menu` WHERE (`MenuID`=13265 AND `TextID`=55216);
+DELETE FROM `gossip_menu` WHERE (`MenuID`=13265 AND `TextID` IN(18718,18720));
 INSERT INTO `gossip_menu` (`MenuID`, `TextID`, `VerifiedBuild`) VALUES 
 (13265, 18718, 55960),
 (13265, 18720, 55960);
