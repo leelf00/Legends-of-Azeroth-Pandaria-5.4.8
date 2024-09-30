@@ -7,6 +7,41 @@ DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId`=29 AND `SourceEntry`=10
 INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry`, `SourceId`, `ElseGroup`, `ConditionTypeOrReference`, `ConditionTarget`, `ConditionValue1`, `ConditionValue2`, `ConditionValue3`, `NegativeCondition`, `ErrorType`, `ErrorTextId`, `ScriptName`, `Comment`) VALUES 
 (29, 0, 1074, 0, 0, 8, 0, 29548, 0, 0, 1, 0, 0, '', 'Player has not quest The Mission (29548) rewarded');
 -- 1074 wrong
+
+-- 1740 Alliance Intro Scene - Pandaria
+-- 1706 Cosmetic - Stormwind - Can See Portal to Paw'Don
+
+-- phase 
+-- 1780 Cosmetic - Ally Gunship Bombing NPCs
+-- 1708 Cosmetic - Spawned Player Gyrocopter
+-- 1789 Cosmetic - See Spawned Rogers on Skyfire
+-- 1791 Cosmetic - Jade Forest - Strongarm Airstrip - Horde Flags
+-- 1793 Cosmetic - See Taran Zhu in Honeydew
+-- 1090 Cosmetic - Clouds
+-- 1868 Cosmetic - See Zin'jun in Ascent
+-- 1795 Cosmetic - See Teleporter @ Garroshar
+-- 1685 Cosmetic - Jade Forest - Paw'don Village - Doors Closed
+-- 1700 Alliance Arrival - Garrosh'ar Point - Bombing Run
+-- 2108 Cosmetic - Ally Stygian Scar NPCs
+
+-- after complete 
+-- 1708, 1789, 1791, 1793, 1868, 1795, 1685, 1700, 2108
+-- remove 1708 Spawned Player Gyrocopter
+-- in mission
+-- 1787 Cosmetic - Paratroopers for Rogers Speech
+-- --
+-- 1708 Spawned Player Gyrocopter
+-- 
+-- 1702 Cosmetic - Garrosh'ar Point - Ga'trul
+-- 1666 Alliance Arrival - Garrosh'ar Point - Horde Alive
+-- 2117 Cosmetic - See Parachutes
+-- 1698 Cosmetic - Garrosh'ar Point - Barricade 1
+-- 1699 Cosmetic - Garrosh'ar Point - Barricade 2
+-- 
+-- 1789 Cosmetic - See Spawned Rogers on Skyfire
+-- 
+
+
 -- gossip_menu
 ALTER TABLE `gossip_menu` 
 MODIFY COLUMN `VerifiedBuild` int NOT NULL DEFAULT 0 AFTER `TextID`;
