@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -704,6 +704,12 @@ enum WorldStatesICC
 enum AreaIds
 {
     AREA_THE_FROZEN_THRONE  = 4859,
+};
+
+enum ICMisc
+{
+    AREA_ICECROWN_CITADEL   = 4812,
+    AT_NERUBAR_BROODKEEPER  = 5611
 };
 
 class spell_trigger_spell_from_caster : public SpellScriptLoader

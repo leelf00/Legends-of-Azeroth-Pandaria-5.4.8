@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -1966,7 +1966,7 @@ struct npc_queldelar_weapon : public customCreatureAI
 
         isIntro = true;
 
-        me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
+        me->SetDisplayFromModel(1);
         Talk(SAY_QUELDELAR_INTRO);
         z = me->GetPositionZ();
         me->OverrideInhabitType(INHABIT_AIR);

@@ -1101,7 +1101,7 @@ class npc_terror_spawn : public CreatureScript
                         me->SetFacingToObject(pureLight);
 
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE);
-                me->SetFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_DISABLE_TURN);
+                me->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISABLE_TURN);
 
                 me->CastSpell(me, SPELL_DARK_BULWARK, true);
 

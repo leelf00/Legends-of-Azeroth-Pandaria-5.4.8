@@ -112,8 +112,8 @@ void Corpse::SaveToDB()
     stmt->setUInt16(index++, GetMapId());                                             // mapId
     stmt->setUInt32(index++, GetUInt32Value(CORPSE_FIELD_DISPLAY_ID));                // displayId
     stmt->setString(index++, _ConcatFields(CORPSE_FIELD_ITEMS, EQUIPMENT_SLOT_END));   // itemCache
-    stmt->setUInt32(index++, GetUInt32Value(CORPSE_FIELD_SKIN_ID));                   // bytes1
-    stmt->setUInt32(index++, GetUInt32Value(CORPSE_FIELD_FACIAL_HAIR_STYLE_ID));                   // bytes2
+    stmt->setUInt32(index++, GetUInt32Value(CORPSE_FIELD_BYTES_1));                   // bytes1
+    stmt->setUInt32(index++, GetUInt32Value(CORPSE_FIELD_BYTES_2));                   // bytes2
     stmt->setUInt8 (index++, GetUInt32Value(CORPSE_FIELD_FLAGS));                     // flags
     stmt->setUInt8 (index++, GetUInt32Value(CORPSE_FIELD_DYNAMIC_FLAGS));             // dynFlags
     stmt->setUInt32(index++, uint32(m_time));                                         // time
@@ -156,8 +156,8 @@ bool Corpse::LoadCorpseFromDB(uint32 guid, Field* fields)
     SetObjectScale(1);
     SetUInt32Value(CORPSE_FIELD_DISPLAY_ID, fields[5].GetUInt32());
     _LoadIntoDataField(fields[6].GetCString(), CORPSE_FIELD_ITEMS, EQUIPMENT_SLOT_END);
-    SetUInt32Value(CORPSE_FIELD_SKIN_ID, fields[7].GetUInt32());
-    SetUInt32Value(CORPSE_FIELD_FACIAL_HAIR_STYLE_ID, fields[8].GetUInt32());
+    SetUInt32Value(CORPSE_FIELD_BYTES_1, fields[7].GetUInt32());
+    SetUInt32Value(CORPSE_FIELD_BYTES_2, fields[8].GetUInt32());
     SetUInt32Value(CORPSE_FIELD_FLAGS, fields[9].GetUInt8());
     SetUInt32Value(CORPSE_FIELD_DYNAMIC_FLAGS, fields[10].GetUInt8());
     SetGuidValue(CORPSE_FIELD_OWNER, ObjectGuid(HighGuid::Player, ownerGuid));

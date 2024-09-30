@@ -354,7 +354,7 @@ void WorldSession::HandleCharEnum(PreparedQueryResult result)
 }
 
 
-void WorldSession::HandleCharEnumOpcode(WorldPacket & /*recvData*/)
+void WorldSession::HandleCharEnumOpcode(WorldPackets::Character::EnumCharacters& /*enumCharacters*/)
 {
     // remove expired bans
     CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_EXPIRED_BANS);
@@ -862,51 +862,28 @@ void WorldSession::HandleCharDeleteOpcode(WorldPacket& recvData)
     SendPacket(&data);
 }
 
-void WorldSession::HandlePlayerLoginOpcode(WorldPacket& recvData)
+void WorldSession::HandlePlayerLoginOpcode(WorldPackets::Character::PlayerLogin& packet)
 {
-    if (PlayerLoading() || GetPlayer() != NULL)
+    if (PlayerLoading() || GetPlayer() != nullptr)
     {
         TC_LOG_ERROR("network", "Player tries to login again, AccountId = %d", GetAccountId());
         return;
     }
 
     m_playerLoading = true;
-    ObjectGuid playerGuid;
-    float unk = 0;
 
     TC_LOG_DEBUG("network", "WORLD: Recvd Player Logon Message");
 
-    recvData >> unk;
+    TC_LOG_DEBUG("network", "Character (Guid: %u) logging in", packet.Guid.GetCounter());
 
-    playerGuid[1] = recvData.ReadBit();
-    playerGuid[4] = recvData.ReadBit();
-    playerGuid[7] = recvData.ReadBit();
-    playerGuid[3] = recvData.ReadBit();
-    playerGuid[2] = recvData.ReadBit();
-    playerGuid[6] = recvData.ReadBit();
-    playerGuid[5] = recvData.ReadBit();
-    playerGuid[0] = recvData.ReadBit();
-
-    recvData.ReadByteSeq(playerGuid[5]);
-    recvData.ReadByteSeq(playerGuid[1]);
-    recvData.ReadByteSeq(playerGuid[0]);
-    recvData.ReadByteSeq(playerGuid[6]);
-    recvData.ReadByteSeq(playerGuid[2]);
-    recvData.ReadByteSeq(playerGuid[4]);
-    recvData.ReadByteSeq(playerGuid[7]);
-    recvData.ReadByteSeq(playerGuid[3]);
-
-    //WorldObject* player = ObjectAccessor::GetWorldObject(*GetPlayer(), playerGuid);
-    TC_LOG_DEBUG("network", "Character (Guid: %u) logging in", playerGuid.GetCounter());
-
-    if (!IsLegitCharacterForAccount(playerGuid))
+    if (!IsLegitCharacterForAccount(packet.Guid))
     {
-        TC_LOG_ERROR("network", "Account (%u) can't login with that character (%u).", GetAccountId(), playerGuid.GetCounter());
+        TC_LOG_ERROR("network", "Account (%u) can't login with that character (%u).", GetAccountId(), packet.Guid.GetCounter());
         KickPlayer();
         return;
     }
 
-    std::shared_ptr<LoginQueryHolder> holder = std::make_shared<LoginQueryHolder>(GetAccountId(), playerGuid);
+    std::shared_ptr<LoginQueryHolder> holder = std::make_shared<LoginQueryHolder>(GetAccountId(), packet.Guid);
     if (!holder->Initialize())
     {
         m_playerLoading = false;
@@ -1162,7 +1139,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder const& holder)
 
     // Set FFA PvP for non GM in non-rest mode
     if (sWorld->IsFFAPvPRealm() && !pCurrChar->IsGameMaster() && !pCurrChar->HasFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_RESTING))
-        pCurrChar->SetByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_FFA_PVP);
+        pCurrChar->SetByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
 
     if (pCurrChar->HasFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_CONTESTED_PVP))
         pCurrChar->SetContestedPvP();
@@ -1345,18 +1322,21 @@ void WorldSession::HandleRequestForcedReactionsOpcode(WorldPacket& recvData)
     _player->GetReputationMgr().SendForceReactions();
 }
 
-void WorldSession::HandleShowingHelmOpcode(WorldPacket& recvData)
+void WorldSession::HandleShowingHelmOpcode(WorldPackets::Character::ShowingHelm& packet)
 {
-    TC_LOG_DEBUG("network", "CMSG_SHOWING_HELM for %s", _player->GetName().c_str());
-    recvData.read_skip<uint8>(); // unknown, bool?
-    _player->ToggleFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_HIDE_HELM);
+    if (packet.ShowHelm)
+        _player->RemoveFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_HIDE_HELM);
+    else
+        _player->SetFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_HIDE_HELM);    
 }
 
-void WorldSession::HandleShowingCloakOpcode(WorldPacket& recvData)
+void WorldSession::HandleShowingCloakOpcode(WorldPackets::Character::ShowingCloak& packet)
 {
-    TC_LOG_DEBUG("network", "CMSG_SHOWING_CLOAK for %s", _player->GetName().c_str());
-    recvData.read_skip<uint8>(); // unknown, bool?
-    _player->ToggleFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_HIDE_CLOAK);
+    if (packet.ShowCloak)
+        _player->RemoveFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_HIDE_CLOAK);
+    else
+        _player->SetFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_HIDE_CLOAK);
+
 }
 
 void WorldSession::SendRenameResult(uint8 result, ObjectGuid guid, std::string name)
@@ -1690,11 +1670,11 @@ void WorldSession::HandleAlterAppearance(WorldPacket& recvData)
     _player->ModifyMoney(-int64(cost));                     // it isn't free
     _player->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_GOLD_SPENT_AT_BARBER, cost);
 
-    _player->SetByteValue(PLAYER_FIELD_HAIR_COLOR_ID, 2, uint8(bs_hair->hair_id));
-    _player->SetByteValue(PLAYER_FIELD_HAIR_COLOR_ID, 3, uint8(Color));
-    _player->SetByteValue(PLAYER_FIELD_REST_STATE, 0, uint8(bs_facialHair->hair_id));
+    _player->SetByteValue(PLAYER_BYTES, 2, uint8(bs_hair->hair_id));
+    _player->SetByteValue(PLAYER_BYTES, 3, uint8(Color));
+    _player->SetByteValue(PLAYER_BYTES_2, 0, uint8(bs_facialHair->hair_id));
     if (bs_skinColor)
-        _player->SetByteValue(PLAYER_FIELD_HAIR_COLOR_ID, 0, uint8(bs_skinColor->hair_id));
+        _player->SetByteValue(PLAYER_BYTES, 0, uint8(bs_skinColor->hair_id));
 
     _player->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_VISIT_BARBER_SHOP, 1);
 
@@ -2831,7 +2811,7 @@ void WorldSession::HandleReorderCharacters(WorldPacket& recvData)
     CharacterDatabase.CommitTransaction(trans);
 }
 
-void WorldSession::HandleOpeningCinematic(WorldPacket& /*recvData*/)
+void WorldSession::HandleOpeningCinematic(WorldPackets::Misc::OpeningCinematic& /*packet*/)
 {
     // Only players that has not yet gained any experience can use this
     if (_player->GetUInt32Value(PLAYER_FIELD_XP))

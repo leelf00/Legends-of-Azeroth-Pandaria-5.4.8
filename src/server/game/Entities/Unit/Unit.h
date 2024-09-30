@@ -26,6 +26,7 @@
 #include "MotionMaster.h"
 #include "Object.h"
 #include "SpellAuraDefines.h"
+#include "SpellDefines.h"
 #include "ThreatManager.h"
 #include "MoveSplineInit.h"
 #include "SpellMgr.h"
@@ -36,59 +37,6 @@
 #include <memory>
 
 #define WORLD_TRIGGER   12999
-
-enum SpellModOp
-{
-    SPELLMOD_DAMAGE = 0,
-    SPELLMOD_DURATION = 1,
-    SPELLMOD_THREAT = 2,
-    SPELLMOD_EFFECT1 = 3,
-    SPELLMOD_CHARGES = 4,
-    SPELLMOD_RANGE = 5,
-    SPELLMOD_RADIUS = 6,
-    SPELLMOD_CRITICAL_CHANCE = 7,
-    SPELLMOD_ALL_EFFECTS = 8,
-    SPELLMOD_NOT_LOSE_CASTING_TIME = 9,
-    SPELLMOD_CASTING_TIME = 10,
-    SPELLMOD_COOLDOWN = 11,
-    SPELLMOD_EFFECT2 = 12,
-    SPELLMOD_IGNORE_ARMOR = 13,
-    SPELLMOD_COST = 14,
-    SPELLMOD_CRIT_DAMAGE_BONUS = 15,
-    SPELLMOD_RESIST_MISS_CHANCE = 16,
-    SPELLMOD_JUMP_TARGETS = 17,
-    SPELLMOD_CHANCE_OF_SUCCESS = 18,
-    SPELLMOD_ACTIVATION_TIME = 19,
-    SPELLMOD_DAMAGE_MULTIPLIER = 20,
-    SPELLMOD_GLOBAL_COOLDOWN = 21,
-    SPELLMOD_DOT = 22,
-    SPELLMOD_EFFECT3 = 23,
-    SPELLMOD_BONUS_MULTIPLIER = 24,
-    // spellmod 25
-    SPELLMOD_PROC_PER_MINUTE = 26,
-    SPELLMOD_VALUE_MULTIPLIER = 27,
-    SPELLMOD_RESIST_DISPEL_CHANCE = 28,
-    SPELLMOD_CRIT_DAMAGE_BONUS_2 = 29, //one not used spell
-    SPELLMOD_SPELL_COST_REFUND_ON_FAIL = 30,
-    SPELLMOD_STACK_AMOUNT = 31,
-    SPELLMOD_EFFECT4 = 32,
-    SPELLMOD_EFFECT5 = 33,
-    SPELLMOD_COST2 = 34,
-    SPELLMOD_UNK_35 = 35 // Bodyguard Visual
-};
-
-#define MAX_SPELLMOD 36
-
-enum SpellValueMod
-{
-    SPELLVALUE_BASE_POINT0,
-    SPELLVALUE_BASE_POINT1,
-    SPELLVALUE_BASE_POINT2,
-    SPELLVALUE_RADIUS_MOD,
-    SPELLVALUE_MAX_TARGETS,
-    SPELLVALUE_AURA_STACK,
-    SPELLVALUE_SPELL_GO_GLAGS,
-};
 
 class CustomSpellValues
 {
@@ -121,19 +69,7 @@ private:
 };
 
 
-enum SpellFacingFlags
-{
-    SPELL_FACING_FLAG_INFRONT = 0x0001
-};
-
-
-
-
-
-
-
-
-// high byte (3 from 0..3) of UNIT_FIELD_SHAPESHIFT_FORM
+// high byte (3 from 0..3) of UNIT_FIELD_BYTES_2
 enum ShapeshiftForm
 {
     FORM_NONE = 0x00,
@@ -321,33 +257,6 @@ enum AuraRemoveMode
     AURA_REMOVE_BY_EXPIRE,            // aura duration has ended
     AURA_REMOVE_BY_DEATH,
     AURA_REMOVE_BY_INTERRUPT,         // interrupt flags
-};
-
-enum TriggerCastFlags
-{
-    TRIGGERED_NONE                                = 0x00000000,   //! Not triggered
-    TRIGGERED_IGNORE_GCD                          = 0x00000001,   //! Will ignore GCD
-    TRIGGERED_IGNORE_SPELL_AND_CATEGORY_CD        = 0x00000002,   //! Will ignore Spell and Category cooldowns
-    TRIGGERED_IGNORE_POWER_AND_REAGENT_COST       = 0x00000004,   //! Will ignore power and reagent cost
-    TRIGGERED_IGNORE_CAST_ITEM                    = 0x00000008,   //! Will not take away cast item or update related achievement criteria
-    TRIGGERED_IGNORE_AURA_SCALING                 = 0x00000010,   //! Will ignore aura scaling
-    TRIGGERED_IGNORE_CAST_IN_PROGRESS             = 0x00000020,   //! Will not check if a current cast is in progress
-    TRIGGERED_IGNORE_COMBO_POINTS                 = 0x00000040,   //! Will ignore combo point requirement
-    TRIGGERED_CAST_DIRECTLY                       = 0x00000080,   //! In Spell::prepare, will be cast directly without setting containers for executed spell
-    TRIGGERED_IGNORE_AURA_INTERRUPT_FLAGS         = 0x00000100,   //! Will ignore interruptible aura's at cast
-    TRIGGERED_IGNORE_SET_FACING                   = 0x00000200,   //! Will not adjust facing to target (if any)
-    TRIGGERED_IGNORE_SHAPESHIFT                   = 0x00000400,   //! Will ignore shapeshift checks
-    TRIGGERED_IGNORE_CASTER_AURASTATE             = 0x00000800,   //! Will ignore caster aura states including combat requirements and death state
-    TRIGGERED_IGNORE_CASTER_MOUNTED_OR_ON_VEHICLE = 0x00002000,   //! Will ignore mounted/on vehicle restrictions
-    TRIGGERED_IGNORE_CASTER_AURAS                 = 0x00010000,   //! Will ignore caster aura restrictions or requirements
-    TRIGGERED_DISALLOW_PROC_EVENTS                = 0x00020000,   //! Disallows proc events from triggered spell (default)
-    TRIGGERED_DONT_REPORT_CAST_ERROR              = 0x00040000,   //! Will return SPELL_FAILED_DONT_REPORT in CheckCast functions
-    TRIGGERED_FULL_MASK                           = 0x0007FFFF,   //! Used when doing CastSpell with triggered == true    TRIGGERED_IGNORE_EQUIPPED_ITEM_REQUIREMENT    = 0x00080000,   //! Will ignore equipped item requirements
-    TRIGGERED_IGNORE_EQUIPPED_ITEM_REQUIREMENT    = 0x00080000,   //! Will ignore equipped item requirements
-    TRIGGERED_IGNORE_TARGET_CHECK                 = 0x00100000,   //! Will ignore most target checks (mostly DBC target checks)
-    TRIGGERED_IGNORE_CASTER_DEATH_STATE           = 0x00200000,
-    TRIGGERED_FULL_DEBUG_MASK                     = 0xFFFFFFFF,
-    TRIGGERED_WITH_SPELL_START                    = (TRIGGERED_FULL_MASK & ~TRIGGERED_CAST_DIRECTLY),
 };
 
 enum UnitMods
@@ -1300,14 +1209,14 @@ public:
     void SetLevel(uint8 lvl, bool sendUpdate = true);
     // uint8 GetRace() const { return GetByteValue(UNIT_FIELD_BYTES_0, UNIT_BYTES_0_OFFSET_RACE); }
     // void SetRace(uint8 race) { SetByteValue(UNIT_FIELD_BYTES_0, UNIT_BYTES_0_OFFSET_RACE, race); }
-    uint8 GetRace() const { return GetByteValue(UNIT_FIELD_SEX, 0); }
-    void SetRace(uint8 race) { SetByteValue(UNIT_FIELD_SEX, 0, race);}
+    uint8 GetRace() const { return GetByteValue(UNIT_FIELD_BYTES_0, 0); }
+    void SetRace(uint8 race) { SetByteValue(UNIT_FIELD_BYTES_0, 0, race);}
     uint32 GetRaceMask() const { return 1 << (GetRace() - 1); }
-    uint8 GetClass() const { return GetByteValue(UNIT_FIELD_SEX, 1); }
-    void SetClass(uint8 newClass) { SetByteValue(UNIT_FIELD_SEX, 1, newClass);}
+    uint8 GetClass() const { return GetByteValue(UNIT_FIELD_BYTES_0, 1); }
+    void SetClass(uint8 newClass) { SetByteValue(UNIT_FIELD_BYTES_0, 1, newClass);}
     uint32 GetClassMask() const { return 1 << (GetClass() - 1); }
-    uint8 GetGender() const { return GetByteValue(UNIT_FIELD_SEX, 3); }
-    void SetGender(uint8 gender) { SetByteValue(UNIT_FIELD_SEX, 3, gender); }
+    uint8 GetGender() const { return GetByteValue(UNIT_FIELD_BYTES_0, 3); }
+    void SetGender(uint8 gender) { SetByteValue(UNIT_FIELD_BYTES_0, 3, gender); }
 
     // Gender GetGender() const { return Gender(GetByteValue(UNIT_FIELD_BYTES_0, UNIT_BYTES_0_OFFSET_GENDER)); }
     // void SetGender(Gender gender) { SetByteValue(UNIT_FIELD_BYTES_0, UNIT_BYTES_0_OFFSET_GENDER, gender); }
@@ -1420,17 +1329,17 @@ public:
     void RemoveUnitFlag(UnitFlags flags) { RemoveFlag(UNIT_FIELD_FLAGS, flags); }
     void ReplaceAllUnitFlags(UnitFlags flags) { SetUInt32Value(UNIT_FIELD_FLAGS, flags); }
 
-    UnitFlags2 GetUnitFlags2() const { return UnitFlags2(GetUInt32Value(UNIT_FIELD_FLAGS2)); }
-    bool HasUnitFlag2(UnitFlags2 flags) const { return HasFlag(UNIT_FIELD_FLAGS2, flags); }
-    void SetUnitFlag2(UnitFlags2 flags) { SetFlag(UNIT_FIELD_FLAGS2, flags); }
-    void RemoveUnitFlag2(UnitFlags2 flags) { RemoveFlag(UNIT_FIELD_FLAGS2, flags); }
-    void ReplaceAllUnitFlags2(UnitFlags2 flags) { SetUInt32Value(UNIT_FIELD_FLAGS2, flags); }
+    UnitFlags2 GetUnitFlags2() const { return UnitFlags2(GetUInt32Value(UNIT_FIELD_FLAGS_2)); }
+    bool HasUnitFlag2(UnitFlags2 flags) const { return HasFlag(UNIT_FIELD_FLAGS_2, flags); }
+    void SetUnitFlag2(UnitFlags2 flags) { SetFlag(UNIT_FIELD_FLAGS_2, flags); }
+    void RemoveUnitFlag2(UnitFlags2 flags) { RemoveFlag(UNIT_FIELD_FLAGS_2, flags); }
+    void ReplaceAllUnitFlags2(UnitFlags2 flags) { SetUInt32Value(UNIT_FIELD_FLAGS_2, flags); }
 
     Emote GetEmoteState() const { return Emote(GetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE)); }
     void SetEmoteState(Emote emote) { SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, emote); }
 
-    SheathState GetSheath() const { return SheathState(GetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 0)); }
-    virtual void SetSheath(SheathState sheathed) { SetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 0, sheathed); }
+    SheathState GetSheath() const { return SheathState(GetByteValue(UNIT_FIELD_BYTES_2, 0)); }
+    virtual void SetSheath(SheathState sheathed) { SetByteValue(UNIT_FIELD_BYTES_2, 0, sheathed); }
 
     // faction template id
     uint32 GetFaction() const { return GetUInt32Value(UNIT_FIELD_FACTION_TEMPLATE); }
@@ -1449,43 +1358,43 @@ public:
     void GetPartyMembers(std::list<Unit*> &units);
     bool IsContestedGuard() const;
 
-    UnitPVPStateFlags GetPvpFlags() const { return UnitPVPStateFlags(GetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, UNIT_BYTES_2_OFFSET_PVP_FLAG)); }
-    bool HasPvpFlag(UnitPVPStateFlags flags) const { return HasByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, UNIT_BYTES_2_OFFSET_PVP_FLAG, flags); }
-    void SetPvpFlag(UnitPVPStateFlags flags) { SetByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, UNIT_BYTES_2_OFFSET_PVP_FLAG, flags); }
-    void RemovePvpFlag(UnitPVPStateFlags flags) { RemoveByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, UNIT_BYTES_2_OFFSET_PVP_FLAG, flags); }
-    void ReplaceAllPvpFlags(UnitPVPStateFlags flags) { SetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, UNIT_BYTES_2_OFFSET_PVP_FLAG, flags); }
+    UnitPVPStateFlags GetPvpFlags() const { return UnitPVPStateFlags(GetByteValue(UNIT_FIELD_BYTES_2, UNIT_BYTES_2_OFFSET_PVP_FLAG)); }
+    bool HasPvpFlag(UnitPVPStateFlags flags) const { return HasByteFlag(UNIT_FIELD_BYTES_2, UNIT_BYTES_2_OFFSET_PVP_FLAG, flags); }
+    void SetPvpFlag(UnitPVPStateFlags flags) { SetByteFlag(UNIT_FIELD_BYTES_2, UNIT_BYTES_2_OFFSET_PVP_FLAG, flags); }
+    void RemovePvpFlag(UnitPVPStateFlags flags) { RemoveByteFlag(UNIT_FIELD_BYTES_2, UNIT_BYTES_2_OFFSET_PVP_FLAG, flags); }
+    void ReplaceAllPvpFlags(UnitPVPStateFlags flags) { SetByteValue(UNIT_FIELD_BYTES_2, UNIT_BYTES_2_OFFSET_PVP_FLAG, flags); }
     
     bool IsPvP() const { return HasPvpFlag(UNIT_BYTE2_FLAG_PVP); }
     void SetPvP(bool state);
 
-    UnitPetFlag GetPetFlags() const { return UnitPetFlag(GetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, UNIT_BYTES_2_OFFSET_PET_FLAGS)); }
-    bool HasPetFlag(UnitPetFlag flags) const { return HasByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, UNIT_BYTES_2_OFFSET_PET_FLAGS, flags); }
-    void SetPetFlag(UnitPetFlag flags) { SetByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, UNIT_BYTES_2_OFFSET_PET_FLAGS, flags); }
-    void RemovePetFlag(UnitPetFlag flags) { RemoveByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, UNIT_BYTES_2_OFFSET_PET_FLAGS, flags); }
-    void ReplaceAllPetFlags(UnitPetFlag flags) { SetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, UNIT_BYTES_2_OFFSET_PET_FLAGS, flags); }
+    UnitPetFlag GetPetFlags() const { return UnitPetFlag(GetByteValue(UNIT_FIELD_BYTES_2, UNIT_BYTES_2_OFFSET_PET_FLAGS)); }
+    bool HasPetFlag(UnitPetFlag flags) const { return HasByteFlag(UNIT_FIELD_BYTES_2, UNIT_BYTES_2_OFFSET_PET_FLAGS, flags); }
+    void SetPetFlag(UnitPetFlag flags) { SetByteFlag(UNIT_FIELD_BYTES_2, UNIT_BYTES_2_OFFSET_PET_FLAGS, flags); }
+    void RemovePetFlag(UnitPetFlag flags) { RemoveByteFlag(UNIT_FIELD_BYTES_2, UNIT_BYTES_2_OFFSET_PET_FLAGS, flags); }
+    void ReplaceAllPetFlags(UnitPetFlag flags) { SetByteValue(UNIT_FIELD_BYTES_2, UNIT_BYTES_2_OFFSET_PET_FLAGS, flags); }
 
     uint32 GetCreatureType() const;
     uint32 GetCreatureTypeMask() const;
 
-    UnitStandStateType GetStandState() const { return UnitStandStateType(GetByteValue(UNIT_FIELD_ANIM_TIER, UNIT_BYTES_1_OFFSET_STAND_STATE)); }
+    UnitStandStateType GetStandState() const { return UnitStandStateType(GetByteValue(UNIT_FIELD_BYTES_1, UNIT_BYTES_1_OFFSET_STAND_STATE)); }
     bool IsSitState() const;
     bool IsStandState() const;
     void SetStandState(UnitStandStateType state);
 
     void SetStandFlags(uint8 flags)
     {
-        SetByteFlag(UNIT_FIELD_ANIM_TIER, 2, flags);
+        SetByteFlag(UNIT_FIELD_BYTES_1, 2, flags);
     }
     void RemoveStandFlags(uint8 flags)
     {
-        RemoveByteFlag(UNIT_FIELD_ANIM_TIER, 2, flags);
+        RemoveByteFlag(UNIT_FIELD_BYTES_1, 2, flags);
     }
 
-    void SetVisFlag(UnitVisFlags flags) { SetByteFlag(UNIT_FIELD_ANIM_TIER, UNIT_BYTES_1_OFFSET_VIS_FLAG, flags); }
-    void RemoveVisFlag(UnitVisFlags flags) { RemoveByteFlag(UNIT_FIELD_ANIM_TIER, UNIT_BYTES_1_OFFSET_VIS_FLAG, flags); }
-    void ReplaceAllVisFlags(UnitVisFlags flags) { SetByteValue(UNIT_FIELD_ANIM_TIER, UNIT_BYTES_1_OFFSET_VIS_FLAG, flags); }
+    void SetVisFlag(UnitVisFlags flags) { SetByteFlag(UNIT_FIELD_BYTES_1, UNIT_BYTES_1_OFFSET_VIS_FLAG, flags); }
+    void RemoveVisFlag(UnitVisFlags flags) { RemoveByteFlag(UNIT_FIELD_BYTES_1, UNIT_BYTES_1_OFFSET_VIS_FLAG, flags); }
+    void ReplaceAllVisFlags(UnitVisFlags flags) { SetByteValue(UNIT_FIELD_BYTES_1, UNIT_BYTES_1_OFFSET_VIS_FLAG, flags); }
 
-    AnimTier GetAnimTier() const { return AnimTier(GetByteValue(UNIT_FIELD_ANIM_TIER, UNIT_BYTES_1_OFFSET_ANIM_TIER)); }
+    AnimTier GetAnimTier() const { return AnimTier(GetByteValue(UNIT_FIELD_BYTES_1, UNIT_BYTES_1_OFFSET_ANIM_TIER)); }
     void SetAnimTier(AnimTier animTier);
 
     bool IsMounted() const { return HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_MOUNT); }
@@ -2119,7 +2028,7 @@ public:
 
     ShapeshiftForm GetShapeshiftForm() const
     {
-        return ShapeshiftForm(GetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 3));
+        return ShapeshiftForm(GetByteValue(UNIT_FIELD_BYTES_2, 3));
     }
     void SetShapeshiftForm(ShapeshiftForm form);
 
@@ -2240,16 +2149,12 @@ public:
     {
         return GetUInt32Value(UNIT_FIELD_DISPLAY_ID);
     }
-    virtual void SetDisplayId(uint32 modelId);
-    uint32 GetNativeDisplayId() const
-    {
-        return GetUInt32Value(UNIT_FIELD_NATIVE_DISPLAY_ID);
-    }
+    virtual void SetDisplayId(uint32 modelId, float displayScale = 1.f);
+    uint32 GetNativeDisplayId() const { return GetUInt32Value(UNIT_FIELD_NATIVE_DISPLAY_ID); }
+    float GetNativeDisplayScale() const { return 1.0f /**GetFloatValue(UNIT_FIELD_NATIVE_X_DISPLAY_SCALE)**/; }    
     void RestoreDisplayId();
-    void SetNativeDisplayId(uint32 modelId)
-    {
-        SetUInt32Value(UNIT_FIELD_NATIVE_DISPLAY_ID, modelId);
-    }
+    void SetNativeDisplayId(uint32 displayId, float displayScale = 1.f) { SetUInt32Value(UNIT_FIELD_NATIVE_DISPLAY_ID, displayId); /**SetFloatValue(UNIT_FIELD_NATIVE_X_DISPLAY_SCALE, displayScale);**/ }
+
     void setTransForm(uint32 spellid)
     {
         m_transform = spellid;
@@ -2569,6 +2474,17 @@ public:
 
     // Movement info
     Movement::MoveSpline* movespline;
+
+    virtual void Talk(std::string const& text, ChatMsg msgType, Language language, float textRange, WorldObject const* target);
+    virtual void Say(std::string const& text, Language language, WorldObject const* target = nullptr);
+    virtual void Yell(std::string const& text, Language language, WorldObject const* target = nullptr);
+    virtual void TextEmote(std::string const& text, WorldObject const* target = nullptr, bool isBossEmote = false);
+    virtual void Whisper(std::string const& text, Language language, Player* target, bool isBossWhisper = false);
+    virtual void Talk(uint32 textId, ChatMsg msgType, float textRange, WorldObject const* target);
+    virtual void Say(uint32 textId, WorldObject const* target = nullptr);
+    virtual void Yell(uint32 textId, WorldObject const* target = nullptr);
+    virtual void TextEmote(uint32 textId, WorldObject const* target = nullptr, bool isBossEmote = false);
+    virtual void Whisper(uint32 textId, Player* target, bool isBossWhisper = false);
 
     float GetCollisionHeight() const override;
 

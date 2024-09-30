@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -212,7 +212,7 @@ class boss_razorscale_controller : public CreatureScript
         {
             boss_razorscale_controllerAI(Creature* creature) : BossAI(creature, DATA_RAZORSCALE_CONTROL)
             {
-                me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
+                me->SetDisplayFromModel(1);
                 me->SetFlying(true);
             }
 
@@ -952,7 +952,7 @@ class npc_devouring_flame : public CreatureScript
             npc_devouring_flameAI(Creature* creature) : ScriptedAI(creature)
             {
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_PACIFIED);
-                me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
+                me->SetDisplayFromModel(1);
                 me->SetReactState(REACT_PASSIVE);
                 SetCombatMovement(false);
             }

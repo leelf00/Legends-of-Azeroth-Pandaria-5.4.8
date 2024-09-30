@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -37,12 +37,12 @@
 #include <list>
 
 class Unit;
-class WorldPacket;
+
 class InstanceScript;
 class Group;
 class InstanceSave;
 class Object;
-class WorldObject;
+
 class TempSummon;
 class Player;
 class ActivePoolData;
@@ -55,6 +55,11 @@ class MapInstanced;
 class BattlegroundMap;
 class InstanceMap;
 class Transport;
+class Weather;
+class WorldObject;
+class WorldPacket;
+class WorldSession;
+enum WeatherState : uint32;
 namespace Trinity { struct ObjectUpdater; }
 namespace VMAP { enum class ModelIgnoreFlags : uint32; }
 
@@ -262,14 +267,21 @@ enum LevelRequirementVsMode
 
 struct ZoneDynamicInfo
 {
-    ZoneDynamicInfo() : MusicId(0), WeatherId(0), WeatherGrade(0.0f),
-        OverrideLightId(0), LightFadeInTime(0) { }
+    ZoneDynamicInfo();
 
     uint32 MusicId;
-    uint32 WeatherId;
-    float WeatherGrade;
-    uint32 OverrideLightId;
-    uint32 LightFadeInTime;
+
+    std::unique_ptr<Weather> DefaultWeather;
+    WeatherState WeatherId;
+    float Intensity;
+
+    struct LightOverride
+    {
+        uint32 AreaLightId;
+        uint32 OverrideLightId;
+        uint32 TransitionMilliseconds;
+    };
+    std::vector<LightOverride> LightOverrides;
 };
 
 #if defined(__GNUC__)
@@ -454,6 +466,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         void RemoveWorldObject(WorldObject* obj) { i_worldObjects.erase(obj); }
 
         void SendToPlayers(WorldPacket const* data) const;
+        bool SendZoneMessage(uint32 zone, WorldPacket const* packet, WorldSession const* self = nullptr, uint32 team = 0) const;
 
         typedef MapRefManager PlayerList;
         PlayerList const& GetPlayers() const { return m_mapRefManager; }
@@ -588,11 +601,14 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
 
         void SendInitTransports(Player* player);
         void SendRemoveTransports(Player* player);
-        void SendZoneDynamicInfo(Player* player);
+        void SendZoneDynamicInfo(uint32 zoneId, Player* player) const;
+        void SendZoneWeather(uint32 zoneId, Player* player) const;
+        void SendZoneWeather(ZoneDynamicInfo const& zoneDynamicInfo, Player* player) const;
 
         void SetZoneMusic(uint32 zoneId, uint32 musicId);
-        void SetZoneWeather(uint32 zoneId, uint32 weatherId, float weatherGrade);
-        void SetZoneOverrideLight(uint32 zoneId, uint32 lightId, uint32 fadeInTime);
+        Weather* GetOrGenerateZoneDefaultWeather(uint32 zoneId);
+        void SetZoneWeather(uint32 zoneId, WeatherState weatherId, float intensity);
+        void SetZoneOverrideLight(uint32 zoneId, uint32 areaLightId, uint32 overrideLightId, Milliseconds transitionTime);
 
         void SetMMapErrorReportEnabled(bool on) { m_mmapErrorReportEnabled = on; }
 
@@ -809,6 +825,7 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
         uint32 debugFlexPlayersCount;
 
         ZoneDynamicInfoMap _zoneDynamicInfo;
+        IntervalTimer _weatherUpdateTimer;
         uint32 _defaultLight;
 };
 

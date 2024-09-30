@@ -4556,13 +4556,13 @@ class spell_censer_of_eternal_agony : public AuraScript
 
     void HandleApply(AuraEffect const*, AuraEffectHandleModes)
     {
-        GetOwner()->ToPlayer()->SetFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_IGNORE_REPUTATION);
+        GetOwner()->ToPlayer()->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_IGNORE_REPUTATION);
         GetOwner()->ToPlayer()->UpdatePvP(true);
     }
 
     void HandleRemove(AuraEffect const*, AuraEffectHandleModes)
     {
-        GetOwner()->ToPlayer()->RemoveFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_IGNORE_REPUTATION);
+        GetOwner()->ToPlayer()->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_IGNORE_REPUTATION);
         GetOwner()->ToPlayer()->UpdatePvP(false);
     }
 

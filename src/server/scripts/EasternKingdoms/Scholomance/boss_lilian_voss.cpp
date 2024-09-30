@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -73,6 +73,7 @@ enum Yells
     TALK_10                   = 9,
     TALK_11                   = 10,
     TALK_12                   = 11,
+    TALK_13                   = 12,
 };
 
 class boss_lilian_voss : public CreatureScript
@@ -344,7 +345,7 @@ class boss_lilian_voss : public CreatureScript
                             break;
                         case EVENT_SOUL_DISMISS:
                             Talk(TALK_4);
-                            me->MonsterTextEmote("Lilian's soul fades into the spirit realm! It can no longer be harmed!", 0, true);
+                            Talk(TALK_13);
                             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
                             me->SetStandState(UNIT_STAND_STATE_DEAD);
                             events.ScheduleEvent(EVENT_SUMMON_SOUL, 4000);

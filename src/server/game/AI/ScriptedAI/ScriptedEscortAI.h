@@ -61,7 +61,7 @@ struct npc_escortAI : public ScriptedAI
         void AttackStart(Unit* who) override;
         void MoveInLineOfSight(Unit* who) override;
         void JustDied(Unit*) override;
-        void JustRespawned() override;
+        void JustAppeared() override;
         void ReturnToLastPoint();
         void EnterEvadeMode() override;
         void UpdateAI(uint32 diff) override;                   //the "internal" update, calls UpdateEscortAI()

@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -387,7 +387,7 @@ class npc_taldaram_flamesphere : public CreatureScript
             {
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                 me->SetFlying(true);
-                me->SetDisplayId(me->GetCreatureTemplate()->Modelid1);
+                me->SetDisplayFromModel(0);
                 me->SetFaction(16);
                 me->SetObjectScale(1.0f);
                 DoCast(me, SPELL_FLAME_SPHERE_VISUAL);

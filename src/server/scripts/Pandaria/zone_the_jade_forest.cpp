@@ -353,7 +353,7 @@ class npc_kraxik_tornado : public CreatureScript
 
             void Reset() override
             {
-                me->SetDisplayId(me->GetCreatureTemplate()->Modelid1);
+                me->SetDisplayFromModel(0);
                 me->SetReactState(REACT_PASSIVE);
                 me->CastSpell(me, SPELL_TORNADO_DMG);
 
@@ -3053,7 +3053,7 @@ class spell_q30063 : public SpellScriptLoader
             {
                 if (GetCaster()->GetTypeId() == TYPEID_PLAYER)
                     if (Player* player = GetCaster()->ToPlayer())
-                        player->MonsterWhisper(sCreatureTextMgr->GetLocalizedChatString(NPC_ELDER_SAGE_STORM_SING, 0, urand(0, 7), Gender(player->GetGender()), player->GetSession()->GetSessionDbLocaleIndex()).c_str(), player, false);
+                        player->Whisper(sCreatureTextMgr->GetLocalizedChatString(NPC_ELDER_SAGE_STORM_SING, 0, urand(0, 7), Gender(player->GetGender()), player->GetSession()->GetSessionDbLocaleIndex()).c_str(), LANG_UNIVERSAL, player);
             }
 
             void Register() override
@@ -3301,7 +3301,7 @@ class npc_wounded_pilot : public CreatureScript
                 me->AddAura(SPELL_WOUNDED_HEALING_TRACKER, me);
                 me->AddAura(SPELL_PERMANENT_FEIGN_DEATH, me);
 
-                me->SetFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_FEIGN_DEATH);
+                me->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH);
                 me->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
                 me->m_Events.KillAllEvents(true);
 
@@ -3349,7 +3349,7 @@ class npc_wounded_pilot : public CreatureScript
                         healer->ToPlayer()->KilledMonsterCredit(NPC_Q29552_CREDIT);
 
                         me->RemoveAllAuras();
-                        me->RemoveFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_FEIGN_DEATH);
+                        me->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH);
                         me->RemoveFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
                         me->AI()->Talk(0, healer);
 

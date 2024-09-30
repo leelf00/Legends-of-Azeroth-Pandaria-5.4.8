@@ -641,7 +641,7 @@ class boss_bd_nefarian : public CreatureScript
                                 onyxia->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_IMMUNE_TO_PC | UNIT_FLAG_IMMUNE_TO_NPC);
                                 // Remove feign death
                                 onyxia->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_UNK_29);
-                                onyxia->RemoveFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_FEIGN_DEATH);
+                                onyxia->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH);
                                 onyxia->RemoveFlag(OBJECT_FIELD_DYNAMIC_FLAGS, UNIT_DYNFLAG_DEAD);
                                 onyxia->ClearUnitState(UNIT_STATE_DIED);
                             }
@@ -1027,7 +1027,7 @@ class npc_nefarian_intro : public CreatureScript
                                 SetOnElevator(onyxia);
                                 // Feign death
                                 onyxia->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_UNK_29);
-                                onyxia->SetFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_FEIGN_DEATH);
+                                onyxia->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH);
                                 onyxia->SetFlag(OBJECT_FIELD_DYNAMIC_FLAGS, UNIT_DYNFLAG_DEAD);
                                 onyxia->AddUnitState(UNIT_STATE_DIED);
                                 // Put stalkers onto the elevator
@@ -1149,7 +1149,7 @@ class npc_animated_bone_warrior : public CreatureScript
                     me->RemoveAurasDueToSpell(SPELL_DIE_VISUAL);
                     me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_IMMUNE_TO_PC);
                     me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_UNK_29);
-                    me->RemoveFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_FEIGN_DEATH);
+                    me->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH);
                     me->RemoveFlag(OBJECT_FIELD_DYNAMIC_FLAGS, UNIT_DYNFLAG_DEAD);
                     DoCast(me, spell->Effects[spell->Id == SPELL_SHADOWBLAZE ? EFFECT_1 : EFFECT_2].BasePoints, true);
                     events.ScheduleEvent(EVENT_HURL_BONE, urand(4000, 9000));
@@ -1168,7 +1168,7 @@ class npc_animated_bone_warrior : public CreatureScript
                     DoCast(me, SPELL_DIE_VISUAL, true);
                     me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_IMMUNE_TO_PC);
                     me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_UNK_29);
-                    me->SetFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_FEIGN_DEATH);
+                    me->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH);
                     me->SetFlag(OBJECT_FIELD_DYNAMIC_FLAGS, UNIT_DYNFLAG_DEAD);
                     me->SetPower(POWER_ENERGY, 0);
                     SetOnElevator(me);

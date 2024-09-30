@@ -348,8 +348,10 @@ enum EncounterActions
 
 enum MiscData
 {
+    LIGHT_DEFAULT               = 2488,
     LIGHT_SNOWSTORM             = 2490,
     LIGHT_SOULSTORM             = 2508,
+    LIGHT_FOG                   = 2509,
 
     MUSIC_FROZEN_THRONE         = 17457,
     MUSIC_SPECIAL               = 17458,    // Summon Shambling Horror, Remorseless Winter, Quake, Summon Val'kyr Periodic, Harvest Soul, Vile Spirits
@@ -748,7 +750,7 @@ class boss_the_lich_king : public CreatureScript
                 me->VisitNearbyGridObject(333.0f, worker);
 
                 // Reset any light override
-                SendLightOverride(0, 5000);
+                me->GetMap()->SetZoneOverrideLight(AREA_ICECROWN_CITADEL, LIGHT_DEFAULT, 0, 5s);
             }
 
             bool CanAIAttack(Unit const* target) const override
@@ -781,7 +783,7 @@ class boss_the_lich_king : public CreatureScript
                     case ACTION_START_ENCOUNTER:
                         instance->SetBossState(DATA_THE_LICH_KING, IN_PROGRESS);
                         Talk(SAY_LK_INTRO_1);
-                        SendMusicToPlayers(MUSIC_FROZEN_THRONE);
+                        me->GetMap()->SetZoneMusic(AREA_ICECROWN_CITADEL, MUSIC_FROZEN_THRONE);
                         // schedule talks
                         me->SetStandState(UNIT_STAND_STATE_STAND);
                         events.ScheduleEvent(EVENT_INTRO_MOVE_1, 4000);
@@ -790,10 +792,10 @@ class boss_the_lich_king : public CreatureScript
                         events.ScheduleEvent(EVENT_START_ATTACK, 5000);
                         break;
                     case ACTION_PLAY_MUSIC:
-                        SendMusicToPlayers(MUSIC_FINAL);
+                        me->GetMap()->SetZoneMusic(AREA_ICECROWN_CITADEL, MUSIC_FINAL);
                         break;
                     case ACTION_RESTORE_LIGHT:
-                        SendLightOverride(0, 5000);
+                        me->GetMap()->SetZoneOverrideLight(AREA_ICECROWN_CITADEL, LIGHT_DEFAULT, 0, 5s);
                         break;
                     case ACTION_BREAK_FROSTMOURNE:
                         me->InterruptNonMeleeSpells(false);
@@ -934,7 +936,7 @@ class boss_the_lich_king : public CreatureScript
                     events.Reset();
                     events.SetPhase(PHASE_OUTRO);
                     summons.DespawnAll();
-                    SendMusicToPlayers(MUSIC_FURY_OF_FROSTMOURNE);
+                    me->GetMap()->SetZoneMusic(AREA_ICECROWN_CITADEL, MUSIC_FURY_OF_FROSTMOURNE);
                     me->InterruptNonMeleeSpells(true);
                     me->CastSpell((Unit*)nullptr, SPELL_FURY_OF_FROSTMOURNE, TRIGGERED_NONE);
                     me->SetWalk(true);
@@ -987,8 +989,8 @@ class boss_the_lich_king : public CreatureScript
                     {
                         summon->CastSpell((Unit*)nullptr, SPELL_BROKEN_FROSTMOURNE, true);
 
-                        SendLightOverride(LIGHT_SOULSTORM, 10000);
-                        SendWeather(WEATHER_STATE_BLACKSNOW);
+                        me->GetMap()->SetZoneOverrideLight(AREA_ICECROWN_CITADEL, LIGHT_DEFAULT, LIGHT_SOULSTORM, 10s);
+                        me->GetMap()->SetZoneWeather(AREA_ICECROWN_CITADEL, WEATHER_STATE_BLACKSNOW, 0.5f);
 
                         events.ScheduleEvent(EVENT_OUTRO_SOUL_BARRAGE, 5000, 0, PHASE_OUTRO);
                         return;
@@ -1048,8 +1050,8 @@ class boss_the_lich_king : public CreatureScript
                 //default:
                     if (spell->Id == SPELL_REMORSELESS_WINTER_1 || spell->Id == SPELL_REMORSELESS_WINTER_2)
                     {
-                        SendLightOverride(LIGHT_SNOWSTORM, 5000);
-                        SendWeather(WEATHER_STATE_LIGHT_SNOW);
+                        me->GetMap()->SetZoneOverrideLight(AREA_ICECROWN_CITADEL, LIGHT_DEFAULT, LIGHT_SNOWSTORM, 5s);
+                        me->GetMap()->SetZoneWeather(AREA_ICECROWN_CITADEL, WEATHER_STATE_LIGHT_SNOW, 0.5f);
                         summons.DespawnEntry(39137 /* Shadow Trap */);
                     }
                 //    break;
@@ -1079,7 +1081,7 @@ class boss_the_lich_king : public CreatureScript
                     case POINT_CENTER_1:
                         me->SetFacingTo(0.0f);
                         Talk(SAY_LK_REMORSELESS_WINTER);
-                        SendMusicToPlayers(MUSIC_SPECIAL);
+                        me->GetMap()->SetZoneMusic(AREA_ICECROWN_CITADEL, MUSIC_SPECIAL);
                         DoCast(me, SPELL_REMORSELESS_WINTER_1);
                         //me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         //events.DelayEvents(62500, EVENT_GROUP_BERSERK); // delay berserk timer, its not ticking during phase transitions
@@ -1096,7 +1098,7 @@ class boss_the_lich_king : public CreatureScript
                     case POINT_CENTER_2:
                         me->SetFacingTo(0.0f);
                         Talk(SAY_LK_REMORSELESS_WINTER);
-                        SendMusicToPlayers(MUSIC_SPECIAL);
+                        me->GetMap()->SetZoneMusic(AREA_ICECROWN_CITADEL, MUSIC_SPECIAL);
                         DoCast(me, SPELL_REMORSELESS_WINTER_2);
                         //me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                         me->RemoveAurasDueToSpell(SPELL_SUMMON_VALKYR_PERIODIC);
@@ -1199,7 +1201,7 @@ class boss_the_lich_king : public CreatureScript
                             break;
                         case EVENT_SUMMON_SHAMBLING_HORROR:
                             DoCast(me, SPELL_SUMMON_SHAMBLING_HORROR);
-                            SendMusicToPlayers(MUSIC_SPECIAL);
+                            me->GetMap()->SetZoneMusic(AREA_ICECROWN_CITADEL, MUSIC_SPECIAL);
                             events.ScheduleEvent(EVENT_SUMMON_SHAMBLING_HORROR, 60000, 0, PHASE_ONE);
                             break;
                         case EVENT_SUMMON_DRUDGE_GHOUL:
@@ -1270,7 +1272,7 @@ class boss_the_lich_king : public CreatureScript
                             me->ClearUnitState(UNIT_STATE_CASTING);  // clear state to ensure check in DoCastAOE passes
                             //me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                             DoCastAOE(SPELL_QUAKE);
-                            SendMusicToPlayers(MUSIC_SPECIAL);
+                            me->GetMap()->SetZoneMusic(AREA_ICECROWN_CITADEL, MUSIC_SPECIAL);
                             Talk(SAY_LK_QUAKE);
                             break;
                         case EVENT_QUAKE_2:
@@ -1278,11 +1280,11 @@ class boss_the_lich_king : public CreatureScript
                             me->ClearUnitState(UNIT_STATE_CASTING);  // clear state to ensure check in DoCastAOE passes
                             //me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                             DoCastAOE(SPELL_QUAKE);
-                            SendMusicToPlayers(MUSIC_SPECIAL);
+                            me->GetMap()->SetZoneMusic(AREA_ICECROWN_CITADEL, MUSIC_SPECIAL);
                             Talk(SAY_LK_QUAKE);
                             break;
                         case EVENT_SUMMON_VALKYR:
-                            SendMusicToPlayers(MUSIC_SPECIAL);
+                            me->GetMap()->SetZoneMusic(AREA_ICECROWN_CITADEL, MUSIC_SPECIAL);
                             Talk(SAY_LK_SUMMON_VALKYR);
                             DoCastAOE(SPELL_SUMMON_VALKYR);
                             events.ScheduleEvent(EVENT_SUMMON_VALKYR, urand(45000, 50000), 0, PHASE_TWO);
@@ -1296,7 +1298,7 @@ class boss_the_lich_king : public CreatureScript
                                 events.SetPhase(PHASE_THREE);
                             break;
                         case EVENT_VILE_SPIRITS:
-                            SendMusicToPlayers(MUSIC_SPECIAL);
+                            me->GetMap()->SetZoneMusic(AREA_ICECROWN_CITADEL, MUSIC_SPECIAL);
                             DoCastAOE(SPELL_VILE_SPIRITS);
                             events.ScheduleEvent(EVENT_VILE_SPIRITS, urand(35000, 40000), EVENT_GROUP_VILE_SPIRITS, PHASE_THREE);
                             break;
@@ -1369,7 +1371,7 @@ class boss_the_lich_king : public CreatureScript
                         case EVENT_OUTRO_RAISE_DEAD:
                             DoCastAOE(SPELL_RAISE_DEAD);
                             me->ClearUnitState(UNIT_STATE_CASTING);
-                            SendMusicToPlayers(MUSIC_FINAL);
+                            me->GetMap()->SetZoneMusic(AREA_ICECROWN_CITADEL, MUSIC_FINAL);
                             break;
                         case EVENT_OUTRO_TALK_5:
                             Talk(SAY_LK_OUTRO_5);
@@ -1434,31 +1436,6 @@ class boss_the_lich_king : public CreatureScript
                 summon->SetSpeed(MOVE_FLIGHT, 0.5f);
                 summon->AI()->DoAction(ACTION_START_ATTACK_2);
             }*/
-
-            void SendMusicToPlayers(uint32 musicId) const
-            {
-                WorldPacket data(SMSG_PLAY_MUSIC, 4);
-                data << uint32(musicId);
-                SendPacketToPlayers(&data);
-            }
-
-            void SendLightOverride(uint32 overrideId, uint32 fadeInTime) const
-            {
-                WorldPacket data(SMSG_OVERRIDE_LIGHT, 12);
-                data << uint32(overrideId); // Light.dbc entry (override)
-                data << uint32(2488);       // Light.dbc entry (map default)
-                data << uint32(fadeInTime);
-                SendPacketToPlayers(&data);
-            }
-
-            void SendWeather(WeatherState weather) const
-            {
-                WorldPacket data(SMSG_WEATHER, 9);
-                data << uint32(weather);
-                data << float(0.5f);
-                data << uint8(0);
-                SendPacketToPlayers(&data);
-            }
 
             // Send packet to all players in The Frozen Throne
             void SendPacketToPlayers(WorldPacket const* data) const
@@ -2671,9 +2648,9 @@ class npc_lich_king_spirit : public CreatureScript
                     me->SetSpeed(MOVE_RUN, 0.35f);
             }
 
-            void JustRespawned() override
+            void JustAppeared() override
             {
-                ScriptedAI::JustRespawned();
+                ScriptedAI::JustAppeared();
                 me->SetVisible(me->FindNearestPlayer(100.0f));
             }
 

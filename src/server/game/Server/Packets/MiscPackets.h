@@ -21,10 +21,134 @@
 #include "Packet.h"
 #include <array>
 
+enum WeatherState : uint32;
+
 namespace WorldPackets
 {
     namespace Misc
     {
+        class TriggerCinematic final : public ServerPacket
+        {
+        public:
+            TriggerCinematic() : ServerPacket(SMSG_TRIGGER_CINEMATIC, 4) { }
+
+            WorldPacket const* Write() override;
+
+            uint32 CinematicID = 0;
+        };        
+
+        class TriggerMovie final : public ServerPacket
+        {
+        public:
+            TriggerMovie() : ServerPacket(SMSG_TRIGGER_MOVIE, 4) { }
+
+            WorldPacket const* Write() override;
+
+            uint32 MovieID = 0;
+        };
+
+        class CompleteCinematic final : public ClientPacket
+        {
+        public:
+            CompleteCinematic(WorldPacket&& packet) : ClientPacket(CMSG_COMPLETE_CINEMATIC, std::move(packet)) { }
+
+            void Read() override { }
+        };
+        
+        class NextCinematicCamera final : public ClientPacket
+        {
+        public:
+            NextCinematicCamera(WorldPacket&& packet) : ClientPacket(CMSG_NEXT_CINEMATIC_CAMERA, std::move(packet)) { }
+
+            void Read() override { }
+        };
+
+        class CompleteMovie final : public ClientPacket
+        {
+        public:
+            CompleteMovie(WorldPacket&& packet) : ClientPacket(CMSG_COMPLETE_MOVIE, std::move(packet)) { }
+
+            void Read() override { }
+        };
+
+        class OpeningCinematic final : public ClientPacket
+        {
+        public:
+            OpeningCinematic(WorldPacket&& packet) : ClientPacket(CMSG_OPENING_CINEMATIC, std::move(packet)) { }
+
+            void Read() override { }
+        };
+
+        class StreamingMovies final : public ServerPacket
+        {
+        public:
+            StreamingMovies() : ServerPacket(SMSG_STREAMING_MOVIES) { }
+
+            WorldPacket const* Write() override;
+
+            std::vector<uint16> MovieIDs;
+        };
+
+        class UITime final : public ServerPacket
+        {
+        public:
+            UITime() : ServerPacket(SMSG_WORLD_STATE_UI_TIMER_UPDATE, 4) { }
+
+            WorldPacket const* Write() override;
+
+            uint32 Time = 0;
+        };
+
+        class TC_GAME_API Weather final : public ServerPacket
+        {
+        public:
+            Weather();
+            Weather(WeatherState weatherID, float intensity = 0.0f, bool abrupt = false);
+
+            WorldPacket const* Write() override;
+
+            bool Abrupt = false;
+            float Intensity = 0.0f;
+            WeatherState WeatherID = WeatherState(0);
+        };        
+
+        class TC_GAME_API PlayMusic final : public ServerPacket
+        {
+        public:
+            PlayMusic() : ServerPacket(SMSG_PLAY_MUSIC, 4) { }
+            PlayMusic(uint32 soundKitID) : ServerPacket(SMSG_PLAY_MUSIC, 4), SoundKitID(soundKitID) { }
+
+            WorldPacket const* Write() override;
+
+            uint32 SoundKitID = 0;
+        };
+
+        class PlayObjectSound final : public ServerPacket
+        {
+        public:
+            PlayObjectSound() : ServerPacket(SMSG_PLAY_OBJECT_SOUND, 8 + 8 + 4) { }
+            PlayObjectSound(ObjectGuid sourceObjectGuid, ObjectGuid targetObjectGuid, uint32 soundKitID) : ServerPacket(SMSG_PLAY_OBJECT_SOUND, 8 + 8 + 4),
+                SourceObjectGUID(sourceObjectGuid), TargetObjectGUID(targetObjectGuid), SoundKitID(soundKitID) { }
+
+            WorldPacket const* Write() override;
+
+            ObjectGuid SourceObjectGUID;
+            ObjectGuid TargetObjectGUID;
+            uint32 SoundKitID = 0;
+        };
+
+        class TC_GAME_API PlaySound final : public ServerPacket
+        {
+        public:
+            PlaySound() : ServerPacket(SMSG_PLAY_SOUND, 4 + 8) { }
+            PlaySound(ObjectGuid sourceObjectGuid, uint32 soundKitID) : ServerPacket(SMSG_PLAY_SOUND, 4 + 8), SourceObjectGUID(sourceObjectGuid), SoundKitID(soundKitID) { }
+
+            WorldPacket const* Write() override;
+
+            ObjectGuid SourceObjectGUID;
+            uint32 SoundKitID = 0;
+        };
+
         class StartMirrorTimer final : public ServerPacket
         {
         public:
@@ -53,6 +177,27 @@ namespace WorldPackets
             uint32 Timer = 0;
         };
 
+        class Dismount final : public ServerPacket
+        {
+        public:
+            Dismount() : ServerPacket(SMSG_DISMOUNT, 8) { }
+
+            WorldPacket const* Write() override;
+
+            ObjectGuid Guid;
+        };
+
+
+        class CorpseReclaimDelay : public ServerPacket
+        {
+        public:
+            CorpseReclaimDelay() : ServerPacket(SMSG_CORPSE_RECLAIM_DELAY, 4) { }
+
+            WorldPacket const* Write() override;
+
+            uint32 Remaining = 0;
+        };
+
         class FarSight final : public ClientPacket
         {
         public:
@@ -62,6 +207,20 @@ namespace WorldPackets
 
             bool Enable = false;
         };
+
+        class OverrideLight final : public ServerPacket
+        {
+        public:
+            OverrideLight() : ServerPacket(SMSG_OVERRIDE_LIGHT, 4 + 4 + 4) { }
+
+            WorldPacket const* Write() override;
+
+            int32 AreaLightID = 0;
+            int32 TransitionMilliseconds = 0;
+            int32 OverrideLightID = 0;
+        };
+
+
     }
 }
 

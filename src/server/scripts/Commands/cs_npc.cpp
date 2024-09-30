@@ -261,7 +261,7 @@ public:
             data.curhealth = 0;
             data.curmana = 0;
             data.currentwaypoint = 0;
-            data.displayid = cinfo->GetFirstValidModelId();
+            //data.displayid = cinfo->GetFirstValidModelId(); Not sure need this line here
             data.dynamicflags = 0;
             data.equipmentId = 0;
             data.mapId = trans->GetGOInfo()->moTransport.mapID;
@@ -755,7 +755,7 @@ public:
             if (target->GetUInt32Value(UNIT_FIELD_FLAGS) & unitFlags[i].Value)
                 handler->PSendSysMessage("%s (0x%X)", unitFlags[i].Name, unitFlags[i].Value);
 
-        handler->PSendSysMessage(LANG_NPCINFO_FLAGS2, target->GetUInt32Value(UNIT_FIELD_FLAGS2), target->GetUInt32Value(OBJECT_FIELD_DYNAMIC_FLAGS), target->GetFaction());
+        handler->PSendSysMessage(LANG_NPCINFO_FLAGS2, target->GetUInt32Value(UNIT_FIELD_FLAGS_2), target->GetUInt32Value(OBJECT_FIELD_DYNAMIC_FLAGS), target->GetFaction());
 
         handler->PSendSysMessage(LANG_COMMAND_RAWPAWNTIMES, defRespawnDelayStr.c_str(), defRespawnDelayMaxStr.c_str(),  curRespawnDelayStr.c_str());
         handler->PSendSysMessage(LANG_NPCINFO_LOOT,  cInfo->lootid, cInfo->pickpocketLootId, cInfo->SkinLootId);
@@ -1318,7 +1318,7 @@ public:
             return false;
         }
 
-        creature->MonsterSay(args, LANG_UNIVERSAL, NULL);
+        creature->Say(args, LANG_UNIVERSAL);
 
         // make some emotes
         char lastchar = args[strlen(args) - 1];
@@ -1347,7 +1347,7 @@ public:
             return false;
         }
 
-        creature->MonsterTextEmote(args, 0);
+        creature->TextEmote(args, 0);
 
         return true;
     }
@@ -1409,7 +1409,7 @@ public:
         if (handler->HasLowerSecurity(receiver, ObjectGuid::Empty))
             return false;
 
-        creature->MonsterWhisper(text, receiver);
+        creature->Whisper(text, LANG_UNIVERSAL, receiver);
         return true;
     }
 
@@ -1426,7 +1426,7 @@ public:
             return false;
         }
 
-        creature->MonsterYell(args, LANG_UNIVERSAL, NULL);
+        creature->Yell(args, LANG_UNIVERSAL);
 
         // make an emote
         creature->HandleEmoteCommand(EMOTE_ONESHOT_SHOUT);

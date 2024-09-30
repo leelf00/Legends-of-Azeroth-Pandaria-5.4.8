@@ -593,20 +593,11 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
 
         virtual void CleanupsBeforeDelete(bool finalCleanup = true);  // used in destructor or explicitly before mass creature delete to remove cross-references to already deleted units
 
-        virtual void SendMessageToSet(WorldPacket* data, bool self);
-        virtual void SendMessageToSetInRange(WorldPacket* data, float dist, bool self);
-        virtual void SendMessageToSet(WorldPacket* data, Player const* skipped_rcvr);
+        virtual void SendMessageToSet(WorldPacket const* data, bool self) const;
+        virtual void SendMessageToSetInRange(WorldPacket const* data, float dist, bool self) const;
+        virtual void SendMessageToSet(WorldPacket const* data, Player const* skipped_rcvr) const;
 
         virtual uint8 GetLevelForTarget(WorldObject const* /*target*/) const { return 1; }
-
-        void MonsterSay(const char* text, uint32 language, WorldObject const* target);
-        void MonsterYell(const char* text, uint32 language, WorldObject const* target);
-        void MonsterTextEmote(const char* text, WorldObject const* target, bool IsBossEmote = false);
-        void MonsterWhisper(const char* text, Player const* target, bool IsBossWhisper = false);
-        void MonsterSay(int32 textId, uint32 language, WorldObject const* target);
-        void MonsterYell(int32 textId, uint32 language, WorldObject const* target);
-        void MonsterTextEmote(int32 textId, WorldObject const* target, bool IsBossEmote = false);
-        void MonsterWhisper(int32 textId, Player const* target, bool IsBossWhisper = false);
 
         void PlayDistanceSound(uint32 sound_id, Player* target = NULL);
         void PlayDirectSound(uint32 sound_id, Player* target = NULL);
@@ -632,9 +623,6 @@ class TC_GAME_API WorldObject : public Object, public WorldLocation
 
         FlaggedValuesArray32<int32, uint32, ServerSideVisibilityType, TOTAL_SERVERSIDE_VISIBILITY_TYPES> m_serverSideVisibility;
         FlaggedValuesArray32<int32, uint32, ServerSideVisibilityType, TOTAL_SERVERSIDE_VISIBILITY_TYPES> m_serverSideVisibilityDetect;
-
-        // Low Level Packets
-        void SendPlaySound(uint32 Sound, bool OnlySelf);
 
         virtual void SetMap(Map* map);
         virtual void ResetMap();

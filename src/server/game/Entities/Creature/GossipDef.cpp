@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -34,7 +34,7 @@ GossipMenu::~GossipMenu()
     ClearMenu();
 }
 
-void GossipMenu::AddMenuItem(int32 menuItemId, uint8 icon, std::string const& message, uint32 sender, uint32 action, std::string const& boxMessage, uint32 boxMoney, bool coded /*= false*/)
+uint32 GossipMenu::AddMenuItem(int32 menuItemId, uint8 icon, std::string const& message, uint32 sender, uint32 action, std::string const& boxMessage, uint32 boxMoney, bool coded /*= false*/)
 {
     ASSERT(_menuItems.size() <= GOSSIP_MAX_MENU_ITEMS);
 
@@ -63,6 +63,7 @@ void GossipMenu::AddMenuItem(int32 menuItemId, uint8 icon, std::string const& me
     menuItem.OptionType      = action;
     menuItem.BoxMessage      = boxMessage;
     menuItem.BoxMoney        = boxMoney;
+    return menuItemId;
 }
 
 /**

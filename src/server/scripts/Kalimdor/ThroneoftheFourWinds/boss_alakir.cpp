@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -711,15 +711,13 @@ class boss_alakir : public CreatureScript
 
                 if (!players.isEmpty())
                 {
-                    WorldPacket data(SMSG_WEATHER, 4 + 4 + 1);
-                    data << uint32(weatherId);
-                    data << float(weatherGrade);
-                    data << uint8(0);
+                    WorldPackets::Misc::Weather weather(WeatherState(weatherId), weatherGrade);
+                    weather.Write();
 
                     for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
                         if (Player* player = itr->GetSource())
                             if (player->GetZoneId() == zoneId)
-                                player->SendDirectMessage(&data);
+                                player->SendDirectMessage(weather.GetRawPacket());
                 }
             }
 
@@ -729,15 +727,16 @@ class boss_alakir : public CreatureScript
 
                 if (!players.isEmpty())
                 {
-                    WorldPacket data(SMSG_OVERRIDE_LIGHT, 4 + 4 + 4);
-                    data << uint32(lightId);
-                    data << uint32(GetDefaultMapLight(instance->instance->GetId()));
-                    data << uint32(fadeInTime);
+                    WorldPackets::Misc::OverrideLight overrideLight;
+                    overrideLight.AreaLightID = lightId;
+                    overrideLight.OverrideLightID = GetDefaultMapLight(instance->instance->GetId());
+                    overrideLight.TransitionMilliseconds = static_cast<uint32>(fadeInTime);
+                    overrideLight.Write();
 
                     for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
                         if (Player* player = itr->GetSource())
                             if (player->GetZoneId() == zoneId)
-                                player->SendDirectMessage(&data);
+                                player->SendDirectMessage(overrideLight.GetRawPacket());
                 }
             }
         };

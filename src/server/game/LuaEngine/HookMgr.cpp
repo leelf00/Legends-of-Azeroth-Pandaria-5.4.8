@@ -1539,9 +1539,9 @@ struct HookMgr::ElunaCreatureAI : ScriptedAI
     }
 
     // Called when creature is spawned or respawned (for reseting variables)
-    void JustRespawned() override
+    void JustAppeared() override
     {
-        ScriptedAI::JustRespawned();
+        ScriptedAI::JustAppeared();
         int bind = sEluna->CreatureEventBindings->GetBind(me->GetEntry(), CREATURE_EVENT_ON_SPAWN);
         if (!bind)
             return;

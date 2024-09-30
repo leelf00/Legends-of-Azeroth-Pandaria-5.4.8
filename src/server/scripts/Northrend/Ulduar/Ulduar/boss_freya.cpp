@@ -1739,7 +1739,7 @@ class npc_sun_beam : public CreatureScript
             {
                 me->SetReactState(REACT_PASSIVE);
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
-                me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
+                me->SetDisplayFromModel(1);
                 me->DespawnOrUnsummon(12*IN_MILLISECONDS);
                 DoCast(me, SPELL_FREYA_UNSTABLE_ENERGY_VISUAL, true); // visual
             }
@@ -1879,7 +1879,7 @@ class npc_nature_bomb : public CreatureScript
                 _bombTimer = urand(8*IN_MILLISECONDS, 10*IN_MILLISECONDS);
                 DoCast(SPELL_OBJECT_BOMB);
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
-                me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
+                me->SetDisplayFromModel(1);
                 SetCombatMovement(false);
             }
 
@@ -1926,7 +1926,7 @@ class npc_unstable_sun_beam : public CreatureScript
                 _despawnTimer = urand(7000, 12000);
                 DoCast(me, SPELL_PHOTOSYNTHESIS);
                 DoCast(me, SPELL_UNSTABLE_SUN_BEAM);
-                me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
+                me->SetDisplayFromModel(1);
                 SetCombatMovement(false);
             }
             

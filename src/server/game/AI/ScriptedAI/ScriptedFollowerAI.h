@@ -49,7 +49,7 @@ class FollowerAI : public ScriptedAI
 
         void JustDied(Unit*);
 
-        void JustRespawned();
+        void JustAppeared();
 
         void UpdateAI(uint32);                        //the "internal" update, calls UpdateFollowerAI()
         virtual void UpdateFollowerAI(uint32);        //used when it's needed to add code in update (abilities, scripted events, etc)

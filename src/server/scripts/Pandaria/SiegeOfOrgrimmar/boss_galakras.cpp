@@ -1716,7 +1716,7 @@ struct npc_galakras_dragonmaw_war_banner : public ScriptedAI
     void Reset() override
     {
         me->ApplySpellImmune(0, IMMUNITY_EFFECT, SPELL_EFFECT_KNOCK_BACK, true);
-        me->SetDisplayId(me->GetCreatureTemplate()->Modelid1);
+        me->SetDisplayFromModel(0);
         DoCast(me, SPELL_WAR_BANNER_AT);
     }
     void EnterEvadeMode() override { }

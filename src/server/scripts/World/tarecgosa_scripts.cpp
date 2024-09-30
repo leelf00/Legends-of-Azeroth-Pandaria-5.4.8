@@ -400,9 +400,9 @@ class npc_hallegosa : public CreatureScript
                 me->setActive(true);
             }
 
-            void JustRespawned() override
+            void JustAppeared() override
             {
-                ScriptedAI::JustRespawned();
+                ScriptedAI::JustAppeared();
                 me->RemoveAllAuras();
                 me->SetCanFly(false);
                 curPoint = 0;

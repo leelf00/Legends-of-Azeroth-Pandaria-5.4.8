@@ -1633,14 +1633,14 @@ class spell_maddening_shout : public SpellScriptLoader
             void OnApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
             {
                 if (Player* owner = GetOwner()->ToPlayer())
-                    owner->SetByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_UNK1);
+                    owner->SetByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_UNK1);
             }
 
             void OnRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
             {
                 if (Unit* owner = GetOwner()->ToPlayer())
                 {
-                    owner->RemoveByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_UNK1);
+                    owner->RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_UNK1);
 
                     // Stop attack only if our target has normal faction
                     if (Unit* target = ObjectAccessor::GetUnit(*owner, owner->GetTarget()))

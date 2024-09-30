@@ -1888,7 +1888,7 @@ void GameObject::Use(Unit* user)
     }
 
     if (spellCaster)
-        spellCaster->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_USE);
+        spellCaster->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_LOOTING);
 
     if (spellCaster)
         spellCaster->CastSpell(user, spellInfo, triggered);
@@ -1933,8 +1933,8 @@ void GameObject::CastSpell(Unit* target, uint32 spellId)
         trigger->SetOwnerGUID(owner->GetGUID());
         if (owner->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE))
             trigger->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);
-        if (owner->HasByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_FFA_PVP))
-            trigger->SetByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_FFA_PVP);
+        if (owner->HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP))
+            trigger->SetByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
         trigger->CastSpell(target ? target : trigger, spellInfo, true, 0, 0, owner->GetGUID());
     }
     else
@@ -2462,7 +2462,7 @@ void GameObject::SetLootState(LootState state, Unit* unit)
 
 void GameObject::SetGoState(GOState state)
 {
-    SetByteValue(GAMEOBJECT_FIELD_PERCENT_HEALTH, 0, state);
+    SetByteValue(GAMEOBJECT_BYTES_1, 0, state);
     sScriptMgr->OnGameObjectStateChanged(this, state);
     if (m_model)
     {

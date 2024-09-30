@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -1497,6 +1497,11 @@ class npc_thrall_benedictus : public CreatureScript
         }
 };
 
+enum Texts
+{
+    EMOTE_DARK_HAZE                     = 0,
+};
+
 // Frozen Servitors stalker 55389, 54560, 55384, 55385, 54598
 // Asira stalkers 53488, 3570621, 3570622
 // Faceless stalkers 54628, 3570623
@@ -1551,7 +1556,7 @@ class npc_frozen_servitor_stalker : public CreatureScript
                             case NPC_DARK_HAZE_STALKER:
                                 if (me->HasAura(SPELL_GROW_VISUAL_COSMETIC))
                                     me->RemoveAura(SPELL_GROW_VISUAL_COSMETIC);
-                                me->MonsterTextEmote("Spawn of the Old Gods materialize nearby!", 0, true);
+                                Talk(EMOTE_DARK_HAZE);
                                 me->SummonCreature(NPC_FACELESS_BORER, me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), me->GetOrientation(), TEMPSUMMON_MANUAL_DESPAWN);
                                 me->SummonCreature(NPC_FACELESS_SHADOW_WEAVER, me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), me->GetOrientation(), TEMPSUMMON_MANUAL_DESPAWN);
                                 me->SummonCreature(NPC_FACELESS_BRUTE, me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), me->GetOrientation(), TEMPSUMMON_MANUAL_DESPAWN);
@@ -1952,7 +1957,7 @@ class npc_ice_wall_exit_stalker : public CreatureScript
 
             void Reset() override 
             {
-                me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
+                me->SetDisplayFromModel(1);
                 me->SetReactState(REACT_PASSIVE);
             }
 

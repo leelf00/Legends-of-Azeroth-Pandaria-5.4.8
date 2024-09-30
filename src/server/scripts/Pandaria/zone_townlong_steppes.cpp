@@ -997,7 +997,7 @@ class npc_longying_ranger : public CreatureScript
         {
             npc_longying_ranger_AI(Creature* creature) : ScriptedAI(creature) { }
 
-            void JustRespawned() override
+            void JustAppeared() override
             {
                 if (GameObject* cage = GetClosestGameObjectWithEntry(me, GO_DRYWOOD_CAGE, 10.f))
                     cage->SetGoState(GO_STATE_READY);

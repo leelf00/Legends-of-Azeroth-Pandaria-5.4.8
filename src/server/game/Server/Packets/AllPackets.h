@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -18,9 +18,12 @@
 #ifndef AllPackets_h__
 #define AllPackets_h__
 
+#include "AuctionHousePackets.h"
+#include "AuthenticationPackets.h"
 #include "CharacterPackets.h"
 #include "MiscPackets.h"
 #include "QueryPackets.h"
 #include "QuestPackets.h"
+#include "SpellPackets.h"
 
 #endif // AllPackets_h__

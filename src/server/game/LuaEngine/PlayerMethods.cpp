@@ -1163,7 +1163,7 @@ namespace LuaPlayer
         uint32 lang = luaL_checkunsigned(L, 2);
         ObjectGuid guid(uint64(sEluna->CHECK_ULONG(L, 3)));
 
-        player->Whisper(text, lang, guid);
+        player->Whisper(text, Language(lang), player, guid);
         return 0;
     }
 
@@ -1180,7 +1180,7 @@ namespace LuaPlayer
         std::string text = luaL_checkstring(L, 1);
         uint32 lang = luaL_checkunsigned(L, 2);
 
-        player->Yell(text, lang);
+        player->Yell(text, Language(lang));
         return 0;
     }
 
@@ -1189,7 +1189,7 @@ namespace LuaPlayer
         std::string text = luaL_checkstring(L, 1);
         uint32 lang = luaL_checkunsigned(L, 2);
 
-        player->Say(text, lang);
+        player->Say(text, Language(lang));
         return 0;
     }
 
@@ -1562,7 +1562,7 @@ namespace LuaPlayer
             return 0;
         }
 
-        player->SetByteValue(UNIT_FIELD_SEX, 2, gender);
+        player->SetByteValue(UNIT_FIELD_BYTES_0, 2, gender);
         /*player->SetByteValue(PLAYER_BYTES_3, 0, gender);*/
         player->InitDisplayIds();
         return 0;

@@ -845,7 +845,7 @@ struct npc_fall_catcher_jikun : public ScriptedAI
 
     void IsSummonedBy(Unit* summoner) override
     {
-        me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
+        me->SetDisplayFromModel(1);
         me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
         summonerGUID = summoner->GetGUID();
         x = 0.0f; y = 0.0f;
@@ -891,7 +891,7 @@ struct npc_jikun_feed : public ScriptedAI
     void IsSummonedBy(Unit* summoner) override
     {
         slimedGUIDs.clear();
-        me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
+        me->SetDisplayFromModel(1);
 
         if (Creature* jiKun = ObjectAccessor::GetCreature(*me, me->GetInstanceScript() ? me->GetInstanceScript()->GetGuidData(DATA_JI_KUN) : ObjectGuid::Empty))
             jiKun->AI()->JustSummoned(me);

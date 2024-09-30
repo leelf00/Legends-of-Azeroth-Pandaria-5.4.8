@@ -101,7 +101,7 @@ class boss_bronjahm : public CreatureScript
             void JustEngagedWith(Unit* /*who*/) override
             {
                 Talk(SAY_AGGRO);
-                me->PlayMusic(MUSIC_EVENT_BRONJAHM);
+                me->PlayDirectMusic(MUSIC_EVENT_BRONJAHM);
                 me->RemoveAurasDueToSpell(SPELL_SOULSTORM_CHANNEL);
 
                 instance->SetBossState(DATA_BRONJAHM, IN_PROGRESS);

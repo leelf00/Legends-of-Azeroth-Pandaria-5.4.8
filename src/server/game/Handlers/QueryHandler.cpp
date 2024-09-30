@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -337,8 +337,15 @@ void WorldSession::HandleCreatureQueryOpcode(WorldPacket& recvData)
         data.FlushBits();
 
         data << uint32(creatureInfo->KillCredit[0]);                  // New in 3.1, kill credit
-        data << uint32(creatureInfo->Modelid4);                       // Modelid4
-        data << uint32(creatureInfo->Modelid2);                       // Modelid2
+
+        if (CreatureModel const* model = creatureInfo->GetModelByIdx(3))
+            data << uint32(model->CreatureDisplayID);                       // Modelid4
+        else
+            data << uint32(0);
+        if (CreatureModel const* model = creatureInfo->GetModelByIdx(1))
+            data << uint32(model->CreatureDisplayID);                       // Modelid2
+        else
+            data << uint32(0);
         data << uint32(creatureInfo->expansion);                      // Expansion Required
         data << uint32(creatureInfo->type);                           // CreatureType.dbc
         data << float(creatureInfo->ModHealth);                       // Hp modifier
@@ -351,8 +358,14 @@ void WorldSession::HandleCreatureQueryOpcode(WorldPacket& recvData)
         if (Title != "")
             data << Title;                                            // Subname
 
-        data << uint32(creatureInfo->Modelid1);                       // Modelid1
-        data << uint32(creatureInfo->Modelid3);                       // Modelid3
+        if (CreatureModel const* model = creatureInfo->GetModelByIdx(0))
+            data << uint32(model->CreatureDisplayID);                       // Modelid1
+        else
+            data << uint32(0);
+        if (CreatureModel const* model = creatureInfo->GetModelByIdx(2))
+            data << uint32(model->CreatureDisplayID);                       // Modelid3
+        else
+            data << uint32(0);
 
         if (creatureInfo->IconName != "")
             data << creatureInfo->IconName;                           // "Directions" for guard, string for Icons 2.3.0

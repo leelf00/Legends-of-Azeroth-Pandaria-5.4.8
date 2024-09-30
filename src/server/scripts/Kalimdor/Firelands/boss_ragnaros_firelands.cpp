@@ -882,7 +882,7 @@ class boss_ragnaros_firelands : public CreatureScript
                             break;
                         case EVENT_EVENT_3:
                             
-                            //me->SetFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_INSTANTLY_APPEAR_MODEL);
+                            //me->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_INSTANTLY_APPEAR_MODEL);
                             if (Creature* pMalfurion = me->FindNearestCreature(NPC_MALFURION_STORMRAGE, 100.0f))
                                 pMalfurion->AI()->Talk(SAY_MALFURION_EVENT_1);
 
@@ -893,7 +893,7 @@ class boss_ragnaros_firelands : public CreatureScript
                                 go->SetDestructibleState(GO_DESTRUCTIBLE_DESTROYED);
                             me->SetDisableGravity(false);
                             me->SetCanFly(false);
-                            me->SetUInt32Value(UNIT_FIELD_ANIM_TIER, 0); // not sure (UNIT_FIELD_BYTES_1)
+                            me->SetUInt32Value(UNIT_FIELD_BYTES_1, 0); // not sure (UNIT_FIELD_BYTES_1)
                             me->RemoveUnitMovementFlag(MOVEMENTFLAG_SWIMMING);
                             Talk(SAY_HEROIC_3);
                             me->SetReactState(REACT_AGGRESSIVE);

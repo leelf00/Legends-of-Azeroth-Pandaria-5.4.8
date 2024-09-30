@@ -62,7 +62,7 @@ struct boss_vanndar : public ScriptedAI
         _events.ScheduleEvent(EVENT_VANNDAR_RESET, 5s);
     }
 
-    void JustRespawned() override
+    void JustAppeared() override
     {
         Reset();
         Talk(YELL_RESPAWN);

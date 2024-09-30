@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -563,7 +563,7 @@ class npc_garalon_leg : public CreatureScript
             void Reset() override
             {
                 me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC | UNIT_FLAG_IMMUNE_TO_NPC | UNIT_FLAG_NOT_SELECTABLE);
-                me->SetDisplayId(me->GetCreatureTemplate()->Modelid4);
+                me->SetDisplayFromModel(3);
             }
 
             void DamageTaken(Unit* attacker, uint32& damage) override

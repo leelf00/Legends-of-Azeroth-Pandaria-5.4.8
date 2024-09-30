@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -17,7 +17,7 @@
 
 #include "Map.h"
 #include "Battleground.h"
-#include "MMapFactory.h"
+#include "BattlePetSpawnMgr.h"
 #include "CellImpl.h"
 #include "DisableMgr.h"
 #include "DynamicTree.h"
@@ -29,6 +29,8 @@
 #include "LFGMgr.h"
 #include "MapInstanced.h"
 #include "MapManager.h"
+#include "MiscPackets.h"
+#include "MMapFactory.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
 #include "Pet.h"
@@ -38,7 +40,8 @@
 #include "Vehicle.h"
 #include "VMapFactory.h"
 #include "VMapManager2.h"
-#include "BattlePetSpawnMgr.h"
+#include "Weather.h"
+#include "WeatherMgr.h"
 #include "G3D/Plane.h"
 
 u_map_magic MapMagic        = { {'M','A','P','S'} };
@@ -55,6 +58,9 @@ static uint16 const holetab_v[4] = { 0x000F, 0x00F0, 0x0F00, 0xF000 };
 #define MAX_CREATURE_ATTACK_RADIUS  (45.0f * sWorld->getRate(RATE_CREATURE_AGGRO))
 
 GridState* si_GridStates[MAX_GRID_STATE];
+
+ZoneDynamicInfo::ZoneDynamicInfo() : MusicId(0), DefaultWeather(nullptr), WeatherId(WEATHER_STATE_FINE),
+Intensity(0.0f) { }
 
 Map::~Map()
 {
@@ -508,7 +514,6 @@ bool Map::AddPlayerToMap(Player* player)
     SendInitSelf(player);
 
     SendInitTransports(player);
-    SendZoneDynamicInfo(player);
 
     player->m_clientGUIDs.clear();
 
@@ -753,6 +758,16 @@ void Map::Update(const uint32 t_diff)
         i_scriptLock = true;
         ScriptsProcess();
         i_scriptLock = false;
+    }
+
+    _weatherUpdateTimer.Update(t_diff);
+    if (_weatherUpdateTimer.Passed())
+    {
+        for (auto&& zoneInfo : _zoneDynamicInfo)
+            if (zoneInfo.second.DefaultWeather && !zoneInfo.second.DefaultWeather->Update(_weatherUpdateTimer.GetInterval()))
+                zoneInfo.second.DefaultWeather.reset();
+
+        _weatherUpdateTimer.Reset();
     }
 
     MoveAllCreaturesInMoveList();
@@ -3183,6 +3198,27 @@ void Map::SendToPlayers(WorldPacket const* data) const
         itr->GetSource()->GetSession()->SendPacket(data);
 }
 
+/// Send a packet to all players (or players selected team) in the zone (except self if mentioned)
+bool Map::SendZoneMessage(uint32 zone, WorldPacket const* packet, WorldSession const* self, uint32 team) const
+{
+    bool foundPlayerToSend = false;
+
+    for (MapReference const& ref : GetPlayers())
+    {
+        Player* player = ref.GetSource();
+        if (player->IsInWorld() &&
+            player->GetZoneId() == zone &&
+            player->GetSession() != self &&
+            (team == 0 || player->GetTeam() == team))
+        {
+            player->SendDirectMessage(packet);
+            foundPlayerToSend = true;
+        }
+    }
+
+    return foundPlayerToSend;
+}
+
 bool Map::ActiveObjectsNearGrid(NGridType const& ngrid) const
 {
     CellCoord cell_min(ngrid.getX() * MAX_NUMBER_OF_CELLS, ngrid.getY() * MAX_NUMBER_OF_CELLS);
@@ -4213,37 +4249,24 @@ void Map::RemoveOldCorpses()
     }
 }
 
-void Map::SendZoneDynamicInfo(Player* player)
+void Map::SendZoneDynamicInfo(uint32 zoneId, Player* player) const
 {
-    uint32 zoneId = GetZoneId(player->GetPhaseMask(), player->GetPositionX(), player->GetPositionY(), player->GetPositionZ());
-    ZoneDynamicInfoMap::const_iterator itr = _zoneDynamicInfo.find(zoneId);
-
+    auto itr = _zoneDynamicInfo.find(zoneId);
     if (itr == _zoneDynamicInfo.end())
         return;
 
     if (uint32 music = itr->second.MusicId)
-    {
-        WorldPacket data(SMSG_PLAY_MUSIC, 4);
-        data << uint32(music);
-        player->SendDirectMessage(&data);
-    }
+        player->SendDirectMessage(WorldPackets::Misc::PlayMusic(music).Write());
 
-    if (uint32 weather = itr->second.WeatherId)
-    {
-        WorldPacket data(SMSG_WEATHER, 4 + 4 + 1);
-        data << uint32(weather);
-        data << float(itr->second.WeatherGrade);
-        data << uint8(0);
-        player->SendDirectMessage(&data);
-    }
+    SendZoneWeather(itr->second, player);
 
-    if (uint32 overrideLight = itr->second.OverrideLightId)
+    for (ZoneDynamicInfo::LightOverride const& lightOverride : itr->second.LightOverrides)
     {
-        WorldPacket data(SMSG_OVERRIDE_LIGHT, 4 + 4 + 1);
-        data << uint32(_defaultLight);
-        data << uint32(overrideLight);
-        data << uint32(itr->second.LightFadeInTime);
-        player->SendDirectMessage(&data);
+        WorldPackets::Misc::OverrideLight overrideLight;
+        overrideLight.AreaLightID = lightOverride.AreaLightId;
+        overrideLight.OverrideLightID = lightOverride.OverrideLightId;
+        overrideLight.TransitionMilliseconds = lightOverride.TransitionMilliseconds;
+        player->SendDirectMessage(overrideLight.Write());
     }
 }
 
@@ -4258,60 +4281,100 @@ void Map::SetZoneMusic(uint32 zoneId, uint32 musicId)
 
     if (!players.isEmpty())
     {
-        WorldPacket data(SMSG_PLAY_MUSIC, 4);
-        data << uint32(musicId);
+        WorldPackets::Misc::PlayMusic playMusic(musicId);
+        playMusic.Write();
 
         for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
             if (Player* player = itr->GetSource())
                 if (player->GetZoneId() == zoneId)
-                    player->SendDirectMessage(&data);
+                    player->SendDirectMessage(playMusic.GetRawPacket());
     }
 }
 
-void Map::SetZoneWeather(uint32 zoneId, uint32 weatherId, float weatherGrade)
+void Map::SendZoneWeather(uint32 zoneId, Player* player) const
 {
-    if (_zoneDynamicInfo.find(zoneId) == _zoneDynamicInfo.end())
-        _zoneDynamicInfo.insert(ZoneDynamicInfoMap::value_type(zoneId, ZoneDynamicInfo()));
+    if (!player->HasAuraType(SPELL_AURA_FORCE_WEATHER))
+    {
+        auto itr = _zoneDynamicInfo.find(zoneId);
+        if (itr == _zoneDynamicInfo.end())
+            return;
 
+        SendZoneWeather(itr->second, player);
+    }
+}
+
+void Map::SendZoneWeather(ZoneDynamicInfo const& zoneDynamicInfo, Player* player) const
+{
+    if (WeatherState weatherId = zoneDynamicInfo.WeatherId)
+    {
+        WorldPackets::Misc::Weather weather(weatherId, zoneDynamicInfo.Intensity);
+        player->SendDirectMessage(weather.Write());
+    }
+    else if (zoneDynamicInfo.DefaultWeather)
+    {
+        zoneDynamicInfo.DefaultWeather->SendWeatherUpdateToPlayer(player);
+    }
+    else
+        Weather::SendFineWeatherUpdateToPlayer(player);
+}
+
+Weather* Map::GetOrGenerateZoneDefaultWeather(uint32 zoneId)
+{
+    WeatherData const* weatherData = WeatherMgr::GetWeatherData(zoneId);
+    if (!weatherData)
+        return nullptr;
+
+    ZoneDynamicInfo& info = _zoneDynamicInfo[zoneId];
+    if (!info.DefaultWeather)
+    {
+        info.DefaultWeather = std::make_unique<Weather>(this, zoneId, weatherData);
+        info.DefaultWeather->ReGenerate();
+        info.DefaultWeather->UpdateWeather();
+    }
+
+    return info.DefaultWeather.get();
+}
+
+void Map::SetZoneWeather(uint32 zoneId, WeatherState weatherId, float intensity)
+{
     ZoneDynamicInfo& info = _zoneDynamicInfo[zoneId];
     info.WeatherId = weatherId;
-    info.WeatherGrade = weatherGrade;
-    Map::PlayerList const& players = GetPlayers();
+    info.Intensity = intensity;
 
-    if (!players.isEmpty())
-    {
-        WorldPacket data(SMSG_WEATHER, 4 + 4 + 1);
-        data << uint32(weatherId);
-        data << float(weatherGrade);
-        data << uint8(0);
-
-        for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
-            if (Player* player = itr->GetSource())
-                if (player->GetZoneId() == zoneId)
-                    player->SendDirectMessage(&data);
-    }
+    SendZoneMessage(zoneId, WorldPackets::Misc::Weather(weatherId, intensity).Write());
 }
 
-void Map::SetZoneOverrideLight(uint32 zoneId, uint32 lightId, uint32 fadeInTime)
+void Map::SetZoneOverrideLight(uint32 zoneId, uint32 areaLightId, uint32 overrideLightId, Milliseconds transitionTime)
 {
-    if (_zoneDynamicInfo.find(zoneId) == _zoneDynamicInfo.end())
-        _zoneDynamicInfo.insert(ZoneDynamicInfoMap::value_type(zoneId, ZoneDynamicInfo()));
-
     ZoneDynamicInfo& info = _zoneDynamicInfo[zoneId];
-    info.OverrideLightId = lightId;
-    info.LightFadeInTime = fadeInTime;
-    Map::PlayerList const& players = GetPlayers();
+    // client can support only one override for each light (zone independent)
+    info.LightOverrides.erase(std::remove_if(info.LightOverrides.begin(), info.LightOverrides.end(), [areaLightId](ZoneDynamicInfo::LightOverride const& lightOverride)
+    {
+        return lightOverride.AreaLightId == areaLightId;
+    }), info.LightOverrides.end());
 
+    // set new override (if any)
+    if (overrideLightId)
+    {
+        ZoneDynamicInfo::LightOverride& lightOverride = info.LightOverrides.emplace_back();
+        lightOverride.AreaLightId = areaLightId;
+        lightOverride.OverrideLightId = overrideLightId;
+        lightOverride.TransitionMilliseconds = static_cast<uint32>(transitionTime.count());
+    }
+
+    Map::PlayerList const& players = GetPlayers();
     if (!players.isEmpty())
     {
-        WorldPacket data(SMSG_OVERRIDE_LIGHT, 4 + 4 + 1);
-        data << uint32(_defaultLight);
-        data << uint32(lightId);
-        data << uint32(fadeInTime);
+        WorldPackets::Misc::OverrideLight overrideLight;
+        overrideLight.AreaLightID = areaLightId;
+        overrideLight.OverrideLightID = overrideLightId;
+        overrideLight.TransitionMilliseconds = static_cast<uint32>(transitionTime.count());
+        overrideLight.Write();
 
         for (Map::PlayerList::const_iterator itr = players.begin(); itr != players.end(); ++itr)
             if (Player* player = itr->GetSource())
                 if (player->GetZoneId() == zoneId)
-                    player->SendDirectMessage(&data);
+                    player->SendDirectMessage(overrideLight.GetRawPacket());
     }
 }
+

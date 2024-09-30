@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -25,8 +25,6 @@
 #include "Spell.h"
 #include "DB2Stores.h"
 
-//#include "SmartScript.h"
-//#include "SmartAI.h"
 typedef uint32 SAIBool;
 
 struct WayPoint
@@ -536,8 +534,8 @@ enum SMART_ACTION
     SMART_ACTION_CALL_RANDOM_TIMED_ACTIONLIST       = 87,     // script9 ids 1-9
     SMART_ACTION_CALL_RANDOM_RANGE_TIMED_ACTIONLIST = 88,     // script9 id min, max
     SMART_ACTION_RANDOM_MOVE                        = 89,     // maxDist
-    SMART_ACTION_SET_UNIT_FIELD_ANIM_TIER           = 90,     // bytes, target
-    SMART_ACTION_REMOVE_UNIT_FIELD_ANIM_TIER        = 91,     // bytes, target
+    SMART_ACTION_SET_UNIT_FIELD_BYTES_1           = 90,     // bytes, target
+    SMART_ACTION_REMOVE_UNIT_FIELD_BYTES_1        = 91,     // bytes, target
     SMART_ACTION_INTERRUPT_SPELL                    = 92,
     SMART_ACTION_SEND_GO_CUSTOM_ANIM                = 93,     // anim id
     SMART_ACTION_SET_DYNAMIC_FLAG                   = 94,     // Flags
@@ -1072,8 +1070,9 @@ struct SmartAction
 
         struct
         {
-            std::array<uint32, SMART_ACTION_PARAM_COUNT - 1> sounds;
+            std::array<uint32, SMART_ACTION_PARAM_COUNT - 2> sounds;
             uint32 onlySelf;
+            uint32 distance;
         } randomSound;
 
         struct

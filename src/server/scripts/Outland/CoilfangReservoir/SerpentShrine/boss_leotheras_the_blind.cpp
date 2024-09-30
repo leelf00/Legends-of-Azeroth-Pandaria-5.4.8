@@ -718,7 +718,7 @@ public:
                 instance->SetData64(DATA_LEOTHERAS_EVENT_STARTER, who->GetGUID());
         }
 
-        void JustRespawned() override
+        void JustAppeared() override
         {
             AddedBanish = false;
             Reset();

@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -539,7 +539,7 @@ class npc_flash_freeze : public CreatureScript
             npc_flash_freezeAI(Creature* creature) : ScriptedAI(creature), instance(me->GetInstanceScript())
             {
                 me->SetReactState(REACT_PASSIVE);
-                me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
+                me->SetDisplayFromModel(1);
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED | UNIT_FLAG_PACIFIED);
                 SetCombatMovement(false);
                 targetGUID = ObjectGuid::Empty;
@@ -599,7 +599,7 @@ class npc_ice_block : public CreatureScript
             npc_ice_blockAI(Creature* creature) : ScriptedAI(creature), instance(me->GetInstanceScript())
             {
                 me->SetReactState(REACT_PASSIVE);
-                me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
+                me->SetDisplayFromModel(1);
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_STUNNED | UNIT_FLAG_PACIFIED);
                 SetCombatMovement(false);
                 targetGUID = ObjectGuid::Empty;
@@ -683,7 +683,7 @@ class npc_icicle : public CreatureScript
         {
             npc_icicleAI(Creature* creature) : ScriptedAI(creature)
             {
-                me->SetDisplayId(me->GetCreatureTemplate()->Modelid1);
+                me->SetDisplayFromModel(0);
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_PACIFIED | UNIT_FLAG_NOT_SELECTABLE);
                 me->SetReactState(REACT_PASSIVE);
                 SetCombatMovement(false);
@@ -733,7 +733,7 @@ class npc_snowpacked_icicle : public CreatureScript
         {
             npc_snowpacked_icicleAI(Creature* creature) : ScriptedAI(creature)
             {
-                me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
+                me->SetDisplayFromModel(1);
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_PACIFIED);
                 me->SetReactState(REACT_PASSIVE);
                 SetCombatMovement(false);
@@ -1068,7 +1068,7 @@ class npc_toasty_fire : public CreatureScript
         {
             npc_toasty_fireAI(Creature* creature) : ScriptedAI(creature)
             {
-                me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
+                me->SetDisplayFromModel(1);
             }
 
             void Reset() override

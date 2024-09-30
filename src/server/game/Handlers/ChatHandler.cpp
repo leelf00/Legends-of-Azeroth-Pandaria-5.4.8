@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -354,9 +354,11 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
     switch (type)
     {
         case CHAT_MSG_SAY:
-        case CHAT_MSG_EMOTE:
-        case CHAT_MSG_YELL:
         {
+            // Prevent cheating
+            if (!sender->IsAlive())
+                return;
+
             if (sender->GetLevel() < sWorld->getIntConfig(CONFIG_CHAT_SAY_LEVEL_REQ))
             {
                 SendNotification(GetTrinityString(LANG_SAY_REQ), sWorld->getIntConfig(CONFIG_CHAT_SAY_LEVEL_REQ));
@@ -366,14 +368,45 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
             if (!sHookMgr->OnChat(sender, type, lang, msg))
                 return;
 #endif
+            sender->Say(msg, Language(lang));
+            break;
+        }            
+        case CHAT_MSG_EMOTE:
+        {
+            // Prevent cheating
+            if (!sender->IsAlive())
+                return;
 
-            if (type == CHAT_MSG_SAY)
-                sender->Say(msg, lang);
-            else if (type == CHAT_MSG_EMOTE)
-                sender->TextEmote(msg);
-            else if (type == CHAT_MSG_YELL)
-                sender->Yell(msg, lang);
-        } break;
+            if (sender->GetLevel() < sWorld->getIntConfig(CONFIG_CHAT_EMOTE_LEVEL_REQ))
+            {
+                SendNotification(GetTrinityString(LANG_SAY_REQ), sWorld->getIntConfig(CONFIG_CHAT_EMOTE_LEVEL_REQ));
+                return;
+            }
+#ifdef ELUNA
+            if (!sHookMgr->OnChat(sender, type, lang, msg))
+                return;
+#endif
+            sender->TextEmote(msg);
+            break;
+        }            
+        case CHAT_MSG_YELL:
+        {
+            // Prevent cheating
+            if (!sender->IsAlive())
+                return;
+
+            if (sender->GetLevel() < sWorld->getIntConfig(CONFIG_CHAT_YELL_LEVEL_REQ))
+            {
+                SendNotification(GetTrinityString(LANG_SAY_REQ), sWorld->getIntConfig(CONFIG_CHAT_YELL_LEVEL_REQ));
+                return;
+            }
+#ifdef ELUNA
+            if (!sHookMgr->OnChat(sender, type, lang, msg))
+                return;
+#endif
+            sender->Yell(msg, Language(lang));
+            break;
+        }
         case CHAT_MSG_WHISPER:
         {
             if (!normalizePlayerName(to))
@@ -413,7 +446,7 @@ void WorldSession::HandleMessagechatOpcode(WorldPacket& recvData)
                 (GetSecurity() > SEC_PLAYER && !sender->isAcceptWhispers() && !sender->IsInWhisperWhiteList(receiver->GetGUID())))
                 sender->AddWhisperWhiteList(receiver->GetGUID());
 
-            GetPlayer()->Whisper(msg, lang, receiver->GetGUID());
+            GetPlayer()->Whisper(msg, Language(lang), receiver);
         } break;
         case CHAT_MSG_PARTY:
         case CHAT_MSG_PARTY_LEADER:

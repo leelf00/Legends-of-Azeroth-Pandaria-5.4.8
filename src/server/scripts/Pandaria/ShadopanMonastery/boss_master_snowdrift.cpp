@@ -1206,12 +1206,12 @@ class npc_spm_jade_staff : public CreatureScript
                 switch (actionId)
                 {
                     case ACTION_START_COMBAT:
-                        me->SetUInt32Value(UNIT_FIELD_SHAPESHIFT_FORM, 1); //UNIT_FIELD_BYTES_2
+                        me->SetUInt32Value(UNIT_FIELD_BYTES_2, 1); //UNIT_FIELD_BYTES_2
                         events.ScheduleEvent(EVENT_STAFF_STRIKE, urand(4, 6) * IN_MILLISECONDS);
                         break;
                     case ACTION_STOP_COMBAT:
                         events.Reset();
-                        me->SetUInt32Value(UNIT_FIELD_SHAPESHIFT_FORM, 0); //UNIT_FIELD_BYTES_2
+                        me->SetUInt32Value(UNIT_FIELD_BYTES_2, 0); //UNIT_FIELD_BYTES_2
                         break;
                 }
             }

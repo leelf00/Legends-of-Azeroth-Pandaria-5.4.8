@@ -1016,38 +1016,5 @@ namespace LuaGlobalFunctions
         return 1;
     }
 
-    static int FindWeather(lua_State* L)
-    {
-        uint32 zoneId = luaL_checkunsigned(L, 1);
-        Weather* weather = WeatherMgr::FindWeather(zoneId);
-        sEluna->Push(L, weather);
-        return 1;
-    }
-
-    static int AddWeather(lua_State* L)
-    {
-        uint32 zoneId = luaL_checkunsigned(L, 1);
-        Weather* weather = WeatherMgr::AddWeather(zoneId);
-        sEluna->Push(L, weather);
-        return 1;
-    }
-
-    static int RemoveWeather(lua_State* L)
-    {
-        uint32 zoneId = luaL_checkunsigned(L, 1);
-
-        WeatherMgr::RemoveWeather(zoneId);
-        return 0;
-    }
-
-    static int SendFineWeatherToPlayer(lua_State* L)
-    {
-        Player* player = sEluna->CHECK_PLAYER(L, 1);
-        if (!player)
-            return 0;
-
-        WeatherMgr::SendFineWeatherUpdateToPlayer(player);
-        return 0;
-    }
 }
 #endif

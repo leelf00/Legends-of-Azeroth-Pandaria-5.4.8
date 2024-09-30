@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -36,7 +36,11 @@ enum Yells
     SAY_BANISH                 = 3,
     SAY_CHAMBER_DESTROY        = 4,
     SAY_PLAYER_KILLED          = 5,
-    SAY_DEATH                  = 6
+    SAY_DEATH                  = 6,
+    EMOTE_WEAKEN               = 7,
+    EMOTE_NEARLY_FREE          = 8,
+    EMOTE_BREAKS_FREE          = 9,
+    EMOTE_BLAST_NOVA           = 10    
 };
 
 enum Emotes

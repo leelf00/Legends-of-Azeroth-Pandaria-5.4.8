@@ -148,7 +148,7 @@ public:
             path_number = strtok((char*)args, " ");
 
         uint32 pathid = 0;
-        uint32 guidLow = 0;
+        ObjectGuid::LowType guidLow = 0;
         Creature* target = handler->getSelectedCreature();
 
         // Did player provide a path_id?
@@ -212,7 +212,7 @@ public:
         target->LoadPath(pathid);
         target->SetDefaultMovementType(WAYPOINT_MOTION_TYPE);
         target->GetMotionMaster()->Initialize();
-        target->MonsterSay("Path loaded.", LANG_UNIVERSAL, NULL);
+        target->Say("Path loaded.", LANG_UNIVERSAL);
 
         return true;
     }
@@ -276,7 +276,7 @@ public:
         target->SetDefaultMovementType(IDLE_MOTION_TYPE);
         target->GetMotionMaster()->MoveTargetedHome();
         target->GetMotionMaster()->Initialize();
-        target->MonsterSay("Path unloaded.", 0, 0);
+        target->Say("Path unloaded.", LANG_UNIVERSAL);
         return true;
     }
 

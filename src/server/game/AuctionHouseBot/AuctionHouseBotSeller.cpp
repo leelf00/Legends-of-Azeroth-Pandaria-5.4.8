@@ -923,8 +923,7 @@ void AuctionBotSeller::AddNewAuctions(SellerConfiguration& config)
         auctionEntry->itemEntry = item->GetEntry();
         auctionEntry->startbid = bidPrice;
         auctionEntry->buyout = buyoutPrice;
-        auctionEntry->auctioneer = auctionEntry->owner; // to be removed
-        //auctionEntry->houseId = houseid;
+        auctionEntry->houseId = houseid;
         auctionEntry->bidder = 0;
         auctionEntry->bid = 0;
         auctionEntry->deposit = sAuctionMgr->GetAuctionDeposit(ahEntry, etime, item, stackCount);

@@ -4798,7 +4798,7 @@ struct npc_siege_of_orgrimmar_sha_cloud : public ScriptedAI
     void Reset() override
     {
         me->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
-        me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
+        me->SetDisplayFromModel(1);
     }
 
     void OnSpellClick(Unit* clicker, bool& /*result*/) override
@@ -4887,7 +4887,7 @@ struct npc_siege_of_orgrimmar_theramore_prisoners : public ScriptedAI
         else
         {
             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_UNK_29);
-            me->RemoveFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_FEIGN_DEATH);
+            me->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH);
         }
     }
     void DoAction(int32 actionId) override

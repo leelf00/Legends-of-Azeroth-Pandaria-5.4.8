@@ -2117,7 +2117,7 @@ struct npc_stoneplow_envoy : public ScriptedAI
     void Reset() override
     {
         me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_UNK_29);
-        me->SetFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_FEIGN_DEATH);
+        me->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH);
         me->CastSpell(me, SPELL_PERMANENT_FEIGN_DEATH_STUN);
         me->setRegeneratingHealth(false);
         me->SetHealth(46087);
@@ -2129,7 +2129,7 @@ struct npc_stoneplow_envoy : public ScriptedAI
         if (spell->Id == SPELL_REVIVE_STONEPLOW_ENVOY && me->HasAura(SPELL_PERMANENT_FEIGN_DEATH_STUN))
         {
             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_UNK_29);
-            me->RemoveFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_FEIGN_DEATH);
+            me->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH);
             me->RemoveAurasDueToSpell(SPELL_PERMANENT_FEIGN_DEATH_STUN);
             script_timer = 500;
             if (Player* player = caster->ToPlayer())
@@ -2187,10 +2187,10 @@ struct npc_nahassa : public ScriptedAI
     npc_nahassa(Creature* creature) : ScriptedAI(creature)
     {
         me->setRegeneratingHealth(false);
-        JustRespawned();
+        JustAppeared();
     }
 
-    void JustRespawned() override
+    void JustAppeared() override
     {
         DoCast(SPELL_NAHASSA_INJURED_ANIM);
         DoCast(SPELL_DYING);
@@ -2200,7 +2200,7 @@ struct npc_nahassa : public ScriptedAI
 
     void JustReachedHome() override
     {
-        JustRespawned();
+        JustAppeared();
     }
 
     void JustEngagedWith(Unit* who) override
@@ -3084,7 +3084,7 @@ struct npc_lorekeeper_vaeldrin : public ScriptedAI
             });
             vaeldrinNew->m_Events.Schedule(delay += 7000, [vaeldrinNew, lyaliaNew]
             {
-                lyaliaNew->RemoveFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_FEIGN_DEATH);
+                lyaliaNew->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH);
             });
             vaeldrinNew->m_Events.Schedule(delay += 2000, [vaeldrinNew, lyaliaNew, playerGuid]
             {

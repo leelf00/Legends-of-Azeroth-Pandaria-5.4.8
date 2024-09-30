@@ -469,7 +469,7 @@ SummonablePremiumNpcAI::SummonablePremiumNpcAI(Creature* creature, uint32 displa
     if (me->IsSummon())
     {
         me->SetDisplayId(displayId ? displayId : me->GetNativeDisplayId());
-        me->SetFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_UNK1); // Makes nameplate disappear, without this it may pop-up for a frame or two after summoning
+        me->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_UNK1); // Makes nameplate disappear, without this it may pop-up for a frame or two after summoning
         me->SetFloatValue(UNIT_FIELD_COMBAT_REACH, 50000.0f);
         me->SetPhaseMask(PHASEMASK_ANYWHERE, false);
         me->SetVisible(false); // Exploiting our visibility system to make summoned .premium NPCs only visible to the summoner

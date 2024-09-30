@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -1631,7 +1631,7 @@ struct npc_soo_activated_weapons_type : public ScriptedAI
                             //me->SetName(normalInfo->Name);
 
                             if (normalInfo)
-                                me->SetDisplayId(normalInfo->Modelid1);
+                                me->SetDisplayId(normalInfo->GetModelByIdx(0)->CreatureDisplayID);
 
                             me->AddAura(SPELL_OVERCHARGED_WEAPON_VISUAL, me); // not need announe it in DBM
                             uint32 maxHealthByDefault = me->GetMaxHealth();
@@ -2182,7 +2182,7 @@ struct npc_siegecrafter_shockwave_missle_trigger : public ScriptedAI
 
     void Reset() override
     {
-        me->SetDisplayId(me->GetEntry() == NPC_LASER_ARRAY_TARGET_VEHICLE ? me->GetCreatureTemplate()->Modelid2 : me->GetCreatureTemplate()->Modelid1);
+        me->SetDisplayFromModel(me->GetEntry() == NPC_LASER_ARRAY_TARGET_VEHICLE ? 1 : 0);
     }
 };
 
@@ -2956,7 +2956,7 @@ class spell_siegecrafter_overcharge_weapon : public SpellScript
                 //target->SetName(normalInfo->Name);
 
                 if (normalInfo)
-                    target->SetDisplayId(normalInfo->Modelid1);
+                    target->SetDisplayId(normalInfo->GetModelByIdx(0)->CreatureDisplayID);
             }
 
             // Speical Announce about overcharged weapon

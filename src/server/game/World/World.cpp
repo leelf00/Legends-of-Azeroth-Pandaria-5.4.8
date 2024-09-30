@@ -495,9 +495,18 @@ void World::LoadConfigSettings(bool reload)
     m_bool_configs[CONFIG_ADDON_CHANNEL] = sConfigMgr->GetBoolDefault("AddonChannel", true);
     m_bool_configs[CONFIG_CLEAN_CHARACTER_DB] = sConfigMgr->GetBoolDefault("CleanCharacterDB", false);
     m_int_configs[CONFIG_PERSISTENT_CHARACTER_CLEAN_FLAGS] = sConfigMgr->GetIntDefault("PersistentCharacterCleanFlags", 0);
+    m_int_configs[CONFIG_AUCTION_GETALL_DELAY] = sConfigMgr->GetIntDefault("Auction.GetAllScanDelay", 900);
+    m_int_configs[CONFIG_AUCTION_SEARCH_DELAY] = sConfigMgr->GetIntDefault("Auction.SearchDelay", 300);
+    if (m_int_configs[CONFIG_AUCTION_SEARCH_DELAY] < 100 || m_int_configs[CONFIG_AUCTION_SEARCH_DELAY] > 10000)
+    {
+        TC_LOG_ERROR("server.loading", "Auction.SearchDelay (%i) must be between 100 and 10000. Using default of 300ms", m_int_configs[CONFIG_AUCTION_SEARCH_DELAY]);
+        m_int_configs[CONFIG_AUCTION_SEARCH_DELAY] = 300;
+    }
     m_int_configs[CONFIG_CHAT_CHANNEL_LEVEL_REQ] = sConfigMgr->GetIntDefault("ChatLevelReq.Channel", 1);
     m_int_configs[CONFIG_CHAT_WHISPER_LEVEL_REQ] = sConfigMgr->GetIntDefault("ChatLevelReq.Whisper", 1);
+    m_int_configs[CONFIG_CHAT_EMOTE_LEVEL_REQ] = sConfigMgr->GetIntDefault("ChatLevelReq.Emote", 1);
     m_int_configs[CONFIG_CHAT_SAY_LEVEL_REQ] = sConfigMgr->GetIntDefault("ChatLevelReq.Say", 1);
+    m_int_configs[CONFIG_CHAT_YELL_LEVEL_REQ] = sConfigMgr->GetIntDefault("ChatLevelReq.Yell", 1);
     m_int_configs[CONFIG_TRADE_LEVEL_REQ] = sConfigMgr->GetIntDefault("LevelReq.Trade", 1);
     m_int_configs[CONFIG_TICKET_LEVEL_REQ] = sConfigMgr->GetIntDefault("LevelReq.Ticket", 1);
     m_int_configs[CONFIG_AUCTION_LEVEL_REQ] = sConfigMgr->GetIntDefault("LevelReq.Auction", 1);
@@ -2277,6 +2286,7 @@ void World::SetInitialWorldSettings()
 
     m_timers[WUPDATE_WEATHERS].SetInterval(1*IN_MILLISECONDS);
     m_timers[WUPDATE_AUCTIONS].SetInterval(MINUTE*IN_MILLISECONDS);
+    m_timers[WUPDATE_AUCTIONS_PENDING].SetInterval(250);
     m_timers[WUPDATE_BLACK_MARKET].SetInterval(MINUTE*IN_MILLISECONDS);
     m_timers[WUPDATE_UPTIME].SetInterval(m_int_configs[CONFIG_UPTIME_UPDATE]*MINUTE*IN_MILLISECONDS);
                                                             //Update "uptime" table based on configuration entry in minutes.
@@ -2595,6 +2605,13 @@ void World::Update(uint32 diff)
         RecordTimeDiff("AuctionMgr::Update");
     }
 
+    if (m_timers[WUPDATE_AUCTIONS_PENDING].Passed())
+    {
+        m_timers[WUPDATE_AUCTIONS_PENDING].Reset();
+
+        sAuctionMgr->UpdatePendingAuctions();
+    }
+
     /// <li> Handle AHBot operations
     if (m_timers[WUPDATE_AHBOT].Passed())
     {
@@ -2607,13 +2624,6 @@ void World::Update(uint32 diff)
     RecordTimeDiff(nullptr);
     UpdateSessions(diff);
     RecordTimeDiff("UpdateSessions");
-
-    /// <li> Handle weather updates when the timer has passed
-    if (m_timers[WUPDATE_WEATHERS].Passed())
-    {
-        m_timers[WUPDATE_WEATHERS].Reset();
-        WeatherMgr::Update(uint32(m_timers[WUPDATE_WEATHERS].GetInterval()));
-    }
 
     /// <li> Update uptime table
     if (m_timers[WUPDATE_UPTIME].Passed())
@@ -2776,12 +2786,12 @@ void World::ForceGameEventUpdate()
 }
 
 /// Send a packet to all players (except self if mentioned)
-void World::SendGlobalMessage(WorldPacket* packet, WorldSession* self, uint32 team)
+void World::SendGlobalMessage(WorldPacket const* packet, WorldSession* self, uint32 team)
 {
     SendGlobalMessage(packet, SEC_PLAYER, self, team);
 }
 
-void World::SendGlobalMessage(WorldPacket* packet, AccountTypes security, WorldSession* self, uint32 team)
+void World::SendGlobalMessage(WorldPacket const* packet, AccountTypes security, WorldSession* self, uint32 team)
 {
     SessionMap::iterator itr;
     for (itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
@@ -2942,9 +2952,11 @@ void World::SendGlobalText(const char* text, WorldSession* self)
 }
 
 /// Send a packet to all players (or players selected team) in the zone (except self if mentioned)
-void World::SendZoneMessage(uint32 zone, WorldPacket* packet, WorldSession* self, uint32 team)
+bool World::SendZoneMessage(uint32 zone, WorldPacket const* packet, WorldSession* self, uint32 team)
 {
+    bool foundPlayerToSend = false;
     SessionMap::const_iterator itr;
+
     for (itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
     {
         if (itr->second &&
@@ -2955,8 +2967,11 @@ void World::SendZoneMessage(uint32 zone, WorldPacket* packet, WorldSession* self
             (team == 0 || itr->second->GetPlayer()->GetTeam() == team))
         {
             itr->second->SendPacket(packet);
+            foundPlayerToSend = true;
         }
     }
+
+    return foundPlayerToSend;
 }
 
 /// Send a System Message to all players in the zone (except self if mentioned)

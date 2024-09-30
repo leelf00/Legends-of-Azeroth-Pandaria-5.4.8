@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -308,7 +308,7 @@ class npc_thorim_controller : public CreatureScript
                 me->SetReactState(REACT_PASSIVE);
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_NON_ATTACKABLE);
                 _gotActivated = false;
-                me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
+                me->SetDisplayFromModel(1);
             }
 
             void Reset() override
@@ -599,7 +599,7 @@ class boss_thorim : public CreatureScript
                 for (uint8 n = 0; n < 7; n++)
                     if (Creature* thunderOrb = me->SummonCreature(NPC_THUNDER_ORB, PosOrbs[n], TEMPSUMMON_CORPSE_DESPAWN))
                     {
-                        thunderOrb->SetDisplayId(thunderOrb->GetCreatureTemplate()->Modelid2);
+                        thunderOrb->SetDisplayFromModel(1);
                         thunderOrb->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE);
                     }
 
@@ -1576,7 +1576,7 @@ class npc_runic_smash : public CreatureScript
             npc_runic_smashAI(Creature* creature) : ScriptedAI(creature)
             {
                 me->SetReactState(REACT_PASSIVE);
-                me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
+                me->SetDisplayFromModel(1);
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NON_ATTACKABLE);
                 SetCombatMovement(false);
             }

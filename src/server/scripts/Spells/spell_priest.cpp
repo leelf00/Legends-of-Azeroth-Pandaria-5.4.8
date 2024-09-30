@@ -1277,7 +1277,7 @@ class spell_pri_confession : public SpellScriptLoader
                     if (bct)
                         baseText = bct->GetText(loc_idx, _player->GetGender());
 
-                    target->MonsterTextEmote(baseText.c_str(), nullptr); 
+                    target->TextEmote(baseText.c_str(), nullptr); 
                 }
             }
 

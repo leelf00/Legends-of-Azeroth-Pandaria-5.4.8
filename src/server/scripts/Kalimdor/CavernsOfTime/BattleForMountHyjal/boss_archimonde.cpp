@@ -42,27 +42,28 @@ enum Texts
 
 enum Spells
 {
-    SPELL_DENOUEMENT_WISP       = 32124,
-    SPELL_ANCIENT_SPARK         = 39349,
-    SPELL_PROTECTION_OF_ELUNE   = 38528,
+    SPELL_DENOUEMENT_WISP            = 32124,
+    SPELL_ANCIENT_SPARK              = 39349,
+    SPELL_PROTECTION_OF_ELUNE        = 38528,
 
-    SPELL_DRAIN_WORLD_TREE      = 39140,
-    SPELL_DRAIN_WORLD_TREE_2    = 39141,
+    SPELL_DRAIN_WORLD_TREE           = 39140,
+    SPELL_DRAIN_WORLD_TREE_2         = 39141,
 
-    SPELL_FINGER_OF_DEATH       = 31984,
-    SPELL_HAND_OF_DEATH         = 35354,
-    SPELL_AIR_BURST             = 32014,
-    SPELL_GRIP_OF_THE_LEGION    = 31972,
-    SPELL_DOOMFIRE_STRIKE       = 31903,    //summons two creatures
-    SPELL_DOOMFIRE_SPAWN        = 32074,
-    SPELL_DOOMFIRE              = 31945,
-    SPELL_SOUL_CHARGE_YELLOW    = 32045,
-    SPELL_SOUL_CHARGE_GREEN     = 32051,
-    SPELL_SOUL_CHARGE_RED       = 32052,
-    SPELL_UNLEASH_SOUL_YELLOW   = 32054,
-    SPELL_UNLEASH_SOUL_GREEN    = 32057,
-    SPELL_UNLEASH_SOUL_RED      = 32053,
-    SPELL_FEAR                  = 31970,
+    SPELL_FINGER_OF_DEATH            = 31984,
+    SPELL_FINGER_OF_DEATH_LAST_PHASE = 32111,
+    SPELL_HAND_OF_DEATH              = 35354,
+    SPELL_AIR_BURST                  = 32014,
+    SPELL_GRIP_OF_THE_LEGION         = 31972,
+    SPELL_DOOMFIRE_STRIKE            = 31903,    //summons two creatures
+    SPELL_DOOMFIRE_SPAWN             = 32074,
+    SPELL_DOOMFIRE                   = 31945,
+    SPELL_SOUL_CHARGE_YELLOW         = 32045,
+    SPELL_SOUL_CHARGE_GREEN          = 32051,
+    SPELL_SOUL_CHARGE_RED            = 32052,
+    SPELL_UNLEASH_SOUL_YELLOW        = 32054,
+    SPELL_UNLEASH_SOUL_GREEN         = 32057,
+    SPELL_UNLEASH_SOUL_RED           = 32053,
+    SPELL_FEAR                       = 31970,
 };
 
 enum Summons
@@ -640,10 +641,49 @@ public:
     };
 };
 
+// Protection of Elune 38528
+class spell_protection_of_elune : public AuraScript
+{
+    PrepareAuraScript(spell_protection_of_elune);
+
+    bool Validate(SpellInfo const* /*spellInfo*/) override
+    {
+        return ValidateSpellInfo(
+        {
+            SPELL_PROTECTION_OF_ELUNE
+        });
+    }
+
+    void HandleEffectApply(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* target = GetTarget();
+        target->ApplySpellImmune(SPELL_HAND_OF_DEATH, IMMUNITY_ID, SPELL_HAND_OF_DEATH, true);
+        target->ApplySpellImmune(SPELL_FINGER_OF_DEATH, IMMUNITY_ID, SPELL_FINGER_OF_DEATH, true);
+        target->ApplySpellImmune(SPELL_FINGER_OF_DEATH_LAST_PHASE, IMMUNITY_ID, SPELL_FINGER_OF_DEATH_LAST_PHASE, true);
+        target->ApplySpellImmune(0, IMMUNITY_ID, SPELL_FINGER_OF_DEATH_LAST_PHASE, true);
+    }
+
+    void HandleEffectRemove(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
+    {
+        Unit* target = GetTarget();
+        target->ApplySpellImmune(SPELL_HAND_OF_DEATH, IMMUNITY_ID, SPELL_HAND_OF_DEATH, false);
+        target->ApplySpellImmune(SPELL_FINGER_OF_DEATH, IMMUNITY_ID, SPELL_FINGER_OF_DEATH, false);
+        target->ApplySpellImmune(SPELL_FINGER_OF_DEATH_LAST_PHASE, IMMUNITY_ID, SPELL_FINGER_OF_DEATH_LAST_PHASE, false);
+        target->ApplySpellImmune(0, IMMUNITY_ID, SPELL_FINGER_OF_DEATH_LAST_PHASE, false);
+    }
+
+    void Register() override
+    {
+        AfterEffectApply += AuraEffectApplyFn(spell_protection_of_elune::HandleEffectApply, EFFECT_0, SPELL_AURA_SCHOOL_IMMUNITY, AURA_EFFECT_HANDLE_REAL);
+        AfterEffectRemove += AuraEffectRemoveFn(spell_protection_of_elune::HandleEffectRemove, EFFECT_0, SPELL_AURA_SCHOOL_IMMUNITY, AURA_EFFECT_HANDLE_REAL);
+    }
+};
+
 void AddSC_boss_archimonde()
 {
     new boss_archimonde();
     new npc_doomfire();
     new npc_doomfire_targetting();
     new npc_ancient_wisp();
+    new spell_protection_of_elune();
 }

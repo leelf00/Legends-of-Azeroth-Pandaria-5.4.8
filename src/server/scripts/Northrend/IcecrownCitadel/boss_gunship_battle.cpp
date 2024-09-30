@@ -275,6 +275,17 @@ enum Texts
     SAY_OVERHEAT_ALERT               = 0,
 };
 
+enum MiscData
+{
+    ITEM_GOBLIN_ROCKET_PACK    = 49278,
+    SPELL_CREATE_ROCKET_PACK   = 70055,
+
+    PHASE_COMBAT               = 0,
+    PHASE_INTRO                = 1,
+
+    MUSIC_ENCOUNTER            = 17289
+};
+
 enum Points
 {
     POINT_OUTRO_MIDWAY,
@@ -498,7 +509,7 @@ class npc_gunship_boss : public CreatureScript
                             events.ScheduleEvent(EVENT_INTRO_HORDE_5, 11000);
                         }
                         DoAction(ACTION_BATTLE_EVENT);
-                        SendMusicToPlayers(17289);
+                        me->GetMap()->SetZoneMusic(AREA_ICECROWN_CITADEL, MUSIC_ENCOUNTER);
                         break;
                     case ACTION_BATTLE_EVENT:
                     {
@@ -560,7 +571,7 @@ class npc_gunship_boss : public CreatureScript
                         if (Creature* zafod = me->FindNearestCreature(NPC_GB_ZAFOD_BOOMBOX, 500.0f, true))
                             zafod->CastSpell(zafod, SPELL_REMOVE_ROCKET_PACK, true);
 
-                        SendMusicToPlayers(0);
+                        me->GetMap()->SetZoneMusic(AREA_ICECROWN_CITADEL, 0);
 
                         Talk(AH(SAY_ALLIANCE_VICTORY, SAY_HORDE_VICTORY));
 
@@ -589,7 +600,7 @@ class npc_gunship_boss : public CreatureScript
                         if (Creature* zafod = me->FindNearestCreature(NPC_GB_ZAFOD_BOOMBOX, 500.0f, true))
                             zafod->CastSpell(zafod, SPELL_REMOVE_ROCKET_PACK, true);
 
-                        SendMusicToPlayers(0);
+                        me->GetMap()->SetZoneMusic(AREA_ICECROWN_CITADEL, 0);
 
                         Talk(AH(SAY_ALLIANCE_DEFEAT, SAY_HORDE_DEFEAT));
 
@@ -1015,13 +1026,6 @@ class npc_gunship_boss : public CreatureScript
                 }
 
                 return nullptr;
-            }
-
-            void SendMusicToPlayers(uint32 musicId) const
-            {
-                WorldPacket data(SMSG_PLAY_MUSIC, 4);
-                data << uint32(musicId);
-                SendPacketToPlayers(&data);
             }
 
             void SendPacketToPlayers(WorldPacket const* data) const
@@ -1885,8 +1889,8 @@ class npc_zafod_boombox : public CreatureScript
             bool OnGossipSelect(Player* player, uint32 sender, uint32 action) override
             {
                 player->CLOSE_GOSSIP_MENU();
-                if (sender == 10885 && action == 0 && !player->HasItemCount(49278, 1, true))
-                    player->AddItem(49278, 1);
+                if (sender == 10885 && action == 0 && !player->HasItemCount(ITEM_GOBLIN_ROCKET_PACK, 1, true))
+                    player->AddItem(ITEM_GOBLIN_ROCKET_PACK, 1);
                 return true;
             }
         };
@@ -2613,8 +2617,8 @@ class spell_icc_remove_rocket_pack : public SpellScriptLoader
                 uint32 itemCount = hitPlr->GetItemCount(itemId, false); // Should be 1, but just in case.
                 hitPlr->DestroyItemCount(itemId, itemCount, true, false);
 
-              if (hitPlr->HasItemCount(49278, 1, true))
-                hitPlr->DestroyItemCount(49278, 1, true);
+              if (hitPlr->HasItemCount(ITEM_GOBLIN_ROCKET_PACK, 1, true))
+                hitPlr->DestroyItemCount(ITEM_GOBLIN_ROCKET_PACK, 1, true);
             }
 
             void Register() override

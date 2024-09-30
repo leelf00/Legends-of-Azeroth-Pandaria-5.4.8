@@ -51,6 +51,7 @@
 class AreaTrigger;
 class Item;
 class PhaseMgr;
+enum GossipOptionIcon : uint8;
 struct AccessRequirement;
 struct PlayerLevelInfo;
 struct DeclinedName;
@@ -577,7 +578,7 @@ struct GossipMenuItems
 {
     uint32              MenuID;
     uint32              OptionID;
-    uint8               OptionIcon;
+    GossipOptionIcon    OptionIcon;
     std::string         OptionText;
     uint32              OptionBroadcastTextID;
     uint32              OptionType;
@@ -1053,11 +1054,11 @@ class ObjectMgr
         void LoadGameObjectTemplateAddons();
         void AddGameobjectInfo(GameObjectTemplate* goinfo);
 
-        CreatureTemplate const* GetCreatureTemplate(uint32 entry);
+        CreatureTemplate const* GetCreatureTemplate(uint32 entry) const;
         CreatureTemplateContainer const* GetCreatureTemplates() const { return &_creatureTemplateStore; }
-        CreatureModelInfo const* GetCreatureModelInfo(uint32 modelId);
-        CreatureModelInfo const* GetCreatureModelRandomGender(uint32* displayID);
-        static uint32 ChooseDisplayId(CreatureTemplate const* cinfo, CreatureData const* data = NULL);
+        CreatureModelInfo const* GetCreatureModelInfo(uint32 modelId) const;
+        CreatureModelInfo const* GetCreatureModelRandomGender(CreatureModel* model, CreatureTemplate const* creatureTemplate) const;
+        static CreatureModel const* ChooseDisplayId(CreatureTemplate const* cinfo, CreatureData const* data = nullptr);
         static void ChooseCreatureFlags(CreatureTemplate const* cinfo, uint32& npcflag, uint32& unit_flags, uint32& dynamicflags, CreatureData const* data = NULL);
         EquipmentInfo const* GetEquipmentInfo(uint32 entry, int8& id);
         CreatureAddon const* GetCreatureAddon(uint32 lowguid);
@@ -1245,6 +1246,8 @@ class ObjectMgr
         void LoadCreatureTemplates();
         void LoadCreatureTemplateAddons();
         void LoadCreatureSparringTemplate();
+        void LoadCreatureTemplate(Field* fields);
+        void LoadCreatureTemplateModels();        
         void LoadCreatureDifficultyModifiers();
         void CheckCreatureTemplate(CreatureTemplate const* cInfo);
         void CheckCreatureMovement(char const* table, uint64 id, CreatureMovementData& creatureMovement);

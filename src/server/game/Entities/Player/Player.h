@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -15,8 +15,8 @@
 * with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef SF_PLAYER_H
-#define SF_PLAYER_H
+#ifndef _PLAYER_H
+#define _PLAYER_H
 
 #include "DBCStores.h"
 #include "GroupReference.h"
@@ -71,6 +71,17 @@ class TradeData;
 typedef std::deque<Mail*> PlayerMails;
 
 #define PLAYER_MAX_SKILLS           128
+enum SkillFieldOffset
+{
+    SKILL_ID_OFFSET = 0,
+    SKILL_STEP_OFFSET = 64,
+    SKILL_RANK_OFFSET = SKILL_STEP_OFFSET + 64,
+    SUBSKILL_START_RANK_OFFSET = SKILL_RANK_OFFSET + 64,
+    SKILL_MAX_RANK_OFFSET = SUBSKILL_START_RANK_OFFSET + 64,
+    SKILL_MODIFIER_OFFSET = SKILL_MAX_RANK_OFFSET + 64,
+    SKILL_TALENT_OFFSET = SKILL_MODIFIER_OFFSET + 64
+};
+
 #define PLAYER_MAX_DAILY_QUESTS     750
 #define PLAYER_EXPLORED_ZONES_SIZE  200
 
@@ -553,7 +564,7 @@ enum PlayerFlags
 #define KNOWN_TITLES_SIZE   4
 #define MAX_TITLE_INDEX     (KNOWN_TITLES_SIZE * 64)        // 4 uint64 fields
 
-// used in PLAYER_FIELD_LIFETIME_MAX_RANK values
+// used in PLAYER_FIELD_BYTES values
 enum PlayerFieldByteFlags
 {
     PLAYER_FIELD_BYTE_TRACK_STEALTHED = 0x00000002,
@@ -561,7 +572,7 @@ enum PlayerFieldByteFlags
     PLAYER_FIELD_BYTE_NO_RELEASE_WINDOW = 0x00000010        // Display no "release spirit" window at all
 };
 
-// used in UNIT_FIELD_SHAPESHIFT_FORM values
+// used in UNIT_FIELD_BYTES_2 values
 enum PlayerFieldByte2Flags
 {
     PLAYER_FIELD_BYTE2_NONE = 0x00,
@@ -1410,13 +1421,17 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
     }
 
     /// Handles said message in regular chat based on declared language and in config pre-defined Range.
-    void Say(std::string const& text, const uint32 language);
+    void Say(std::string const& text, Language language, WorldObject const* = nullptr) override;
+    void Say(uint32 textId, WorldObject const* target = nullptr) override;
     /// Handles yelled message in regular chat based on declared language and in config pre-defined Range.
-    void Yell(std::string const& text, const uint32 language);
+    void Yell(std::string const& text, Language language, WorldObject const* = nullptr) override;
+    void Yell(uint32 textId, WorldObject const* target = nullptr) override;
     /// Outputs an universal text which is supposed to be an action.
-    void TextEmote(std::string const& text);
+    void TextEmote(std::string const& text, WorldObject const* = nullptr, bool = false) override;
+    void TextEmote(uint32 textId, WorldObject const* target = nullptr, bool isBossEmote = false) override;
     /// Handles whispers from Addons and players based on sender, receiver's guid and language.
-    void Whisper(std::string const& text, const uint32 language, ObjectGuid receiver);
+    void Whisper(std::string const& text, Language language, Player* receiver, bool = false) override;
+    void Whisper(uint32 textId, Player* target, bool isBossWhisper = false) override;
     void WhisperAddon(std::string const& text, std::string const& prefix, Player* receiver);
 
     void SendPersonalMessage(std::string const& text, ChatMsg type, Language lang);
@@ -1470,11 +1485,11 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
     bool IsValidPos(uint8 bag, uint8 slot, bool explicit_pos);
     uint8 GetBankBagSlotCount() const
     {
-        return GetByteValue(PLAYER_FIELD_REST_STATE, 2);
+        return GetByteValue(PLAYER_BYTES_2, 2);
     }
     void SetBankBagSlotCount(uint8 count)
     {
-        SetByteValue(PLAYER_FIELD_REST_STATE, 2, count);
+        SetByteValue(PLAYER_BYTES_2, 2, count);
     }
     //BattlePay
     uint64 GetDonateTokens() const;
@@ -1614,7 +1629,7 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
     TradeData* GetTradeData() const { return m_trade; }
     void TradeCancel(bool sendback);
 
-    CinematicMgr* GetCinematicMgr() const { return _cinematicMgr; }
+    CinematicMgr* GetCinematicMgr() const { return _cinematicMgr.get(); }
 
     void UpdateEnchantTime(uint32 time);
     void UpdateSoulboundTradeItems();
@@ -2148,6 +2163,9 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
     uint8 getCinematic() const { return m_cinematic; }
     void setCinematic(uint8 cine) { m_cinematic = cine; }
 
+    uint32 GetMovie() const { return m_movie; }
+    void SetMovie(uint32 movie) { m_movie = movie; }
+
     ActionButton* AddActionButton(uint8 button, uint32 action, uint8 type);
     void RemoveActionButton(uint8 button);
     ActionButton const* GetActionButton(uint8 button);
@@ -2386,13 +2404,11 @@ public:
     bool UpdatePosition(float x, float y, float z, float orientation, bool teleport = false) override;
     bool UpdatePosition(const Position &pos, bool teleport = false) override { return UpdatePosition(pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), pos.GetOrientation(), teleport); }
     void ProcessTerrainStatusUpdate(ZLiquidStatus oldLiquidStatus, Optional<LiquidData> const& newLiquidData) override;
-    void SendMessageToSet(WorldPacket* data, bool self)
-    {
-        SendMessageToSetInRange(data, GetVisibilityRange() + 2 * World::Visibility_RelocationLowerLimit, self);
-    };// overwrite Object::SendMessageToSet
-    void SendMessageToSetInRange(WorldPacket* data, float fist, bool self);// overwrite Object::SendMessageToSetInRange
-    void SendMessageToSetInRange(WorldPacket* data, float dist, bool self, bool own_team_only);
-    void SendMessageToSet(WorldPacket* data, Player const* skipped_rcvr);
+
+    void SendMessageToSet(WorldPacket const* data, bool self) const override { SendMessageToSetInRange(data, GetVisibilityRange() + 2 * World::Visibility_RelocationLowerLimit, self); }
+    void SendMessageToSetInRange(WorldPacket const* data, float dist, bool self) const override;
+    void SendMessageToSetInRange(WorldPacket const* data, float dist, bool self, bool own_team_only, bool required3dDist = false) const;
+    void SendMessageToSet(WorldPacket const* data, Player const* skipped_rcvr) const override;
 
     Corpse* GetCorpse() const;
     void SpawnCorpseBones(bool triggerSave = true);
@@ -2559,7 +2575,7 @@ public:
     void SetDrunkValue(uint8 newDrunkValue, uint32 itemId = 0);
     uint8 GetDrunkValue() const
     {
-        return GetByteValue(PLAYER_FIELD_ARENA_FACTION, 1);
+        return GetByteValue(PLAYER_BYTES_3, 1);
     }
     static DrunkenState GetDrunkenstateByValue(uint8 value);
 
@@ -2638,7 +2654,7 @@ public:
 
     void SendAurasForTarget(Unit* target);
 
-    PlayerMenu* PlayerTalkClass;
+    std::unique_ptr<PlayerMenu> PlayerTalkClass;
     std::vector<ItemSetEffect*> ItemSetEff;
 
     std::unordered_map<ObjectGuid, ObjectGuid> const& GetLootView() const { return m_lootView; }
@@ -3484,6 +3500,8 @@ protected:
 
     uint8 m_cinematic;
 
+    uint32 m_movie;
+
     TradeData* m_trade;
 
     bool   m_DailyQuestChanged;
@@ -3567,7 +3585,7 @@ protected:
     Item* _StoreItem(uint16 pos, Item* pItem, uint32 count, bool clone, bool update);
     Item* _LoadItem(CharacterDatabaseTransaction trans, uint32 zoneId, uint32 timeDiff, Field* fields);
 
-    CinematicMgr* _cinematicMgr;
+    std::unique_ptr<CinematicMgr> _cinematicMgr;
 
     std::set<uint32> m_refundableItems;
     void SendRefundInfo(Item* item);

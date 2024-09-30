@@ -2257,7 +2257,7 @@ protected:
         Unit* target = GetTarget();
         if (Player* mage = target->ToPlayer())
         {
-            mage->SetUInt16Value(PLAYER_FIELD_OVERRIDE_SPELLS_ID, 0, 16384); // TODO: Need more research
+            mage->SetUInt16Value(PLAYER_FIELD_BYTES2, 0, 16384); // TODO: Need more research
             if (Pet* pet = mage->GetPet())
                 pet->CastSpell(pet, GetId(), true);
         }
@@ -2268,7 +2268,7 @@ protected:
     void HandleRemove(AuraEffect const*, AuraEffectHandleModes)
     {
         if (Player* mage = GetTarget()->ToPlayer())
-            mage->SetUInt16Value(PLAYER_FIELD_OVERRIDE_SPELLS_ID, 0, 0);
+            mage->SetUInt16Value(PLAYER_FIELD_BYTES2, 0, 0);
     }
 
     void Register() override

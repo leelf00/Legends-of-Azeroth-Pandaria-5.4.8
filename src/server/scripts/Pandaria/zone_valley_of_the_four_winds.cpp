@@ -373,7 +373,12 @@ class spell_gen_gather_muddy_water : public SpellScriptLoader
                 {
                     if (!player->HasAura(106284))
                     {
-                        player->MonsterTextEmote("Mudmug's vial will slowly spill water while you are moving. Plan your path carefully!", player, true);
+                        BroadcastText const* bct = sObjectMgr->GetBroadcastText(55303);
+                        LocaleConstant loc_idx = player->GetSession()->GetSessionDbLocaleIndex();
+                        std::string baseText = "";
+                        if (bct)
+                            baseText = bct->GetText(loc_idx, player->GetGender());                   
+                        player->TextEmote(baseText);
                         player->CastSpell(player, 106284, true);
                     }
                     else

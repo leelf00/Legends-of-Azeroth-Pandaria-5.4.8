@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -133,7 +133,7 @@ class instance_unga_ingoo : public InstanceMapScript
                     case NPC_BUNNY_ZTO_2:
                     case NPC_BUNNY_ZTO:
                     case NPC_HOZEN_SWING:
-                        creature->SetDisplayId(creature->GetCreatureTemplate()->Modelid2);
+                        creature->SetDisplayFromModel(1);
                         break;
                     case NPC_OOKIE:
                     case NPC_CHIHOZEN_BINONO:

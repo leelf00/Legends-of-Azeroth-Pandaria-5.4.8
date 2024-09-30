@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -1755,7 +1755,7 @@ struct npc_spoils_lift_hook : public ScriptedAI
 
     void Reset() override
     {
-        me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
+        me->SetDisplayFromModel(1);
         me->SetFlag(UNIT_FIELD_NPC_FLAGS, UNIT_NPC_FLAG_SPELLCLICK);
         hasPassenger = false;
         clickerGUID = ObjectGuid::Empty;
@@ -2248,7 +2248,7 @@ struct npc_spoils_pandarens_gift : public ScriptedAI
     void IsSummonedBy(Unit* summoner) override
     {
         if (summoner->ToCreature())
-            me->SetDisplayId(summoner->ToCreature()->GetCreatureTemplate()->Modelid1); // for visible, no data in sniffs more than it (should`ve a green weapon under circle like me remember)
+            me->SetDisplayId(summoner->ToCreature()->GetCreatureTemplate()->GetModelByIdx(0)->CreatureDisplayID); // for visible, no data in sniffs more than it (should`ve a green weapon under circle like me remember)
 
         summonerEntry = summoner->GetEntry();
 

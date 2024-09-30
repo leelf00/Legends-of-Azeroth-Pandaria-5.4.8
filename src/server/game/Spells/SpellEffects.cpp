@@ -14,62 +14,63 @@
 * You should have received a copy of the GNU General Public License along
 * with this program. If not, see <http://www.gnu.org/licenses/>.
 */
-
-#include "Common.h"
-#include "DatabaseEnv.h"
-#include "WorldPacket.h"
-#include "Opcodes.h"
-#include "Log.h"
-#include "UpdateMask.h"
-#include "World.h"
-#include "ObjectMgr.h"
-#include "SpellMgr.h"
-#include "Player.h"
-#include "SkillExtraItems.h"
-#include "Unit.h"
-#include "Spell.h"
-#include "DynamicObject.h"
-#include "SpellAuras.h"
-#include "SpellAuraEffects.h"
-#include "Group.h"
-#include "UpdateData.h"
-#include "MapManager.h"
-#include "ObjectAccessor.h"
-#include "SharedDefines.h"
-#include "Pet.h"
-#include "GameObject.h"
-#include "GossipDef.h"
-#include "Creature.h"
-#include "Totem.h"
-#include "CreatureAI.h"
-#include "BattlegroundMgr.h"
+#include "AccountMgr.h"
+#include "AreaTrigger.h"
 #include "Battleground.h"
-#include "OutdoorPvPMgr.h"
-#include "Language.h"
-#include "SocialMgr.h"
-#include "Util.h"
-#include "VMapFactory.h"
-#include "TemporarySummon.h"
+#include "BattlegroundMgr.h"
+#include "BattlePetMgr.h"
+#include "Common.h"
 #include "CellImpl.h"
+#include "Creature.h"
+#include "CreatureAI.h"
+#include "DatabaseEnv.h"
+#include "DynamicObject.h"
+#include "Formulas.h"
+#include "GameObject.h"
+#include "GameObjectAI.h"
+#include "GossipDef.h"
 #include "GridNotifiers.h"
 #include "GridNotifiersImpl.h"
-#include "SkillDiscovery.h"
-#include "Formulas.h"
-#include "Vehicle.h"
-#include "Random.h"
-#include "ScriptMgr.h"
-#include "GameObjectAI.h"
-#include "AccountMgr.h"
-#include "InstanceScript.h"
-#include "PathGenerator.h"
+#include "Group.h"
 #include "Guild.h"
 #include "GuildMgr.h"
-#include "ReputationMgr.h"
-#include "AreaTrigger.h"
-#include "BattlePetMgr.h"
+#include "InstanceScript.h"
+#include "Log.h"
+#include "Language.h"
+#include "MapManager.h"
+#include "MiscPackets.h"
+#include "ObjectAccessor.h"
+#include "ObjectMgr.h"
+#include "Opcodes.h"
+#include "OutdoorPvPMgr.h"
+#include "PathGenerator.h"
+#include "Pet.h"
 #include "PetBattle.h"
-#include "UpdateFieldFlags.h"
+#include "Player.h"
+#include "Random.h"
+#include "ReputationMgr.h"
+#include "ScriptMgr.h"
 #include "ServiceMgr.h"
+#include "SharedDefines.h"
+#include "SkillExtraItems.h"
+#include "SkillDiscovery.h"
+#include "Spell.h"
+#include "SpellAuras.h"
+#include "SpellAuraEffects.h"
+#include "SpellMgr.h"
+#include "SpellPackets.h"
+#include "SocialMgr.h"
+#include "TemporarySummon.h"
+#include "Totem.h"
+#include "Unit.h"
+#include "UpdateData.h"
+#include "UpdateFieldFlags.h"
+#include "UpdateMask.h"
+#include "Util.h"
+#include "Vehicle.h"
+#include "VMapFactory.h"
+#include "World.h"
+#include "WorldPacket.h"
 
 pEffect SpellEffects[TOTAL_SPELL_EFFECTS]=
 {
@@ -4228,24 +4229,24 @@ void Spell::EffectScriptEffect(SpellEffIndex effIndex)
                 // Roll Dice - Decahedral Dwarven Dice
                 case 47770:
                 {
-                    char buf[128];
-                    const char *gender = "his";
-                    if (m_caster->GetGender() > 0)
-                        gender = "her";
-                    sprintf(buf, "%s rubs %s [Decahedral Dwarven Dice] between %s hands and rolls. One %u and one %u.", m_caster->GetName().c_str(), gender, gender, urand(1, 10), urand(1, 10));
-                    m_caster->MonsterTextEmote(buf, 0);
+                    BroadcastText const* bct = sObjectMgr->GetBroadcastText(26147);//rubs his |Hitem:36863|h|cFFFFFFFF[Decahedral Dwarven Dice]|r|h between his hands and rolls.
+                    LocaleConstant loc_idx = m_caster->ToPlayer()->GetSession()->GetSessionDbLocaleIndex();
+                    std::string baseText = "";
+                    if (bct)
+                        baseText = bct->GetText(loc_idx, m_caster->GetGender());
+                        m_caster->TextEmote(baseText);
                     break;
                 }
                 // Roll 'dem Bones - Worn Troll Dice
                 case 47776:
                 {
-                    char buf[128];
-                    const char *gender = "his";
-                    if (m_caster->GetGender() > 0)
-                        gender = "her";
-                    sprintf(buf, "%s causually tosses %s [Worn Troll Dice]. One %u and one %u.", m_caster->GetName().c_str(), gender, urand(1, 6), urand(1, 6));
-                    m_caster->MonsterTextEmote(buf, 0);
-                    break;
+                    BroadcastText const* bct = sObjectMgr->GetBroadcastText(26152);//casually tosses his |Hitem:36862|h|cFFFFFFFF[Worn Troll Dice]|r|h.
+                    LocaleConstant loc_idx = m_caster->ToPlayer()->GetSession()->GetSessionDbLocaleIndex();
+                    std::string baseText = "";
+                    if (bct)
+                        baseText = bct->GetText(loc_idx, m_caster->GetGender());
+                        m_caster->TextEmote(baseText);
+                    break;                    
                 }
                 // Death Knight Initiate Visual
                 case 51519:
@@ -5355,6 +5356,10 @@ void Spell::EffectForceDeselect(SpellEffIndex /*effIndex*/)
 
     // SMSG_BREAK_TAREGT not SMSG_CLEAR_TARGET
     GetCaster()->SendClearTarget();
+
+    WorldPackets::Spells::ClearTarget clearTarget;
+    clearTarget.Guid = m_caster->GetGUID();
+    m_caster->SendMessageToSet(clearTarget.Write(), true);
 
     UnitList targets;
     Trinity::AnyUnfriendlyUnitInObjectRangeCheck u_check(GetCaster(), GetCaster(), GetCaster()->GetMap()->GetVisibilityRange());
@@ -6640,7 +6645,7 @@ void Spell::EffectRenamePet(SpellEffIndex /*effIndex*/)
         !unitTarget->ToCreature()->IsPet() || ((Pet*)unitTarget)->getPetType() != HUNTER_PET)
         return;
 
-    unitTarget->SetByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 2, UNIT_CAN_BE_RENAMED);
+    unitTarget->SetByteFlag(UNIT_FIELD_BYTES_2, 2, UNIT_CAN_BE_RENAMED);
 }
 
 void Spell::EffectForcePlayerInteraction(SpellEffIndex effIndex)
@@ -6672,9 +6677,7 @@ void Spell::EffectPlayMusic(SpellEffIndex effIndex)
         return;
     }
 
-    WorldPacket data(SMSG_PLAY_MUSIC, 4);
-    data << uint32(soundid);
-    unitTarget->ToPlayer()->GetSession()->SendPacket(&data);
+    unitTarget->ToPlayer()->SendDirectMessage(WorldPackets::Misc::PlayMusic(soundid).Write());
 }
 
 void Spell::EffectSpecCount(SpellEffIndex /*effIndex*/)
@@ -6704,13 +6707,17 @@ void Spell::EffectPlaySound(SpellEffIndex effIndex)
     if (effectHandleMode != SPELL_EFFECT_HANDLE_HIT_TARGET)
         return;
 
-    if (!unitTarget || unitTarget->GetTypeId() != TYPEID_PLAYER)
+    if (!unitTarget)
+        return;
+
+    Player* player = unitTarget->ToPlayer();
+    if (!player)
         return;
 
     switch (m_spellInfo->Id)
     {
         case 91604: // Restricted Flight Area
-            unitTarget->ToPlayer()->GetSession()->SendNotification(LANG_ZONE_NOFLYZONE);
+            player->GetSession()->SendNotification(LANG_ZONE_NOFLYZONE);
             break;
         default:
             break;
@@ -6724,27 +6731,7 @@ void Spell::EffectPlaySound(SpellEffIndex effIndex)
         return;
     }
 
-    ObjectGuid guid = m_caster->GetGUID();
-
-    WorldPacket data(SMSG_PLAY_SOUND, 4 + 9);
-    data.WriteBit(guid[2]);
-    data.WriteBit(guid[3]);
-    data.WriteBit(guid[7]);
-    data.WriteBit(guid[6]);
-    data.WriteBit(guid[0]);
-    data.WriteBit(guid[5]);
-    data.WriteBit(guid[4]);
-    data.WriteBit(guid[1]);
-    data << uint32(soundId);
-    data.WriteByteSeq(guid[3]);
-    data.WriteByteSeq(guid[2]);
-    data.WriteByteSeq(guid[4]);
-    data.WriteByteSeq(guid[7]);
-    data.WriteByteSeq(guid[5]);
-    data.WriteByteSeq(guid[0]);
-    data.WriteByteSeq(guid[6]);
-    data.WriteByteSeq(guid[1]);
-    unitTarget->ToPlayer()->GetSession()->SendPacket(&data);
+    player->PlayDirectSound(soundId, player);
 }
 
 void Spell::EffectRemoveAura(SpellEffIndex effIndex)

@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -1071,20 +1071,29 @@ class spell_monkey_wisdom : public SpellScriptLoader
 
             void HandleScript(SpellEffIndex /*eff*/)
             {
-                std::string text_str[9] =
-                {
-                    "Peel banana first, eat second.",
-                    "Wet fur not fun to sleep on.",
-                    "Don't roll in own poo unless you want to smell like poo all day.",
-                    "Steal a banana from a hozen, expect an angry hozen.",
-                    "Poo not good to eat, but very good to throw.",
-                    "Mouth only hole that banana go in.",
-                    "Don't throw banana peel where going to walk.",
-                    "Firecracker for throwing, banana for eating.",
-                    "Don't pull own tail when there are other tails to pull."
+                uint32 wisdoms[9] = {
+                    54074, // Peel banana first, eat second.
+                    54077, // Wet fur not fun to sleep on.
+                    54078, // Don't roll in own poo unless want to smell like poo all day.
+                    54075, // Steal a banana from a hozen, expect a angry hozen.
+                    54080, // Poo not good to eat, but very good to throw.
+                    54073, // Don't throw banana peel where going to walk.
+                    54076, // Firecracker for throwing, banana for eating.
+                    54079  // Don't pull own tail when there are other tails to pull.
                 };
 
-                GetHitUnit()->MonsterTextEmote(text_str[urand(0, 8)].c_str(), GetHitUnit(), true);
+                auto target = GetHitUnit();
+                if (GetCaster() != target)
+                {
+                    BroadcastText const* bct = sObjectMgr->GetBroadcastText(wisdoms[urand(0, 7)]);
+                    Player* _player = target->ToPlayer();
+                    LocaleConstant loc_idx = _player->GetSession()->GetSessionDbLocaleIndex();
+                    std::string baseText = "";
+                    if (bct)
+                        baseText = bct->GetText(loc_idx, _player->GetGender());
+
+                    target->TextEmote(baseText.c_str(), nullptr); 
+                }
             }
 
             void Register() override

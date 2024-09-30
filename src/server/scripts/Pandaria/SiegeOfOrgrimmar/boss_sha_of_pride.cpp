@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -975,7 +975,7 @@ struct npc_rift_of_corruption : public ScriptedAI
 
     void Reset() override
     {
-        me->SetDisplayId(me->GetCreatureTemplate()->Modelid1);
+        me->SetDisplayFromModel(0);
         DoCast(me, SPELL_RIFT_OF_CORRUPTION_VIS);
         DoCast(me, SPELL_BOLT_OF_CORRUPTION_DUMMY);
         DoCast(me, SPELL_RIFT_OF_CORRUPTION_AT);

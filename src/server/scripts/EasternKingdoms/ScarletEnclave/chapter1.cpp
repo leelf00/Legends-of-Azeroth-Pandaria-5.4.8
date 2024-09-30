@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -124,7 +124,7 @@ public:
             events.Reset();
             me->SetFaction(7);
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
-            me->SetUInt32Value(UNIT_FIELD_ANIM_TIER, 8);
+            me->SetUInt32Value(UNIT_FIELD_BYTES_1, 8);
             me->LoadEquipment(0, true);
         }
 
@@ -158,7 +158,7 @@ public:
             wait_timer = 5000;
             phase = PHASE_TO_EQUIP;
 
-            me->SetUInt32Value(UNIT_FIELD_ANIM_TIER, 0);
+            me->SetUInt32Value(UNIT_FIELD_BYTES_1, 0);
             me->RemoveAurasDueToSpell(SPELL_SOUL_PRISON_CHAIN_SELF);
             me->RemoveAurasDueToSpell(SPELL_SOUL_PRISON_CHAIN);
 
@@ -357,7 +357,7 @@ struct npc_eye_of_acherus : public ScriptedAI
 {
     npc_eye_of_acherus(Creature* creature) : ScriptedAI(creature)
     {
-        creature->SetDisplayId(creature->GetCreatureTemplate()->Modelid1);
+        me->SetDisplayFromModel(0);
         creature->SetReactState(REACT_PASSIVE);
     }
 
@@ -884,11 +884,14 @@ public:
 };
 
 // correct way: 52312 52314 52555 ...
-enum Creatures_SG
+enum TheGiftThatKeepsOnGiving
 {
-    NPC_GHOULS = 28845,
-    NPC_GHOSTS = 28846,
+    SAY_LINE_0  = 0,
+
+    NPC_GHOULS  = 28845,
+    NPC_GHOSTS  = 28846,
 };
+
 class npc_dkc1_gothik : public CreatureScript
 {
 public:
@@ -993,8 +996,16 @@ public:
             // Ghouls should display their Birth Animation
             // Crawling out of the ground
             //DoCast(me, 35177, true);
-            //me->MonsterSay("Mommy?", LANG_UNIVERSAL, 0);
             me->SetReactState(REACT_DEFENSIVE);
+        }
+
+        void JustAppeared() override
+        {
+            CreatureAI::JustAppeared();
+
+            if (urand(0, 1))
+                if (Unit* owner = me->GetOwner())
+                    Talk(SAY_LINE_0, owner);
         }
 
         void FindMinions(Unit* owner)
@@ -1080,7 +1091,7 @@ class npc_scarlet_miner_cart : public CreatureScript
             npc_scarlet_miner_cartAI(Creature* creature) : PassiveAI(creature), _minerGUID(), _playerGUID()
             {
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_PC);
-                me->SetDisplayId(me->GetCreatureTemplate()->Modelid1); // Modelid2 is a horse.
+                me->SetDisplayFromModel(0);
             }
 
             void JustSummoned(Creature* summon) override

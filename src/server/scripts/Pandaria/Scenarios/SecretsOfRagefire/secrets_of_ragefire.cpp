@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -1046,7 +1046,7 @@ struct npc_ragefire_investigated_item : public ScriptedAI
 
     void Reset() override
     {
-        me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
+        me->SetDisplayFromModel(1);
 
         if (me->GetEntry() == NPC_PANDARIA_ARTIFACTS)
             me->SetObjectScale(2.0f);
@@ -1474,7 +1474,7 @@ struct npc_ragefire_shattered_earth : public ScriptedAI
 
     void Reset() override
     {
-        me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
+        me->SetDisplayFromModel(1);
         DoCast(me, SPELL_SHATTERED_EARTH);
     }
 

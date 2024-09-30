@@ -71,7 +71,7 @@ class TC_GAME_API SmartAI : public CreatureAI
         bool IsEscortInvokerInRange();
 
         // Called when creature is spawned or respawned
-        void JustRespawned() override;
+        void JustAppeared() override;
 
         // Called after InitializeAI(), EnterEvadeMode() for resetting variables
         void Reset() override;

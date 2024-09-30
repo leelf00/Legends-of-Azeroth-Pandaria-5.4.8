@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -38,8 +38,6 @@ enum Spells
 #define CHAMBER_CENTER_Z             -0.4
 
 #define MAX_ENCOUNTER 2
-
-#define EMOTE_BONDS_WEAKEN          "'s bonds begin to weaken!"
 
 class instance_magtheridons_lair : public InstanceMapScript
 {
@@ -179,7 +177,7 @@ class instance_magtheridons_lair : public InstanceMapScript
                             Creature* Magtheridon = instance->GetCreature(MagtheridonGUID);
                             if (Magtheridon && Magtheridon->IsAlive())
                             {
-                                Magtheridon->MonsterTextEmote(EMOTE_BONDS_WEAKEN, 0);
+                                Magtheridon->AI()->Talk(6);
                                 CageTimer = 120000;
                             }
                             HandleGameObject(DoorGUID, false);

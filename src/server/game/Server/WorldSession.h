@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -60,6 +60,17 @@ struct DeclinedName;
 struct ItemTemplate;
 struct MovementInfo;
 struct PetBattleRequest;
+
+namespace WorldPackets
+{
+    namespace Misc
+    {
+        class CompleteCinematic;
+        class CompleteMovie;
+        class NextCinematicCamera;
+        class OpeningCinematic;
+    }
+}
 
 namespace lfg
 {
@@ -443,6 +454,7 @@ class TC_GAME_API WorldSession
 
         uint32 GetLatency() const { return m_latency; }
         void SetLatency(uint32 latency) { m_latency = latency; }
+        void ResetClientTimeDelay() { m_clientTimeDelay = 0; }
 
         std::atomic<time_t> m_timeOutTime;
         void UpdateTimeOutTime(uint32 diff)
@@ -485,17 +497,17 @@ class TC_GAME_API WorldSession
         void Handle_Deprecated(WorldPacket& recvPacket);    // never used anymore by client
         void LogUnprocessedTail(WorldPacket const* packet);
 
-        void HandleCharEnumOpcode(WorldPacket& recvPacket);
+        void HandleCharEnumOpcode(WorldPackets::Character::EnumCharacters& /*enumCharacters*/);
         void HandleCharDeleteOpcode(WorldPacket& recvPacket);
         void HandleCharCreateOpcode(WorldPacket& recvPacket);
-        void HandlePlayerLoginOpcode(WorldPacket& recvPacket);
+        void HandlePlayerLoginOpcode(WorldPackets::Character::PlayerLogin& packet);
         void HandleLoadScreenOpcode(WorldPacket& recvPacket);
         void HandleCharEnum(PreparedQueryResult result);
         void HandlePlayerLogin(LoginQueryHolder const& holder);
         void HandleCharFactionOrRaceChange(WorldPacket& recvData);
         void HandleRandomizeCharNameOpcode(WorldPacket& recvData);
         void HandleReorderCharacters(WorldPacket& recvData);
-        void HandleOpeningCinematic(WorldPacket& recvData);
+        void HandleOpeningCinematic(WorldPackets::Misc::OpeningCinematic& packet);
 
         // played time
         void HandlePlayedTime(WorldPacket& recvPacket);
@@ -522,8 +534,8 @@ class TC_GAME_API WorldSession
         void HandleMountSpecialAnimOpcode(WorldPacket& recvdata);
 
         // character view
-        void HandleShowingHelmOpcode(WorldPacket& recvData);
-        void HandleShowingCloakOpcode(WorldPacket& recvData);
+        void HandleShowingHelmOpcode(WorldPackets::Character::ShowingHelm& packet);
+        void HandleShowingCloakOpcode(WorldPackets::Character::ShowingCloak& packet);
 
         // repair
         void HandleRepairItemOpcode(WorldPacket& recvPacket);
@@ -759,6 +771,7 @@ class TC_GAME_API WorldSession
         void HandleAuctionListOwnerItems(WorldPacket& recvData);
         void HandleAuctionPlaceBid(WorldPacket& recvData);
         void HandleAuctionListPendingSales(WorldPacket& recvData);
+        void HandleReplicateItems(WorldPackets::AuctionHouse::AuctionReplicateItems& packet);
 
         void HandleGetMailList(WorldPacket& recvData);
         void HandleSendMail(WorldPacket& recvData);
@@ -869,9 +882,9 @@ class TC_GAME_API WorldSession
         //void HandleGetChannelMemberCount(WorldPacket& recvPacket);
         void HandleSetChannelWatch(WorldPacket& recvPacket);
 
-        void HandleCompleteCinematic(WorldPacket& recvPacket);
-        void HandleCompleteMovie(WorldPacket& recvPacket);
-        void HandleNextCinematicCamera(WorldPacket& recvPacket);
+        void HandleCompleteCinematic(WorldPackets::Misc::CompleteCinematic& packet);
+        void HandleCompleteMovie(WorldPackets::Misc::CompleteMovie& packet);    
+        void HandleNextCinematicCamera(WorldPackets::Misc::NextCinematicCamera& packet);
 
         void HandlePageTextQueryOpcode(WorldPacket& recvPacket);
 
@@ -1090,6 +1103,7 @@ class TC_GAME_API WorldSession
         void HandleDiscardedTimeSyncAcks(WorldPacket & recvData);
         void HandleLogStreamingError(WorldPacket & recvData);
         void HandleShowTradeSkill(WorldPacket& recvData);
+        void SendStreamingMovie();
 
         void SendBroadcastTextDb2Reply(uint32 entry, ByteBuffer& buffer);
         void SendItemDb2Reply(uint32 entry, ByteBuffer& buffer);
@@ -1259,6 +1273,7 @@ class TC_GAME_API WorldSession
         LocaleConstant m_sessionDbcLocale;
         LocaleConstant m_sessionDbLocaleIndex;
         uint32 m_latency;
+        uint32 m_clientTimeDelay;
         uint32 m_flags;
         TimeValue m_firstCancelModSpeedNoContorlAurasPacket;
         TimeValue m_lastCancelModSpeedNoContorlAurasPacket;

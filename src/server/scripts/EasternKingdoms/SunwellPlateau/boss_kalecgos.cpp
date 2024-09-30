@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -79,8 +79,6 @@ enum SWPActions
 };
 
 #define GO_FAILED   "You are unable to use this currently."
-
-#define EMOTE_UNABLE_TO_FIND    "is unable to find kalecgos"
 
 #define FLY_X   1679
 #define FLY_Y   900
@@ -717,7 +715,6 @@ class boss_sathrovarr : public CreatureScript
                         }
                         else
                         {
-                            me->MonsterTextEmote(EMOTE_UNABLE_TO_FIND, 0);
                             EnterEvadeMode();
                             return;
                         }

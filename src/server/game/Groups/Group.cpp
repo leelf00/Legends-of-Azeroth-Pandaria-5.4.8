@@ -2938,7 +2938,7 @@ void Group::BroadcastGroupUpdate(void)
         Player* pp = ObjectAccessor::FindPlayer(citr->guid);
         if (pp && pp->IsInWorld())
         {
-            pp->ForceValuesUpdateAtIndex(UNIT_FIELD_SHAPESHIFT_FORM);
+            pp->ForceValuesUpdateAtIndex(UNIT_FIELD_BYTES_2);
             pp->ForceValuesUpdateAtIndex(UNIT_FIELD_FACTION_TEMPLATE);
             TC_LOG_DEBUG("misc", "-- Forced group value update for '%s'", pp->GetName().c_str());
         }

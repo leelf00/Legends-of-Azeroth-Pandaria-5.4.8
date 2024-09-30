@@ -95,10 +95,6 @@ void RegisterGlobals(lua_State* L)
     lua_register(L, "SaveAllPlayers", &LuaGlobalFunctions::SaveAllPlayers);                                 // SaveAllPlayers() - Saves all players
     lua_register(L, "SendMail", &LuaGlobalFunctions::SendMail);                                             // SendMail(subject, text, receiverLowGUID[, sender, stationary, delay, itemEntry, itemAmount, itemEntry2, itemAmount2...]) - Sends a mail to player with lowguid. use nil to use default values on optional arguments. Sender is an optional player object. UNDOCUMENTED
     lua_register(L, "AddTaxiPath", &LuaGlobalFunctions::AddTaxiPath);                                       // AddTaxiPath(pathTable, mountA, mountH[, price, pathId]) - Adds a new taxi path. Returns the path's ID. Will replace an existing path if pathId provided and already used. path table structure: T = {{map, x, y, z[, actionFlag, delay, arrivalEvId, departEvId]}, {...}, ...} UDOCUMENTED
-    lua_register(L, "FindWeather", &LuaGlobalFunctions::FindWeather);                                       // FindWeather(zoneId) - Finds the weather by zoneId and returns the weather
-    lua_register(L, "AddWeather", &LuaGlobalFunctions::AddWeather);                                         // AddWeather(zoneId) - Adds weather to the following zone, also returns weather
-    lua_register(L, "RemoveWeather", &LuaGlobalFunctions::RemoveWeather);                                   // RemoveWeather(zoneId) - Removes weather from a zone
-    lua_register(L, "SendFineWeatherToPlayer", &LuaGlobalFunctions::SendFineWeatherToPlayer);               // SendFineWeatherToPlayer(player) - Sends WEATHER_STATE_FINE weather to the
 }
 
 ElunaRegister<Object> ObjectMethods[] =

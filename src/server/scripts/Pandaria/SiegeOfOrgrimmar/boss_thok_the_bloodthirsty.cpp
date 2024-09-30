@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -922,7 +922,7 @@ struct npc_korkron_jailer : public ScriptedAI
             me->PrepareChanneledCast(me->GetOrientation());
             me->SetHealth(1);
             me->SetFaction(35); // cuz ref doesn`t work
-            me->SetFlag(UNIT_FIELD_FLAGS2, 69240832);
+            me->SetFlag(UNIT_FIELD_FLAGS_2, 69240832);
             DoCast(me, SPELL_PERMANENT_FEIGN_DEATH, true);
 
             if (me->GetInstanceScript())
@@ -1131,7 +1131,7 @@ struct npc_thok_ice_tomb : public ScriptedAI
         if (Creature* thok = ObjectAccessor::GetCreature(*me, me->GetInstanceScript() ? me->GetInstanceScript()->GetGuidData(DATA_THOK_THE_BLOODTHIRSTY) : ObjectGuid::Empty))
             thok->AI()->JustSummoned(me);
 
-        me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
+        me->SetDisplayFromModel(1);
         ownerGUID = summoner->GetGUID();
         summoner->CastSpell(summoner, SPELL_SUMMON_ICE_TOMB_STUN, true);
 

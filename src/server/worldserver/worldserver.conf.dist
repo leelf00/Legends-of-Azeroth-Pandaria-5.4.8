@@ -505,6 +505,24 @@ CleanCharacterDB = 0
 PersistentCharacterCleanFlags = 0
 
 #
+#    Auction.GetAllScanDelay
+#        Description: Sets the minimum time in seconds, a single player character can perform a getall scan.
+#                     The value is only held in memory so a server restart will clear it.
+#                     Setting this to zero, will disable GetAll functions completely.
+#        Default:     900 - (GetAll scan limited to once every 15mins per player character)
+
+Auction.GetAllScanDelay = 900
+
+#
+#    Auction.SearchDelay
+#        Description: Sets the minimum time in milliseconds (seconds x 1000), that the client must wait between
+#                     auction search operations. This can be increased if somehow Auction House activity is causing
+#                     too much load.
+#        Default:     300 - (Time delay between auction searches set to 0.3secs)
+
+Auction.SearchDelay = 300
+
+#
 ###################################################################################################
 
 ###################################################################################################
@@ -1703,24 +1721,18 @@ Channel.RestrictedLfg = 1
 
 #
 #    ChatLevelReq.Channel
-#        Description: Level requirement for characters to be able to write in chat channels.
+#    ChatLevelReq.Whisper
+#    ChatLevelReq.Emote
+#    ChatLevelReq.Say
+#    ChatLevelReq.Yell
+#        Description: Level requirement for characters to be able to use chats.
 #        Default:     1
 
 ChatLevelReq.Channel = 1
-
-#
-#    ChatLevelReq.Whisper
-#        Description: Level requirement for characters to be able to whisper other characters.
-#        Default:     1
-
 ChatLevelReq.Whisper = 1
-
-#
-#    ChatLevelReq.Say
-#        Description: Level requirement for characters to be able to use say/yell/emote.
-#        Default:     1
-
+ChatLevelReq.Emote = 1
 ChatLevelReq.Say = 1
+ChatLevelReq.Yell = 1
 
 #
 #    PreserveCustomChannels

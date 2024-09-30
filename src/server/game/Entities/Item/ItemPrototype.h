@@ -815,9 +815,11 @@ struct ItemTemplate
     uint32 CalculateArmor(uint32 ilvl) const;
     void CalculateMinMaxDamageScaling(uint32 ilvl, uint32& minDamage, uint32& maxDamage) const;
 
+    uint32 GetId() const { return ItemId; }
     uint32 GetClass() const { return Class; }
     uint32 GetSubClass() const { return SubClass; }
     uint32 GetQuality() const { return Quality; }
+    uint32 GetInventoryType() const { return InventoryType; }
     uint32 GetFlags() const { return Flags; }
     uint32 GetBuyCount() const { return std::max(BuyCount, 1u); }
     uint32 GetBuyPrice() const { return BuyPrice; }

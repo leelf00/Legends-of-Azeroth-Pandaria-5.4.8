@@ -76,6 +76,7 @@
 #include "SpellAuraEffects.h"
 #include "SpellAuras.h"
 #include "SpellMgr.h"
+#include "SpellPackets.h"
 #include "Transport.h"
 #include "TradeData.h"
 #include "UpdateData.h"
@@ -264,7 +265,9 @@ Player::Player(WorldSession* session) : Unit(true), phaseMgr(this), hasForcedMov
 
     m_cinematic = 0;
 
-    PlayerTalkClass = new PlayerMenu(GetSession());
+    m_movie = 0;
+
+    PlayerTalkClass = std::make_unique<PlayerMenu>(GetSession());
     m_currentBuybackSlot = BUYBACK_SLOT_START;
 
     m_DailyQuestChanged = false;
@@ -406,7 +409,7 @@ Player::Player(WorldSession* session) : Unit(true), phaseMgr(this), hasForcedMov
     m_reputationMgr = new ReputationMgr(this);
     m_battlePetMgr = new BattlePetMgr(this);
 
-    _cinematicMgr = new CinematicMgr(this);
+    _cinematicMgr = std::make_unique<CinematicMgr>(this);
 
     transcendence_spirit = nullptr;
 
@@ -434,8 +437,6 @@ Player::~Player()
     for (ItemMap::iterator iter = mMitems.begin(); iter != mMitems.end(); ++iter)
         delete iter->second;                                //if item is duplicated... then server may crash ... but that item should be deallocated
 
-    delete PlayerTalkClass;
-
     for (size_t x = 0; x < ItemSetEff.size(); x++)
         delete ItemSetEff[x];
 
@@ -443,7 +444,6 @@ Player::~Player()
     delete m_runes;
     delete m_reputationMgr;
     delete m_battlePetMgr;
-    delete _cinematicMgr;
 
     for (uint8 i = 0; i < VOID_STORAGE_MAX_SLOT; ++i)
         delete _voidStorageItems[i];
@@ -530,7 +530,7 @@ bool Player::Create(uint32 guidlow, CharacterCreateInfo* createInfo)
     InitDisplayIds();
     if (sWorld->getIntConfig(CONFIG_GAME_TYPE) == REALM_TYPE_PVP || sWorld->getIntConfig(CONFIG_GAME_TYPE) == REALM_TYPE_RPPVP)
     {
-        SetByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_PVP);
+        SetByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_PVP);
         SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);
     }
 
@@ -538,13 +538,13 @@ bool Player::Create(uint32 guidlow, CharacterCreateInfo* createInfo)
 
     SetInt32Value(PLAYER_FIELD_WATCHED_FACTION_INDEX, uint32(-1));  // -1 is default value
 
-    SetUInt32Value(PLAYER_FIELD_HAIR_COLOR_ID, (createInfo->Skin | (createInfo->Face << 8) | (createInfo->HairStyle << 16) | (createInfo->HairColor << 24)));
-    SetUInt32Value(PLAYER_FIELD_REST_STATE, (createInfo->FacialHair |
+    SetUInt32Value(PLAYER_BYTES, (createInfo->Skin | (createInfo->Face << 8) | (createInfo->HairStyle << 16) | (createInfo->HairColor << 24)));
+    SetUInt32Value(PLAYER_BYTES_2, (createInfo->FacialHair |
                                    (0x00 << 8) |
                                    (0x00 << 16) |
                                    (((GetSession()->IsARecruiter() || GetSession()->GetRecruiterId() != 0) ? REST_STATE_RAF_LINKED : REST_STATE_NOT_RAF_LINKED) << 24)));
-    SetByteValue(PLAYER_FIELD_ARENA_FACTION, 0, createInfo->Gender);
-    SetByteValue(PLAYER_FIELD_ARENA_FACTION, 3, 0);                     // BattlefieldArenaFaction (0 or 1)
+    SetByteValue(PLAYER_BYTES_3, 0, createInfo->Gender);
+    SetByteValue(PLAYER_BYTES_3, 3, 0);                     // BattlefieldArenaFaction (0 or 1)
 
     SetGuidValue(OBJECT_FIELD_DATA, ObjectGuid::Empty);
     SetUInt32Value(PLAYER_FIELD_GUILD_RANK_ID, 0);
@@ -1087,7 +1087,7 @@ void Player::SetDrunkValue(uint8 newDrunkValue, uint32 itemId /*= 0*/)
         m_invisibilityDetect.DelFlag(INVISIBILITY_DRUNK);
 
     uint32 newDrunkenState = Player::GetDrunkenstateByValue(newDrunkValue);
-    SetByteValue(PLAYER_FIELD_ARENA_FACTION, 1, newDrunkValue);
+    SetByteValue(PLAYER_BYTES_3, 1, newDrunkValue);
     UpdateObjectVisibility();
 
     if (!isSobering)
@@ -2734,7 +2734,7 @@ void Player::SetGameMaster(bool on)
         m_ExtraFlags |= PLAYER_EXTRA_GM_ON;
         SetFaction(35);
         SetFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_GM);
-        SetFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_ALLOW_CHEAT_SPELLS);
+        SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_ALLOW_CHEAT_SPELLS);
 
         if (Pet* pet = GetPet())
         {
@@ -2742,7 +2742,7 @@ void Player::SetGameMaster(bool on)
             pet->getHostileRefManager().setOnlineOfflineState(false);
         }
 
-        RemoveByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_FFA_PVP);
+        RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
         ResetContestedPvP();
 
         getHostileRefManager().setOnlineOfflineState(false);
@@ -2756,7 +2756,7 @@ void Player::SetGameMaster(bool on)
         m_ExtraFlags &= ~ PLAYER_EXTRA_GM_ON;
         setFactionForRace(GetRace());
         RemoveFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_GM);
-        RemoveFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_ALLOW_CHEAT_SPELLS);
+        RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_ALLOW_CHEAT_SPELLS);
 
         if (Pet* pet = GetPet())
         {
@@ -2766,7 +2766,7 @@ void Player::SetGameMaster(bool on)
 
         // restore FFA PvP Server state
         if (sWorld->IsFFAPvPRealm())
-            SetByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_FFA_PVP);
+            SetByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
 
         // restore FFA PvP area state, remove not allowed for GM mounts
         UpdateArea(m_areaUpdateId);
@@ -3055,8 +3055,8 @@ void Player::GiveLevel(uint8 level)
             {
                 ++m_grantableLevels;
 
-                if (!HasByteFlag(PLAYER_FIELD_LIFETIME_MAX_RANK, 1, 0x01))
-                    SetByteFlag(PLAYER_FIELD_LIFETIME_MAX_RANK, 1, 0x01);
+                if (!HasByteFlag(PLAYER_FIELD_BYTES, 1, 0x01))
+                    SetByteFlag(PLAYER_FIELD_BYTES, 1, 0x01);
             }
         }
     }
@@ -3279,16 +3279,16 @@ void Player::InitStatsForLevel(bool reapplyMods)
         UNIT_FLAG_SKINNABLE      | UNIT_FLAG_MOUNT        | UNIT_FLAG_TAXI_FLIGHT      );
     SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);   // must be set
 
-    SetFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_REGENERATE_POWER);// must be set
+    SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER);// must be set
 
     // cleanup player flags (will be re-applied if need at aura load), to avoid have ghost flag without ghost aura, for example.
     RemoveFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_AFK | PLAYER_FLAGS_DND | PLAYER_FLAGS_GM | PLAYER_FLAGS_GHOST | PLAYER_FLAGS_ALLOW_ONLY_ABILITY);
 
     RemoveStandFlags(UNIT_STAND_FLAGS_ALL);                 // one form stealth modified bytes
-    RemoveByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_FFA_PVP | UNIT_BYTE2_FLAG_SANCTUARY);
+    RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP | UNIT_BYTE2_FLAG_SANCTUARY);
 
     // restore if need some important flags
-    //SetUInt32Value(PLAYER_FIELD_LIFETIME_MAX_RANK2, 0);                 // flags empty by default
+    //SetUInt32Value(PLAYER_FIELD_BYTES2, 0);                 // flags empty by default
 
     if (reapplyMods)                                        // reapply stats values only on .reset stats (level) command
         _ApplyAllStatBonuses();
@@ -5202,7 +5202,7 @@ void Player::KillPlayer()
     //SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_IN_PVP);
 
     SetUInt32Value(OBJECT_FIELD_DYNAMIC_FLAGS, UNIT_DYNFLAG_NONE);
-    ApplyModFlag(PLAYER_FIELD_LIFETIME_MAX_RANK, PLAYER_FIELD_BYTE_RELEASE_TIMER, !sMapStore.LookupEntry(GetMapId())->Instanceable() && !HasAuraType(SPELL_AURA_PREVENT_RESURRECTION));
+    ApplyModFlag(PLAYER_FIELD_BYTES, PLAYER_FIELD_BYTE_RELEASE_TIMER, !sMapStore.LookupEntry(GetMapId())->Instanceable() && !HasAuraType(SPELL_AURA_PREVENT_RESURRECTION));
 
     // 6 minutes until repop at graveyard
     m_deathTimer = 6 * MINUTE * IN_MILLISECONDS;
@@ -5247,8 +5247,8 @@ Corpse* Player::CreateCorpse()
     _corpseLocation.WorldRelocate(*this);
 
     _uf = GetRace();
-    _pb = GetUInt32Value(PLAYER_FIELD_HAIR_COLOR_ID);
-    _pb2 = GetUInt32Value(PLAYER_FIELD_REST_STATE);
+    _pb = GetUInt32Value(PLAYER_BYTES);
+    _pb2 = GetUInt32Value(PLAYER_BYTES_2);
 
     uint8 race       = (uint8)(_uf);
     uint8 skin       = (uint8)(_pb);
@@ -5260,8 +5260,8 @@ Corpse* Player::CreateCorpse()
     _cfb1 = ((0x00) | (race << 8) | (GetGender() << 16) | (skin << 24));
     _cfb2 = ((face) | (hairstyle << 8) | (haircolor << 16) | (facialhair << 24));
 
-    corpse->SetUInt32Value(CORPSE_FIELD_SKIN_ID, _cfb1);
-    corpse->SetUInt32Value(CORPSE_FIELD_FACIAL_HAIR_STYLE_ID, _cfb2);
+    corpse->SetUInt32Value(CORPSE_FIELD_BYTES_1, _cfb1);
+    corpse->SetUInt32Value(CORPSE_FIELD_BYTES_2, _cfb2);
 
     uint32 flags = CORPSE_FLAG_UNK2;
     if (HasFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_HIDE_HELM))
@@ -5952,8 +5952,8 @@ bool Player::UpdateSkill(uint32 skill_id, uint32 step)
     uint16 field = itr->second.pos / 2;
     uint8 offset = itr->second.pos & 1; // itr->second.pos % 2
 
-    uint16 value = GetUInt16Value(PLAYER_FIELD_SKILL_RANKS + field, offset);
-    uint16 max = GetUInt16Value(PLAYER_FIELD_SKILL_MAX_RANKS + field, offset);
+    uint16 value = GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_RANK_OFFSET + field, offset);
+    uint16 max = GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MAX_RANK_OFFSET + field, offset);
 
     if (!max || !value || value >= max)
         return false;
@@ -5964,7 +5964,7 @@ bool Player::UpdateSkill(uint32 skill_id, uint32 step)
         if (new_value > max)
             new_value = max;
 
-        SetUInt16Value(PLAYER_FIELD_SKILL_RANKS + field, offset, new_value);
+        SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_RANK_OFFSET + field, offset, new_value);
         if (itr->second.uState != SKILL_NEW)
             itr->second.uState = SKILL_CHANGED;
 
@@ -6120,8 +6120,8 @@ bool Player::UpdateSkillPro(uint16 skillId, int32 chance, uint32 step)
     uint16 field = itr->second.pos / 2;
     uint8 offset = itr->second.pos & 1; // itr->second.pos % 2
 
-    uint16 value = GetUInt16Value(PLAYER_FIELD_SKILL_RANKS + field, offset);
-    uint16 max = GetUInt16Value(PLAYER_FIELD_SKILL_MAX_RANKS + field, offset);
+    uint16 value = GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_RANK_OFFSET + field, offset);
+    uint16 max = GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MAX_RANK_OFFSET + field, offset);
 
     if (!max || !value || value >= max)
         return false;
@@ -6138,7 +6138,7 @@ bool Player::UpdateSkillPro(uint16 skillId, int32 chance, uint32 step)
     if (new_value > max)
         new_value = max;
 
-    SetUInt16Value(PLAYER_FIELD_SKILL_RANKS + field, offset, new_value);
+    SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_RANK_OFFSET + field, offset, new_value);
     if (itr->second.uState != SKILL_NEW)
         itr->second.uState = SKILL_CHANGED;
 
@@ -6173,7 +6173,7 @@ void Player::ModifySkillBonus(uint32 skillid, int32 val, bool talent)
     if (itr == mSkillStatus.end() || itr->second.uState == SKILL_DELETED)
         return;
 
-    uint16 field = itr->second.pos / 2 + (talent ? PLAYER_FIELD_SKILL_TALENTS : PLAYER_FIELD_SKILL_MODIFIERS);
+    uint16 field = itr->second.pos / 2 + (talent ? PLAYER_FIELD_SKILL + SKILL_TALENT_OFFSET : PLAYER_FIELD_SKILL + SKILL_MODIFIER_OFFSET);
     uint8 offset = itr->second.pos & 1; // itr->second.pos % 2
 
     uint16 bonus = GetUInt16Value(field, offset);
@@ -6203,13 +6203,13 @@ void Player::UpdateSkillsForLevel()
         {
             if (!IsWeaponSkill(entry->SkillId))
             {
-                uint16 max = GetUInt16Value(PLAYER_FIELD_SKILL_MAX_RANKS + field, offset);
+                uint16 max = GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MAX_RANK_OFFSET + field, offset);
 
                 /// update only level dependent max skill values
                 if (max != 1)
                 {
-                    SetUInt16Value(PLAYER_FIELD_SKILL_MAX_RANKS + field, offset, maxSkill);
-                    SetUInt16Value(PLAYER_FIELD_SKILL_MAX_RANKS + field, offset, maxSkill);
+                    SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MAX_RANK_OFFSET + field, offset, maxSkill);
+                    SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MAX_RANK_OFFSET + field, offset, maxSkill);
                     if (itr->second.uState != SKILL_NEW)
                         itr->second.uState = SKILL_CHANGED;
                 }
@@ -6217,7 +6217,7 @@ void Player::UpdateSkillsForLevel()
         }
 
         // Update level dependent skillline spells
-        LearnSkillRewardedSpells(entry->SkillId, GetUInt16Value(PLAYER_FIELD_SKILL_RANKS + field, offset));
+        LearnSkillRewardedSpells(entry->SkillId, GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_RANK_OFFSET + field, offset));
     }
 }
 
@@ -6242,11 +6242,11 @@ void Player::UpdateSkillsToMaxSkillsForLevel()
         uint16 field = itr->second.pos / 2;
         uint8 offset = itr->second.pos & 1; // itr->second.pos % 2
 
-        uint16 max = GetUInt16Value(PLAYER_FIELD_SKILL_MAX_RANKS + field, offset);
+        uint16 max = GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MAX_RANK_OFFSET + field, offset);
 
         if (max > 1)
         {
-            SetUInt16Value(PLAYER_FIELD_SKILL_MAX_RANKS + field, offset, max);
+            SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MAX_RANK_OFFSET + field, offset, max);
 
             if (itr->second.uState != SKILL_NEW)
                 itr->second.uState = SKILL_CHANGED;
@@ -6269,7 +6269,7 @@ void Player::SetSkill(uint16 id, uint16 step, uint16 newVal, uint16 maxVal)
     {
         uint16 field = itr->second.pos / 2;
         uint8 offset = itr->second.pos & 1; // itr->second.pos % 2
-        currVal = GetUInt16Value(PLAYER_FIELD_SKILL_RANKS + field, offset);
+        currVal = GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_RANK_OFFSET + field, offset);
         if (newVal)
         {
             // if skill value is going down, update enchantments before setting the new value
@@ -6277,10 +6277,10 @@ void Player::SetSkill(uint16 id, uint16 step, uint16 newVal, uint16 maxVal)
                 UpdateSkillEnchantments(id, currVal, newVal);
 
             // update step
-            SetUInt16Value(PLAYER_FIELD_SKILL_STEPS + field, offset, step);
+            SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_STEP_OFFSET + field, offset, step);
             // update value
-            SetUInt16Value(PLAYER_FIELD_SKILL_RANKS + field, offset, newVal);
-            SetUInt16Value(PLAYER_FIELD_SKILL_MAX_RANKS + field, offset, maxVal);
+            SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_RANK_OFFSET + field, offset, newVal);
+            SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MAX_RANK_OFFSET + field, offset, maxVal);
 
             if (itr->second.uState != SKILL_NEW)
                 itr->second.uState = SKILL_CHANGED;
@@ -6298,12 +6298,12 @@ void Player::SetSkill(uint16 id, uint16 step, uint16 newVal, uint16 maxVal)
             //remove enchantments needing this skill
             UpdateSkillEnchantments(id, currVal, 0);
             // clear skill fields
-            SetUInt16Value(PLAYER_FIELD_SKILL_LINEIDS + field, offset, 0);
-            SetUInt16Value(PLAYER_FIELD_SKILL_STEPS + field, offset, 0);
-            SetUInt16Value(PLAYER_FIELD_SKILL_RANKS + field, offset, 0);
-            SetUInt16Value(PLAYER_FIELD_SKILL_MAX_RANKS + field, offset, 0);
-            SetUInt16Value(PLAYER_FIELD_SKILL_MODIFIERS + field, offset, 0);
-            SetUInt16Value(PLAYER_FIELD_SKILL_TALENTS + field, offset, 0);
+            SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_ID_OFFSET + field, offset, 0);
+            SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_STEP_OFFSET + field, offset, 0);
+            SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_RANK_OFFSET + field, offset, 0);
+            SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MAX_RANK_OFFSET + field, offset, 0);
+            SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MODIFIER_OFFSET + field, offset, 0);
+            SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_TALENT_OFFSET + field, offset, 0);
 
             // mark as deleted or simply remove from map if not saved yet
             if (itr->second.uState != SKILL_NEW)
@@ -6335,7 +6335,7 @@ void Player::SetSkill(uint16 id, uint16 step, uint16 newVal, uint16 maxVal)
             uint16 field = i / 2;
             uint8 offset = i & 1; // i % 2
 
-            if (!GetUInt16Value(PLAYER_FIELD_SKILL_LINEIDS + field, offset))
+            if (!GetUInt16Value(PLAYER_FIELD_SKILL + field, offset))
             {
                 SkillLineEntry const* skillEntry = sSkillLineStore.LookupEntry(id);
                 if (!skillEntry)
@@ -6344,7 +6344,7 @@ void Player::SetSkill(uint16 id, uint16 step, uint16 newVal, uint16 maxVal)
                     return;
                 }
 
-                SetUInt16Value(PLAYER_FIELD_SKILL_LINEIDS + field, offset, id);
+                SetUInt16Value(PLAYER_FIELD_SKILL + field, offset, id);
                 if (skillEntry->categoryId == SKILL_CATEGORY_PROFESSION)
                 {
                     if (!GetUInt32Value(PLAYER_FIELD_PROFESSION_SKILL_LINE))
@@ -6353,9 +6353,9 @@ void Player::SetSkill(uint16 id, uint16 step, uint16 newVal, uint16 maxVal)
                         SetUInt32Value(PLAYER_FIELD_PROFESSION_SKILL_LINE + 1, id);
                 }
 
-                SetUInt16Value(PLAYER_FIELD_SKILL_STEPS + field, offset, step);
-                SetUInt16Value(PLAYER_FIELD_SKILL_RANKS + field, offset, newVal);
-                SetUInt16Value(PLAYER_FIELD_SKILL_MAX_RANKS + field, offset, maxVal);
+                SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_STEP_OFFSET + field, offset, step);
+                SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_RANK_OFFSET + field, offset, newVal);
+                SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MAX_RANK_OFFSET + field, offset, maxVal);
 
                 UpdateSkillEnchantments(id, currVal, newVal);
                 UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_REACH_SKILL_LEVEL, id);
@@ -6371,8 +6371,8 @@ void Player::SetSkill(uint16 id, uint16 step, uint16 newVal, uint16 maxVal)
                     mSkillStatus.insert(SkillStatusMap::value_type(id, SkillStatusData(i, SKILL_NEW)));
 
                 // apply skill bonuses
-                SetUInt16Value(PLAYER_FIELD_SKILL_MODIFIERS + field, offset, 0);
-                SetUInt16Value(PLAYER_FIELD_SKILL_TALENTS + field, offset, 0);
+                SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MODIFIER_OFFSET + field, offset, 0);
+                SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_TALENT_OFFSET + field, offset, 0);
 
                 // temporary bonuses
                 AuraEffectList const& mModSkill = GetAuraEffectsByType(SPELL_AURA_MOD_SKILL);
@@ -6418,7 +6418,7 @@ uint16 Player::GetSkillStep(uint16 skill) const
     if (itr == mSkillStatus.end() || itr->second.uState == SKILL_DELETED)
         return 0;
 
-    return GetUInt16Value(PLAYER_FIELD_SKILL_STEPS + itr->second.pos / 2, itr->second.pos & 1);
+    return GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_STEP_OFFSET + itr->second.pos / 2, itr->second.pos & 1);
 }
 
 uint16 Player::GetSkillValue(uint32 skill) const
@@ -6433,9 +6433,9 @@ uint16 Player::GetSkillValue(uint32 skill) const
     uint16 field = itr->second.pos / 2;
     uint8 offset = itr->second.pos & 1;
 
-    int32 result = int32(GetUInt16Value(PLAYER_FIELD_SKILL_RANKS + field, offset));
-    result += int32(GetUInt16Value(PLAYER_FIELD_SKILL_MODIFIERS + field, offset));
-    result += int32(GetUInt16Value(PLAYER_FIELD_SKILL_TALENTS + field, offset));
+    int32 result = int32(GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_RANK_OFFSET + field, offset));
+    result += int32(GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MODIFIER_OFFSET + field, offset));
+    result += int32(GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_TALENT_OFFSET + field, offset));
     return result < 0 ? 0 : result;
 }
 
@@ -6451,9 +6451,9 @@ uint16 Player::GetMaxSkillValue(uint32 skill) const
     uint16 field = itr->second.pos / 2;
     uint8 offset = itr->second.pos & 1;
 
-    int32 result = int32(GetUInt16Value(PLAYER_FIELD_SKILL_MAX_RANKS + field, offset));
-    result += int32(GetUInt16Value(PLAYER_FIELD_SKILL_MODIFIERS + field, offset));
-    result += int32(GetUInt16Value(PLAYER_FIELD_SKILL_TALENTS + field, offset));
+    int32 result = int32(GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MAX_RANK_OFFSET + field, offset));
+    result += int32(GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MODIFIER_OFFSET + field, offset));
+    result += int32(GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_TALENT_OFFSET + field, offset));
     return result < 0 ? 0 : result;
 }
 
@@ -6469,7 +6469,7 @@ uint16 Player::GetPureMaxSkillValue(uint32 skill) const
     uint16 field = itr->second.pos / 2;
     uint8 offset = itr->second.pos & 1;
 
-    return GetUInt16Value(PLAYER_FIELD_SKILL_MAX_RANKS + field, offset);
+    return GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MAX_RANK_OFFSET + field, offset);
 }
 
 uint16 Player::GetBaseSkillValue(uint32 skill) const
@@ -6484,8 +6484,8 @@ uint16 Player::GetBaseSkillValue(uint32 skill) const
     uint16 field = itr->second.pos / 2;
     uint8 offset = itr->second.pos & 1;
 
-    int32 result = int32(GetUInt16Value(PLAYER_FIELD_SKILL_RANKS + field, offset));
-    result += int32(GetUInt16Value(PLAYER_FIELD_SKILL_TALENTS + field, offset));
+    int32 result = int32(GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_RANK_OFFSET + field, offset));
+    result += int32(GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_TALENT_OFFSET + field, offset));
     return result < 0 ? 0 : result;
 }
 
@@ -6501,7 +6501,7 @@ uint16 Player::GetPureSkillValue(uint32 skill) const
     uint16 field = itr->second.pos / 2;
     uint8 offset = itr->second.pos & 1;
 
-    return GetUInt16Value(PLAYER_FIELD_SKILL_RANKS + field, offset);
+    return GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_RANK_OFFSET + field, offset);
 }
 
 int16 Player::GetSkillPermBonusValue(uint32 skill) const
@@ -6516,7 +6516,7 @@ int16 Player::GetSkillPermBonusValue(uint32 skill) const
     uint16 field = itr->second.pos / 2;
     uint8 offset = itr->second.pos & 1;
 
-    return GetUInt16Value(PLAYER_FIELD_SKILL_TALENTS + field, offset);
+    return GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_TALENT_OFFSET + field, offset);
 }
 
 int16 Player::GetSkillTempBonusValue(uint32 skill) const
@@ -6531,7 +6531,7 @@ int16 Player::GetSkillTempBonusValue(uint32 skill) const
     uint16 field = itr->second.pos / 2;
     uint8 offset = itr->second.pos & 1;
 
-    return GetUInt16Value(PLAYER_FIELD_SKILL_MODIFIERS + field, offset);
+    return GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MODIFIER_OFFSET + field, offset);
 }
 
 void Player::SendActionButtons(uint32 state) const
@@ -6740,28 +6740,28 @@ void Player::SaveRecallPosition()
     m_recallO = GetOrientation();
 }
 
-void Player::SendMessageToSetInRange(WorldPacket* data, float dist, bool self)
+void Player::SendMessageToSetInRange(WorldPacket const* data, float dist, bool self) const
 {
     if (self)
-        GetSession()->SendPacket(data);
+        SendDirectMessage(data);
 
     Trinity::MessageDistDeliverer notifier(this, data, dist);
     VisitNearbyWorldObject(dist, notifier, false, true);
 }
 
-void Player::SendMessageToSetInRange(WorldPacket* data, float dist, bool self, bool own_team_only)
+void Player::SendMessageToSetInRange(WorldPacket const* data, float dist, bool self, bool own_team_only, bool required3dDist /*= false*/) const
 {
     if (self)
-        GetSession()->SendPacket(data);
+        SendDirectMessage(data);
 
     Trinity::MessageDistDeliverer notifier(this, data, dist, own_team_only);
     VisitNearbyWorldObject(dist, notifier, false, true);
 }
 
-void Player::SendMessageToSet(WorldPacket* data, Player const* skipped_rcvr)
+void Player::SendMessageToSet(WorldPacket const* data, Player const* skipped_rcvr) const
 {
     if (skipped_rcvr != this)
-        GetSession()->SendPacket(data);
+        SendDirectMessage(data);
 
     // we use World::GetMaxVisibleDistance() because i cannot see why not use a distance
     // update: replaced by GetMap()->GetVisibilityDistance()
@@ -6776,18 +6776,20 @@ void Player::SendDirectMessage(WorldPacket const* data) const
 
 void Player::SendCinematicStart(uint32 CinematicSequenceId)
 {
-    WorldPacket data(SMSG_TRIGGER_CINEMATIC, 4);
-    data << uint32(CinematicSequenceId);
-    SendDirectMessage(&data);
+    WorldPackets::Misc::TriggerCinematic packet;
+    packet.CinematicID = CinematicSequenceId;
+    SendDirectMessage(packet.Write());
+
     if (CinematicSequencesEntry const* sequence = sCinematicSequencesStore.LookupEntry(CinematicSequenceId))
         _cinematicMgr->BeginCinematic(sequence);
 }
 
-void Player::SendMovieStart(uint32 MovieId)
+void Player::SendMovieStart(uint32 movieId)
 {
-    WorldPacket data(SMSG_TRIGGER_MOVIE, 4);
-    data << uint32(MovieId);
-    SendDirectMessage(&data);
+    SetMovie(movieId);
+    WorldPackets::Misc::TriggerMovie packet;
+    packet.MovieID = movieId;
+    SendDirectMessage(packet.Write());    
 }
 
 void Player::CheckAreaExploreAndOutdoor()
@@ -7314,8 +7316,8 @@ bool Player::RewardHonor(Unit* victim, uint32 groupsize, int32 honor, bool pvpto
         {
             // Check if allowed to receive it in current map
             uint8 MapType = sWorld->getIntConfig(CONFIG_PVP_TOKEN_MAP_TYPE);
-            if ((MapType == 1 && !InBattleground() && !HasByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_FFA_PVP))
-                || (MapType == 2 && !HasByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_FFA_PVP))
+            if ((MapType == 1 && !InBattleground() && !HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP))
+                || (MapType == 2 && !HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP))
                 || (MapType == 3 && !InBattleground()))
                 return true;
 
@@ -7919,12 +7921,12 @@ void Player::UpdateArea(uint32 newArea)
     pvpInfo.IsInNoPvPArea = false;
     if (area && area->IsSanctuary())    // in sanctuary
     {
-        SetByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_SANCTUARY);
+        SetByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_SANCTUARY);
         pvpInfo.IsInNoPvPArea = true;
         CombatStopWithPets();
     }
     else
-        RemoveByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_SANCTUARY);
+        RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_SANCTUARY);
 
     phaseMgr.RemoveUpdateFlag(PHASE_UPDATE_FLAG_AREA_UPDATE);
 
@@ -7955,11 +7957,7 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
         // Let there be light! :3
         if (m_zoneUpdateId == 876 || newZone == 876) // GM Island
         {
-            WorldPacket data(SMSG_OVERRIDE_LIGHT, 12);
-            data << uint32(newZone == 876 ? 500 : 0);
-            data << uint32(2488);
-            data << uint32(1);
-            SendDirectMessage(&data);
+            GetMap()->SetZoneOverrideLight(876, newZone == 876 ? 500 : 0, 2488, 1s);
         }
     }
 
@@ -7977,19 +7975,10 @@ void Player::UpdateZone(uint32 newZone, uint32 newArea)
     if (!zone)
         return;
 
-    if (sWorld->getBoolConfig(CONFIG_WEATHER) && !HasAuraType(SPELL_AURA_FORCE_WEATHER))
-    {
-        if (Weather* weather = WeatherMgr::FindWeather(zone->ID))
-            weather->SendWeatherUpdateToPlayer(this);
-        else
-        {
-            if (!WeatherMgr::AddWeather(zone->ID))
-            {
-                // send fine weather packet to remove old zone's weather
-                WeatherMgr::SendFineWeatherUpdateToPlayer(this);
-            }
-        }
-    }
+    if (sWorld->getBoolConfig(CONFIG_WEATHER))
+        GetMap()->GetOrGenerateZoneDefaultWeather(newZone);
+
+    GetMap()->SendZoneDynamicInfo(newZone, this);
 
     sScriptMgr->OnPlayerUpdateZone(this, newZone, newArea);
 
@@ -14281,7 +14270,7 @@ void Player::AddItemToBuyBackSlot(Item* pItem)
         uint32 etime = uint32(base - m_logintime + (30 * 3600));
         uint32 eslot = slot - BUYBACK_SLOT_START;
 
-        SetUInt64Value(PLAYER_FIELD_VENDORBUYBACK_SLOTS + (eslot * 2), pItem->GetGUID());
+        SetUInt64Value(PLAYER_FIELD_INV_SLOTS + (slot * 2), pItem->GetGUID());
         if (ItemTemplate const* proto = pItem->GetTemplate())
             SetUInt32Value(PLAYER_FIELD_BUYBACK_PRICE + eslot, proto->SellPrice * pItem->GetCount());
         else
@@ -14318,7 +14307,7 @@ void Player::RemoveItemFromBuyBackSlot(uint32 slot, bool del)
         m_items[slot] = nullptr;
 
         uint32 eslot = slot - BUYBACK_SLOT_START;
-        SetUInt64Value(PLAYER_FIELD_VENDORBUYBACK_SLOTS + (eslot * 2), 0);
+        SetGuidValue(PLAYER_FIELD_INV_SLOTS + (slot * 2), ObjectGuid::Empty);
         SetUInt32Value(PLAYER_FIELD_BUYBACK_PRICE + eslot, 0);
         SetUInt32Value(PLAYER_FIELD_BUYBACK_TIMESTAMP + eslot, 0);
 
@@ -15461,10 +15450,8 @@ void Player::SendNewItem(Item* item, uint32 count, bool received, bool created, 
 
 void Player::PrepareGossipMenu(WorldObject* source, uint32 menuId /*= 0*/, bool showQuests /*= false*/)
 {
-    PlayerMenu* menu = PlayerTalkClass;
-    menu->ClearMenus();
-
-    menu->GetGossipMenu().SetMenuId(menuId);
+    PlayerTalkClass->ClearMenus();
+    PlayerTalkClass->GetGossipMenu().SetMenuId(menuId);
 
     GossipMenuItemsMapBounds menuItemBounds = sObjectMgr->GetGossipMenuItemsMapBounds(menuId);
 
@@ -15557,7 +15544,7 @@ void Player::PrepareGossipMenu(WorldObject* source, uint32 menuId /*= 0*/, bool 
                 case GOSSIP_OPTION_TRAINER:
                     if (GetClass() != creature->GetCreatureTemplate()->trainer_class && creature->GetCreatureTemplate()->trainer_type == TRAINER_TYPE_CLASS)
                         TC_LOG_ERROR("sql.sql", "GOSSIP_OPTION_TRAINER:: Player %s (GUID: %u) request wrong gossip menu: %u with wrong class: %u at Creature: %s (Entry: %u, Trainer Class: %u)",
-                        GetName().c_str(), GetGUID().GetCounter(), menu->GetGossipMenu().GetMenuId(), GetClass(), creature->GetName().c_str(), creature->GetEntry(), creature->GetCreatureTemplate()->trainer_class);
+                        GetName().c_str(), GetGUID().GetCounter(), PlayerTalkClass->GetGossipMenu().GetMenuId(), GetClass(), creature->GetName().c_str(), creature->GetEntry(), creature->GetCreatureTemplate()->trainer_class);
                     // no break;
                 case GOSSIP_OPTION_GOSSIP:
                 case GOSSIP_OPTION_SPIRITGUIDE:
@@ -15625,8 +15612,8 @@ void Player::PrepareGossipMenu(WorldObject* source, uint32 menuId /*= 0*/, bool 
                 }
             }
 
-            menu->GetGossipMenu().AddMenuItem(itr->second.OptionID, itr->second.OptionIcon, strOptionText, 0, itr->second.OptionType, strBoxText, itr->second.BoxMoney, itr->second.BoxCoded);
-            menu->GetGossipMenu().AddGossipMenuItemData(itr->second.OptionID, itr->second.ActionMenuID, itr->second.ActionPoiID);
+            PlayerTalkClass->GetGossipMenu().AddMenuItem(itr->second.OptionID, itr->second.OptionIcon, strOptionText, 0, itr->second.OptionType, strBoxText, itr->second.BoxMoney, itr->second.BoxCoded);
+            PlayerTalkClass->GetGossipMenu().AddGossipMenuItemData(itr->second.OptionID, itr->second.ActionMenuID, itr->second.ActionPoiID);
         }
     }
 }
@@ -18639,16 +18626,16 @@ bool Player::LoadFromDB(ObjectGuid guid, CharacterDatabaseQueryHolder const& hol
         money = MAX_MONEY_AMOUNT;
     SetMoney(money);
 
-    SetUInt32Value(PLAYER_FIELD_HAIR_COLOR_ID, fields[9].GetUInt32());
-    SetUInt32Value(PLAYER_FIELD_REST_STATE, fields[10].GetUInt32());
-    SetByteValue(PLAYER_FIELD_ARENA_FACTION, 0, fields[5].GetUInt8());
-    SetByteValue(PLAYER_FIELD_ARENA_FACTION, 1, fields[45].GetUInt8());
+    SetUInt32Value(PLAYER_BYTES, fields[9].GetUInt32());
+    SetUInt32Value(PLAYER_BYTES_2, fields[10].GetUInt32());
+    SetByteValue(PLAYER_BYTES_3, 0, fields[5].GetUInt8());
+    SetByteValue(PLAYER_BYTES_3, 1, fields[45].GetUInt8());
     SetUInt32Value(PLAYER_FIELD_PLAYER_FLAGS, fields[11].GetUInt32());
     SetInt32Value(PLAYER_FIELD_WATCHED_FACTION_INDEX, fields[44].GetUInt32());
     SetUInt32Value(PLAYER_FIELD_VIRTUAL_PLAYER_REALM, realm.Id.Realm);
 
     // set which actionbars the client has active - DO NOT REMOVE EVER AGAIN (can be changed though, if it does change fieldwise)
-    SetByteValue(PLAYER_FIELD_LIFETIME_MAX_RANK, 2, fields[58].GetUInt8());
+    SetByteValue(PLAYER_FIELD_BYTES, 2, fields[58].GetUInt8());
 
     InitDisplayIds();
 
@@ -19044,7 +19031,7 @@ bool Player::LoadFromDB(ObjectGuid guid, CharacterDatabaseQueryHolder const& hol
     SetUInt64Value(PLAYER_FIELD_FARSIGHT_OBJECT, 0);
     SetCreatorGUID(ObjectGuid::Empty);
 
-    RemoveFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_FORCE_MOVEMENT);
+    RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FORCE_MOVEMENT);
 
     // reset some aura modifiers before aura apply
     SetUInt32Value(PLAYER_FIELD_TRACK_CREATURE_MASK, 0);
@@ -19309,7 +19296,7 @@ bool Player::LoadFromDB(ObjectGuid guid, CharacterDatabaseQueryHolder const& hol
         SetFlag(OBJECT_FIELD_DYNAMIC_FLAGS, UNIT_DYNFLAG_REFER_A_FRIEND);
 
     if (m_grantableLevels > 0)
-        SetByteValue(PLAYER_FIELD_LIFETIME_MAX_RANK, 1, 0x01);
+        SetByteValue(PLAYER_FIELD_BYTES, 1, 0x01);
 
     uint32 lootSpecialization = fields[60].GetUInt32();
     auto specializationEntry = sChrSpecializationStore.LookupEntry(lootSpecialization);
@@ -19609,7 +19596,7 @@ void Player::LoadCorpse(PreparedQueryResult result)
         {
             Field* fields = result->Fetch();
             _corpseLocation.WorldRelocate(fields[0].GetUInt16(), fields[1].GetFloat(), fields[2].GetFloat(), fields[3].GetFloat(), fields[4].GetFloat());
-            ApplyModFlag(PLAYER_FIELD_LIFETIME_MAX_RANK, PLAYER_FIELD_BYTE_RELEASE_TIMER, !sMapStore.LookupEntry(_corpseLocation.GetMapId())->Instanceable());
+            ApplyModFlag(PLAYER_FIELD_BYTES, PLAYER_FIELD_BYTE_RELEASE_TIMER, !sMapStore.LookupEntry(_corpseLocation.GetMapId())->Instanceable());
         }
     }
 
@@ -20929,8 +20916,8 @@ void Player::SaveToDB(bool create /*=false*/)
         stmt->setUInt8(index++, GetLevel());
         stmt->setUInt32(index++, GetUInt32Value(PLAYER_FIELD_XP));
         stmt->setUInt64(index++, GetMoney());
-        stmt->setUInt32(index++, GetUInt32Value(PLAYER_FIELD_HAIR_COLOR_ID));
-        stmt->setUInt32(index++, GetUInt32Value(PLAYER_FIELD_REST_STATE));
+        stmt->setUInt32(index++, GetUInt32Value(PLAYER_BYTES));
+        stmt->setUInt32(index++, GetUInt32Value(PLAYER_BYTES_2));
         stmt->setUInt32(index++, GetUInt32Value(PLAYER_FIELD_PLAYER_FLAGS));
         stmt->setUInt16(index++, (uint16)GetMapId());
         stmt->setUInt32(index++, (uint32)GetInstanceId());
@@ -21029,7 +21016,7 @@ void Player::SaveToDB(bool create /*=false*/)
             ss << GetUInt32Value(PLAYER_FIELD_KNOWN_TITLES + i) << ' ';
         stmt->setString(index++, ss.str());
 
-        stmt->setUInt8(index++, GetByteValue(PLAYER_FIELD_LIFETIME_MAX_RANK, 2));
+        stmt->setUInt8(index++, GetByteValue(PLAYER_FIELD_BYTES, 2));
         stmt->setUInt32(index++, m_grantableLevels);
     }
     else
@@ -21043,8 +21030,8 @@ void Player::SaveToDB(bool create /*=false*/)
         stmt->setUInt8(index++, GetLevel());
         stmt->setUInt32(index++, GetUInt32Value(PLAYER_FIELD_XP));
         stmt->setUInt64(index++, GetMoney());
-        stmt->setUInt32(index++, GetUInt32Value(PLAYER_FIELD_HAIR_COLOR_ID));
-        stmt->setUInt32(index++, GetUInt32Value(PLAYER_FIELD_REST_STATE));
+        stmt->setUInt32(index++, GetUInt32Value(PLAYER_BYTES));
+        stmt->setUInt32(index++, GetUInt32Value(PLAYER_BYTES_2));
         stmt->setUInt32(index++, GetUInt32Value(PLAYER_FIELD_PLAYER_FLAGS));
 
         if (!IsBeingTeleported())
@@ -21160,7 +21147,7 @@ void Player::SaveToDB(bool create /*=false*/)
             ss << GetUInt32Value(PLAYER_FIELD_KNOWN_TITLES + i) << ' ';
 
         stmt->setString(index++, ss.str());
-        stmt->setUInt8(index++, GetByteValue(PLAYER_FIELD_LIFETIME_MAX_RANK, 2));
+        stmt->setUInt8(index++, GetByteValue(PLAYER_FIELD_BYTES, 2));
         stmt->setUInt32(index++, m_grantableLevels);
 
         stmt->setUInt8(index++, IsInWorld() && !GetSession()->PlayerLogout() ? 1 : 0);
@@ -21833,8 +21820,8 @@ void Player::_SaveSkills(CharacterDatabaseTransaction trans)
         uint16 field = itr->second.pos / 2;
         uint8 offset = itr->second.pos & 1;
 
-        uint16 value = GetUInt16Value(PLAYER_FIELD_SKILL_RANKS + field, offset);
-        uint16 max = GetUInt16Value(PLAYER_FIELD_SKILL_MAX_RANKS + field, offset);
+        uint16 value = GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_RANK_OFFSET + field, offset);
+        uint16 max = GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MAX_RANK_OFFSET + field, offset);
 
         switch (itr->second.uState)
         {
@@ -22459,34 +22446,49 @@ void Player::StopCastingCharm()
     }
 }
 
-void Player::Say(const std::string& text, const uint32 language)
+void Player::Say(const std::string& text, Language language, WorldObject const* /*= nullptr*/)
 {
     std::string _text(text);
     sScriptMgr->OnPlayerChat(this, CHAT_MSG_SAY, language, _text);
 
     WorldPacket data;
-    ChatHandler::BuildChatPacket(data, CHAT_MSG_SAY, Language(language), this, this, text);
+    ChatHandler::BuildChatPacket(data, CHAT_MSG_SAY, language, this, this, _text);
     SendMessageToSetInRange(&data, sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_SAY), true);
 }
 
-void Player::Yell(const std::string& text, const uint32 language)
+void Player::Say(uint32 textId, WorldObject const* target /*= nullptr*/)
+{
+    Talk(textId, CHAT_MSG_SAY, sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_SAY), target);
+}
+
+void Player::Yell(std::string const& text, Language language, WorldObject const* /*= nullptr*/)
 {
     std::string _text(text);
     sScriptMgr->OnPlayerChat(this, CHAT_MSG_YELL, language, _text);
 
     WorldPacket data;
-    ChatHandler::BuildChatPacket(data, CHAT_MSG_YELL, Language(language), this, this, text);
+    ChatHandler::BuildChatPacket(data, CHAT_MSG_YELL, language, this, this, _text);
     SendMessageToSetInRange(&data, sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_YELL), true);
 }
 
-void Player::TextEmote(const std::string& text)
+void Player::Yell(uint32 textId, WorldObject const* target /*= nullptr*/)
+{
+    Talk(textId, CHAT_MSG_YELL, sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_YELL), target);
+}
+
+void Player::TextEmote(std::string const& text, WorldObject const* /*= nullptr*/, bool /*= false*/)
 {
     std::string _text(text);
     sScriptMgr->OnPlayerChat(this, CHAT_MSG_EMOTE, LANG_UNIVERSAL, _text);
 
     WorldPacket data;
-    ChatHandler::BuildChatPacket(data, CHAT_MSG_EMOTE, LANG_UNIVERSAL, this, this, text);
+    ChatHandler::BuildChatPacket(data, CHAT_MSG_EMOTE, LANG_UNIVERSAL, this, this, _text);
     SendMessageToSetInRange(&data, sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_TEXTEMOTE), true, !sWorld->getBoolConfig(CONFIG_ALLOW_TWO_SIDE_INTERACTION_CHAT));
+}
+
+void Player::TextEmote(uint32 textId, WorldObject const* target /*= nullptr*/, bool /*isBossEmote = false*/)
+{
+    Talk(textId, CHAT_MSG_EMOTE, sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_TEXTEMOTE), target);
 }
 
 void Player::WhisperAddon(const std::string& text, const std::string& prefix, Player* receiver)
@@ -22502,40 +22504,58 @@ void Player::WhisperAddon(const std::string& text, const std::string& prefix, Pl
     receiver->GetSession()->SendPacket(&data);
 }
 
-void Player::Whisper(const std::string& text, uint32 language, ObjectGuid receiver)
+void Player::Whisper(std::string const& text, Language language, Player* target, bool isBossWhisper)
 {
+    ASSERT(target);
+
     bool isAddonMessage = language == LANG_ADDON;
 
     if (!isAddonMessage) // if not addon data
         language = LANG_UNIVERSAL; // whispers should always be readable
 
-    Player* rPlayer = ObjectAccessor::FindPlayer(receiver);
-
     std::string _text(text);
-    sScriptMgr->OnPlayerChat(this, CHAT_MSG_WHISPER, language, _text, rPlayer);
+    sScriptMgr->OnPlayerChat(this, isBossWhisper ? CHAT_MSG_RAID_BOSS_WHISPER : CHAT_MSG_WHISPER, language, _text, target);
 
     WorldPacket data;
-    ChatHandler::BuildChatPacket(data, CHAT_MSG_WHISPER, Language(language), this, this, text);
-    rPlayer->GetSession()->SendPacket(&data);
+    ChatHandler::BuildChatPacket(data, isBossWhisper ? CHAT_MSG_RAID_BOSS_WHISPER : CHAT_MSG_WHISPER, Language(language), this, this, _text);
+    target->SendDirectMessage(&data);
 
     // rest stuff shouldn't happen in case of addon message
     if (isAddonMessage)
         return;
 
-    ChatHandler::BuildChatPacket(data, CHAT_MSG_WHISPER_INFORM, Language(language), rPlayer, rPlayer, text);
-    GetSession()->SendPacket(&data);
+    ChatHandler::BuildChatPacket(data, CHAT_MSG_WHISPER_INFORM, Language(language), target, target, _text);
+    SendDirectMessage(&data);
 
-    if (!isAcceptWhispers() && !IsGameMaster() && !rPlayer->IsGameMaster())
+    if (!isAcceptWhispers() && !IsGameMaster() && !target->IsGameMaster())
     {
         SetAcceptWhispers(true);
         ChatHandler(GetSession()).SendSysMessage(LANG_COMMAND_WHISPERON);
     }
 
     // announce afk or dnd message
-    if (rPlayer->isAFK())
-        ChatHandler(GetSession()).PSendSysMessage(LANG_PLAYER_AFK, rPlayer->GetName().c_str(), rPlayer->autoReplyMsg.c_str());
-    else if (rPlayer->isDND())
-        ChatHandler(GetSession()).PSendSysMessage(LANG_PLAYER_DND, rPlayer->GetName().c_str(), rPlayer->autoReplyMsg.c_str());
+    if (target->isAFK())
+        ChatHandler(GetSession()).PSendSysMessage(LANG_PLAYER_AFK, target->GetName().c_str(), target->autoReplyMsg.c_str());
+    else if (target->isDND())
+        ChatHandler(GetSession()).PSendSysMessage(LANG_PLAYER_DND, target->GetName().c_str(), target->autoReplyMsg.c_str());
+}
+
+void Player::Whisper(uint32 textId, Player* target, bool isBossWhisper)
+{
+    if (!target)
+        return;
+
+    BroadcastText const* bct = sObjectMgr->GetBroadcastText(textId);
+    if (!bct)
+    {
+        TC_LOG_ERROR("entities.unit", "WorldObject::MonsterWhisper: `broadcast_text` was not %u found", textId);
+        return;
+    }
+
+    LocaleConstant locale = target->GetSession()->GetSessionDbLocaleIndex();
+    WorldPacket data;
+    ChatHandler::BuildChatPacket(data, isBossWhisper ? CHAT_MSG_RAID_BOSS_WHISPER : CHAT_MSG_WHISPER, LANG_UNIVERSAL, this, target, bct->GetText(locale, GetGender()), 0, "", locale);
+    target->SendDirectMessage(&data);
 }
 
 void Player::SendPersonalMessage(std::string const& text, ChatMsg type, Language lang)
@@ -23296,11 +23316,11 @@ void Player::SetRestBonus(float rest_bonus_new)
 
     // update data for client
     if (GetSession()->IsARecruiter() || (GetSession()->GetRecruiterId() != 0))
-        SetByteValue(PLAYER_FIELD_REST_STATE, 3, REST_STATE_RAF_LINKED);
+        SetByteValue(PLAYER_BYTES_2, 3, REST_STATE_RAF_LINKED);
     else if (m_rest_bonus > 10)
-        SetByteValue(PLAYER_FIELD_REST_STATE, 3, REST_STATE_RESTED);              // Set Reststate = Rested
+        SetByteValue(PLAYER_BYTES_2, 3, REST_STATE_RESTED);              // Set Reststate = Rested
     else if (m_rest_bonus <= 1)
-        SetByteValue(PLAYER_FIELD_REST_STATE, 3, REST_STATE_NOT_RAF_LINKED);              // Set Reststate = Normal
+        SetByteValue(PLAYER_BYTES_2, 3, REST_STATE_NOT_RAF_LINKED);              // Set Reststate = Normal
 
     //RestTickUpdate
     SetUInt32Value(PLAYER_FIELD_REST_STATE_BONUS_POOL, uint32(m_rest_bonus));
@@ -24227,23 +24247,23 @@ void Player::UpdateHomebindTime(uint32 time)
 
 void Player::UpdatePvPState(bool onlyFFA)
 {
-    /// @todo should we always synchronize UNIT_FIELD_SHAPESHIFT_FORM, 1 of controller and controlled?
+    /// @todo should we always synchronize UNIT_FIELD_BYTES_2, 1 of controller and controlled?
     // no, we shouldn't, those are checked for affecting player by client
     if (!pvpInfo.IsInNoPvPArea && !IsGameMaster()
         && (pvpInfo.IsInFFAPvPArea || sWorld->IsFFAPvPRealm()))
     {
-        if (!HasByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_FFA_PVP))
+        if (!HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP))
         {
-            SetByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_FFA_PVP);
+            SetByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
             for (ControlList::iterator itr = m_Controlled.begin(); itr != m_Controlled.end(); ++itr)
-                (*itr)->SetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_FFA_PVP);
+                (*itr)->SetByteValue(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
         }
     }
-    else if (HasByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_FFA_PVP))
+    else if (HasByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP))
     {
-        RemoveByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_FFA_PVP);
+        RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
         for (ControlList::iterator itr = m_Controlled.begin(); itr != m_Controlled.end(); ++itr)
-            (*itr)->RemoveByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_FFA_PVP);
+            (*itr)->RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
     }
 
     if (onlyFFA)
@@ -24594,7 +24614,7 @@ void Player::SetBattlegroundEntryPoint()
 void Player::SetBGTeam(uint32 team)
 {
     m_bgData.bgTeam = team;
-    SetByteValue(PLAYER_FIELD_ARENA_FACTION, 3, uint8(team == ALLIANCE ? 1 : 0));
+    SetByteValue(PLAYER_BYTES_3, 3, uint8(team == ALLIANCE ? 1 : 0));
 }
 
 Team Player::GetBGTeam() const
@@ -26968,13 +26988,9 @@ int32 Player::CalculateCorpseReclaimDelay(bool load) const
 
 void Player::SendCorpseReclaimDelay(uint32 delay)
 {
-    WorldPacket data(SMSG_CORPSE_RECLAIM_DELAY, 4);
-    data.WriteBit(delay == 0);
-
-    if (delay)
-        data << uint32(delay * IN_MILLISECONDS);
-
-    GetSession()->SendPacket(&data);
+    WorldPackets::Misc::CorpseReclaimDelay packet;
+    packet.Remaining = delay;
+    GetSession()->SendPacket(packet.Write());
 }
 
 Player* Player::GetNextRandomRaidMember(float radius)
@@ -27248,10 +27264,10 @@ uint32 Player::GetBarberShopCost(uint8 newhairstyle, uint8 newhaircolor, uint8 n
     if (level > GT_MAX_LEVEL)
         level = GT_MAX_LEVEL;                               // max level in this dbc
 
-    uint8 hairstyle = GetByteValue(PLAYER_FIELD_HAIR_COLOR_ID, 2);
-    uint8 haircolor = GetByteValue(PLAYER_FIELD_HAIR_COLOR_ID, 3);
-    uint8 facialhair = GetByteValue(PLAYER_FIELD_REST_STATE, 0);
-    uint8 skincolor = GetByteValue(PLAYER_FIELD_HAIR_COLOR_ID, 0);
+    uint8 hairstyle = GetByteValue(PLAYER_BYTES, 2);
+    uint8 haircolor = GetByteValue(PLAYER_BYTES, 3);
+    uint8 facialhair = GetByteValue(PLAYER_BYTES_2, 0);
+    uint8 skincolor = GetByteValue(PLAYER_BYTES, 0);
 
     if ((hairstyle == newhairstyle) && (haircolor == newhaircolor) && (facialhair == newfacialhair) && (!newSkin || (newSkin->hair_id == skincolor)))
         return 0;
@@ -27805,7 +27821,7 @@ void Player::_LoadSkills(PreparedQueryResult result)
             uint16 field = count / 2;
             uint8 offset = count & 1;
 
-            SetUInt16Value(PLAYER_FIELD_SKILL_LINEIDS + field, offset, skill);
+            SetUInt16Value(PLAYER_FIELD_SKILL + field, offset, skill);
             uint16 step = 0;
 
             if (pSkill->categoryId == SKILL_CATEGORY_SECONDARY)
@@ -27819,11 +27835,11 @@ void Player::_LoadSkills(PreparedQueryResult result)
                     SetUInt32Value(PLAYER_FIELD_PROFESSION_SKILL_LINE + professionCount++, skill);
             }
 
-            SetUInt16Value(PLAYER_FIELD_SKILL_STEPS + field, offset, step);
-            SetUInt16Value(PLAYER_FIELD_SKILL_RANKS + field, offset, value);
-            SetUInt16Value(PLAYER_FIELD_SKILL_MAX_RANKS + field, offset, max);
-            SetUInt16Value(PLAYER_FIELD_SKILL_MODIFIERS + field, offset, 0);
-            SetUInt16Value(PLAYER_FIELD_SKILL_TALENTS + field, offset, 0);
+            SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_STEP_OFFSET + field, offset, step);
+            SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_RANK_OFFSET + field, offset, value);
+            SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MAX_RANK_OFFSET + field, offset, max);
+            SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MODIFIER_OFFSET + field, offset, 0);
+            SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_TALENT_OFFSET + field, offset, 0);
 
             mSkillStatus.insert(SkillStatusMap::value_type(skill, SkillStatusData(count, SKILL_UNCHANGED)));
             learnReward.emplace(skill, value);
@@ -27847,12 +27863,12 @@ void Player::_LoadSkills(PreparedQueryResult result)
         uint16 field = count / 2;
         uint8 offset = count & 1;
 
-        SetUInt16Value(PLAYER_FIELD_SKILL_LINEIDS + field, offset, 0);
-        SetUInt16Value(PLAYER_FIELD_SKILL_STEPS + field, offset, 0);
-        SetUInt16Value(PLAYER_FIELD_SKILL_RANKS + field, offset, 0);
-        SetUInt16Value(PLAYER_FIELD_SKILL_MAX_RANKS + field, offset, 0);
-        SetUInt16Value(PLAYER_FIELD_SKILL_MODIFIERS + field, offset, 0);
-        SetUInt16Value(PLAYER_FIELD_SKILL_TALENTS + field, offset, 0);
+        SetUInt16Value(PLAYER_FIELD_SKILL + field, offset, 0);
+        SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_STEP_OFFSET + field, offset, 0);
+        SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_RANK_OFFSET + field, offset, 0);
+        SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MAX_RANK_OFFSET + field, offset, 0);
+        SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MODIFIER_OFFSET + field, offset, 0);
+        SetUInt16Value(PLAYER_FIELD_SKILL + SKILL_TALENT_OFFSET + field, offset, 0);
     }
 
     // special settings
@@ -29721,7 +29737,7 @@ Pet* Player::SummonPet(uint32 entry, float x, float y, float z, float ang, uint3
 
     pet->SetPowerType(POWER_MANA);
     pet->SetUInt32Value(UNIT_FIELD_NPC_FLAGS, 0);
-    pet->SetUInt32Value(UNIT_FIELD_ANIM_TIER, 0);
+    pet->SetUInt32Value(UNIT_FIELD_BYTES_1, 0);
     pet->InitStatsForLevel(GetLevel());
 
     SetMinion(pet, true);

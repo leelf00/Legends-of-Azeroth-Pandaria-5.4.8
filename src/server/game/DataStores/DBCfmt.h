@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -18,7 +18,7 @@
 #ifndef TRINITY_DBCSFRM_H
 #define TRINITY_DBCSFRM_H
 
-// x - skip<uint32>, X - skip<uint8>, s - char*, f - float, i - uint32, b - uint8, d - index (not included)
+// x - skip<uint32>, X - skip<uint8>, s - char*, S - char*, f - float, i - uint32, b - uint8, d - index (not included)
 // n - index (included), l - bool, p - field present in sql dbc, a - field absent in sql dbc
 
 char const Achievementfmt[] =            "niiisxiixixxiii";
@@ -45,7 +45,7 @@ char const ChrClassesXPowerTypesfmt[] = "nii";
 char const CinematicCameraEntryfmt[] = "nSiffff";
 char const CinematicSequencesEntryfmt[] = "nxiiiiiiii";
 char const CreatureDisplayInfofmt[] = "nixifxxxxxxxxxxxxxxx";
-char const CreatureModelDatafmt[] = "nisxfxxxxxxxxxxffxxxxxxxxxxxxxxxxx";
+char const CreatureModelDatafmt[] = "niSxfxxxxxxxxxxffxxxxxxxxxxxxxxxxx";
 char const CreatureFamilyfmt[] = "nfifiiiiixsx";
 char const CreatureImmunitiesfmt[] = "niiiiiiiiiiiiiiiiiiiiiiiiiiiii";
 char const CreatureSpellDatafmt[] = "niiiixxxx";

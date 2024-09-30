@@ -113,26 +113,67 @@ VendorItem const* VendorItemData::FindItemCostPair(uint32 item_id, uint32 extend
     return NULL;
 }
 
-uint32 CreatureTemplate::GetRandomValidModelId() const
+CreatureModel const CreatureModel::DefaultInvisibleModel(11686, 1.0f, 1.0f);
+CreatureModel const CreatureModel::DefaultVisibleModel(17519, 1.0f, 1.0f);
+
+CreatureModel const* CreatureTemplate::GetModelByIdx(uint32 idx) const
 {
-    uint8 c = 0;
-    uint32 modelIDs[4];
-
-    if (Modelid1) modelIDs[c++] = Modelid1;
-    if (Modelid2) modelIDs[c++] = Modelid2;
-    if (Modelid3) modelIDs[c++] = Modelid3;
-    if (Modelid4) modelIDs[c++] = Modelid4;
-
-    return ((c>0) ? modelIDs[urand(0, c-1)] : 0);
+    return idx < Models.size() ? &Models[idx] : nullptr;
 }
 
-uint32 CreatureTemplate::GetFirstValidModelId() const
+CreatureModel const* CreatureTemplate::GetRandomValidModel() const
 {
-    if (Modelid1) return Modelid1;
-    if (Modelid2) return Modelid2;
-    if (Modelid3) return Modelid3;
-    if (Modelid4) return Modelid4;
-    return 0;
+    if (!Models.size())
+        return nullptr;
+
+    // If only one element, ignore the Probability (even if 0)
+    if (Models.size() == 1)
+        return &Models[0];
+
+    auto selectedItr = Trinity::Containers::SelectRandomWeightedContainerElement(Models, [](CreatureModel const& model)
+    {
+        return model.Probability;
+    });
+
+    return &(*selectedItr);
+}
+
+CreatureModel const* CreatureTemplate::GetFirstValidModel() const
+{
+    for (CreatureModel const& model : Models)
+        if (model.CreatureDisplayID)
+            return &model;
+
+    return nullptr;
+}
+
+CreatureModel const* CreatureTemplate::GetModelWithDisplayId(uint32 displayId) const
+{
+    for (CreatureModel const& model : Models)
+        if (displayId == model.CreatureDisplayID)
+            return &model;
+
+    return nullptr;
+}
+
+CreatureModel const* CreatureTemplate::GetFirstInvisibleModel() const
+{
+    for (CreatureModel const& model : Models)
+        if (CreatureModelInfo const* modelInfo = sObjectMgr->GetCreatureModelInfo(model.CreatureDisplayID))
+            if (modelInfo && modelInfo->is_trigger)
+                return &model;
+
+    return &CreatureModel::DefaultInvisibleModel;
+}
+
+CreatureModel const* CreatureTemplate::GetFirstVisibleModel() const
+{
+    for (CreatureModel const& model : Models)
+        if (CreatureModelInfo const* modelInfo = sObjectMgr->GetCreatureModelInfo(model.CreatureDisplayID))
+            if (modelInfo && !modelInfo->is_trigger)
+                return &model;
+
+    return &CreatureModel::DefaultVisibleModel;
 }
 
 bool AssistDelayEvent::Execute(uint64 /*e_time*/, uint32 /*p_time*/)
@@ -173,7 +214,7 @@ m_PlayerDamageReq(0), m_lootRecipient(), m_lootRecipientGroup(0), m_corpseRemove
 m_respawnDelay(300), m_corpseDelay(60), m_wanderDistance(0.0f), m_WalkMode(0.0f), m_reactState(REACT_AGGRESSIVE),
 m_defaultMovementType(IDLE_MOTION_TYPE), m_spawnId(0), m_equipmentId(0), m_originalEquipmentId(0), m_AlreadyCallAssistance(false),
 m_AlreadySearchedAssistance(false), m_regenHealth(true), m_AI_locked(false), m_meleeDamageSchoolMask(SPELL_SCHOOL_MASK_NORMAL),
-m_creatureInfo(nullptr), m_creatureData(nullptr), m_path_id(0), m_formation(NULL), m_respawnDelayMax(0), dynamicHealthPlayersCount(0)
+m_creatureInfo(nullptr), m_creatureData(nullptr), m_path_id(0), m_formation(nullptr), m_triggerJustAppeared(true), m_respawnDelayMax(0), dynamicHealthPlayersCount(0)
 {
     m_regenTimer = 0;
     m_valuesCount = UNIT_END;
@@ -190,7 +231,7 @@ m_creatureInfo(nullptr), m_creatureData(nullptr), m_path_id(0), m_formation(NULL
     m_ReactDistance = 0;
 
     ResetLootMode(); // restore default loot mode
-    TriggerJustRespawned = false;
+
     m_isTempWorldObject = false;
     _focusSpell = NULL;
 }
@@ -271,21 +312,6 @@ void Creature::SearchFormation()
         sFormationMgr->AddCreatureToGroup(frmdata->second.leaderGUID, this);
 }
 
-void Creature::PlayMusic(uint32 MusicID)
-{
-    uint32 areaId = GetAreaId();
-    Map::PlayerList const& pList = GetMap()->GetPlayers();
-    for (Map::PlayerList::const_iterator itr = pList.begin(); itr != pList.end(); ++itr)
-    {
-        if (itr->GetSource()->GetAreaId() == areaId)
-        {
-            WorldPacket data(SMSG_PLAY_MUSIC, 4);
-            data << uint32(MusicID);
-            (itr->GetSource())->GetSession()->SendPacket(&data);
-        }
-    }
-}
-
 void Creature::RemoveCorpse(bool setSpawnTime)
 {
     if (getDeathState() != CORPSE)
@@ -340,22 +366,22 @@ bool Creature::InitEntry(uint32 entry, uint32 /*team*/, const CreatureData* data
     SetClass(uint8(cinfo->unit_class));
 
     // Cancel load if no model defined
-    if (!(cinfo->GetFirstValidModelId()))
+    if (!(cinfo->GetFirstValidModel()))
     {
         TC_LOG_ERROR("sql.sql", "Creature (Entry: %u) has no model defined in table `creature_template`, can't load. ", entry);
         return false;
     }
 
-    uint32 displayID = ObjectMgr::ChooseDisplayId(GetCreatureTemplate(), data);
-    CreatureModelInfo const* minfo = sObjectMgr->GetCreatureModelRandomGender(&displayID);
+    CreatureModel model = *ObjectMgr::ChooseDisplayId(cinfo, data);
+    CreatureModelInfo const* minfo = sObjectMgr->GetCreatureModelRandomGender(&model, cinfo);
     if (!minfo)                                             // Cancel load if no model defined
     {
         TC_LOG_ERROR("sql.sql", "Creature (Entry: %u) has no model defined in table `creature_template`, can't load. ", entry);
         return false;
     }
 
-    SetDisplayId(displayID);
-    SetNativeDisplayId(displayID);
+    SetDisplayId(model.CreatureDisplayID, true);
+    SetNativeDisplayId(model.CreatureDisplayID);
     SetGender(minfo->gender);
 
     // Load creature equipment
@@ -426,7 +452,7 @@ bool Creature::UpdateEntry(uint32 Entry, uint32 team, const CreatureData* data)
     SetAttackTime(RANGED_ATTACK, cInfo->RangeAttackTime);
 
     SetUInt32Value(UNIT_FIELD_FLAGS, unit_flags);
-    SetUInt32Value(UNIT_FIELD_FLAGS2, cInfo->unit_flags2);
+    SetUInt32Value(UNIT_FIELD_FLAGS_2, cInfo->unit_flags2);
 
     SetUInt32Value(OBJECT_FIELD_DYNAMIC_FLAGS, dynamicflags);
 
@@ -517,10 +543,10 @@ void Creature::SetPhaseMask(uint32 newPhaseMask, bool update)
 
 void Creature::Update(uint32 diff)
 {
-    if (IsAIEnabled && TriggerJustRespawned)
+    if (IsAIEnabled && m_triggerJustAppeared)
     {
-        TriggerJustRespawned = false;
-        AI()->JustRespawned();
+        m_triggerJustAppeared = false;
+        AI()->JustAppeared();
         if (m_vehicleKit)
             m_vehicleKit->Reset();
         if (GetMap()->IsRaid() && ((InstanceMap*)GetMap())->GetInstanceScript())
@@ -804,6 +830,13 @@ bool Creature::Create(uint32 guidlow, Map* map, uint32 phaseMask, uint32 Entry, 
         return false;
     }
 
+    {
+        // area/zone id is needed immediately for ZoneScript::GetCreatureEntry hook before it is known which creature template to load (no model/scale available yet)
+        PositionFullTerrainStatus data;
+        GetMap()->GetFullTerrainStatusForPosition(GetPhaseMask(), GetPositionX(), GetPositionY(), GetPositionZ(), data, MAP_ALL_LIQUIDS, DEFAULT_COLLISION_HEIGHT);
+        ProcessPositionDataChanged(data);
+    }
+
     if (!CreateFromProto(guidlow, Entry, vehId, team, data))
         return false;
 
@@ -840,14 +873,8 @@ bool Creature::Create(uint32 guidlow, Map* map, uint32 phaseMask, uint32 Entry, 
         Relocate(x, y, z, ang);
     }
 
-    uint32 displayID = GetNativeDisplayId();
-    CreatureModelInfo const* minfo = sObjectMgr->GetCreatureModelRandomGender(&displayID);
-    if (minfo && !IsTotem())                               // Cancel load if no model defined or if totem
-    {
-        SetDisplayId(displayID);
-        SetNativeDisplayId(displayID);
-        SetGender(minfo->gender);
-    }
+    //! Need to be called after LoadCreaturesAddon - MOVEMENTFLAG_HOVER is set there
+    m_positionZ += GetHoverOffset();
 
     LastUsedScriptID = GetScriptId();
 
@@ -1035,16 +1062,16 @@ void Creature::SaveToDB(uint32 mapid, uint16 spawnMask, uint32 phaseMask)
     uint32 npcflag = GetUInt32Value(UNIT_FIELD_NPC_FLAGS);
     uint32 npcflag2 = GetUInt32Value(UNIT_FIELD_NPC_FLAGS + 1);
     uint32 unit_flags = GetUInt32Value(UNIT_FIELD_FLAGS);
-    uint32 unit_flags2 = GetUInt32Value(UNIT_FIELD_FLAGS2);
+    uint32 unit_flags2 = GetUInt32Value(UNIT_FIELD_FLAGS_2);
     uint32 dynamicflags = GetUInt32Value(OBJECT_FIELD_DYNAMIC_FLAGS);
 
     // check if it's a custom model and if not, use 0 for displayId
     CreatureTemplate const* cinfo = GetCreatureTemplate();
     if (cinfo)
     {
-        if (displayId == cinfo->Modelid1 || displayId == cinfo->Modelid2 ||
-            displayId == cinfo->Modelid3 || displayId == cinfo->Modelid4)
-            displayId = 0;
+        for (CreatureModel model : cinfo->Models)
+            if (displayId && displayId == model.CreatureDisplayID)
+                displayId = 0;
 
         if (npcflag == cinfo->npcflag)
             npcflag = 0;
@@ -1719,22 +1746,22 @@ void Creature::Respawn(bool force)
 
         setDeathState(JUST_RESPAWNED);
 
-        uint32 displayID = GetNativeDisplayId();
-        CreatureModelInfo const* minfo = sObjectMgr->GetCreatureModelRandomGender(&displayID);
-        if (minfo)                                             // Cancel load if no model defined
-        {
-            SetDisplayId(displayID);
-            SetNativeDisplayId(displayID);
-            SetGender(minfo->gender);
-        }
+
+        CreatureModel display(GetNativeDisplayId(), 0, 1.0f);
+        if (sObjectMgr->GetCreatureModelRandomGender(&display, GetCreatureTemplate()))
+            SetDisplayId(display.CreatureDisplayID, true);
 
         sBattlePetSpawnMgr->OnRespawn(this);
 
         GetMotionMaster()->InitDefault();
 
-        //Call AI respawn virtual function
-        if (IsAIEnabled)
-            TriggerJustRespawned = true;//delay event to next tick so all creatures are created on the map before processing
+        // Re-initialize reactstate that could be altered by movementgenerators
+        InitializeReactState();
+
+        if (UnitAI* ai = AI()) // reset the AI to be sure no dirty or uninitialized values will be used till next tick
+            ai->Reset();
+
+        m_triggerJustAppeared = true;//delay event to next tick so all creatures are created on the map before processing
 
         uint32 poolid = GetDBTableGUIDLow() ? sPoolMgr->IsPartOfAPool<Creature>(GetDBTableGUIDLow()) : 0;
         if (poolid)
@@ -2154,7 +2181,7 @@ bool Creature::_IsTargetAcceptable(const Unit* target) const
     if (target->HasUnitState(UNIT_STATE_DIED))
     {
         // guards can detect fake death
-        if (IsGuard() && target->HasFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_FEIGN_DEATH))
+        if (IsGuard() && target->HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH))
             return true;
         else
             return false;
@@ -2869,15 +2896,21 @@ void Creature::SetObjectScale(float scale)
     }
 }
 
-void Creature::SetDisplayId(uint32 modelId)
+void Creature::SetDisplayId(uint32 modelId, float displayScale /*= 1.f*/)
 {
-    Unit::SetDisplayId(modelId);
+    Unit::SetDisplayId(modelId, displayScale);
 
     if (CreatureModelInfo const* minfo = sObjectMgr->GetCreatureModelInfo(modelId))
     {
         SetFloatValue(UNIT_FIELD_BOUNDING_RADIUS, minfo->bounding_radius * GetObjectScale());
         SetFloatValue(UNIT_FIELD_COMBAT_REACH, minfo->combat_reach * GetObjectScale());
     }
+}
+
+void Creature::SetDisplayFromModel(uint32 modelIdx)
+{
+    if (CreatureModel const* model = GetCreatureTemplate()->GetModelByIdx(modelIdx))
+        SetDisplayId(model->CreatureDisplayID);
 }
 
 void Creature::SetTarget(ObjectGuid guid)

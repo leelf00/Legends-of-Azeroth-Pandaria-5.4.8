@@ -1533,20 +1533,20 @@ void WorldSession::HandleMirrorImageDataRequest(WorldPacket& recvData)
         data.WriteBit(guid[6]);
         data.FlushBits();
 
-        data << uint8(player->GetByteValue(PLAYER_FIELD_HAIR_COLOR_ID, 3)); // haircolor
+        data << uint8(player->GetByteValue(PLAYER_BYTES, 3)); // haircolor
         data << uint32(player->GetDisplayId());
-        data << uint8(player->GetByteValue(PLAYER_FIELD_REST_STATE, 0));    // facial hair
+        data << uint8(player->GetByteValue(PLAYER_BYTES_2, 0));    // facial hair
 
         data.WriteByteSeq(guildGuid[6]);
         data.WriteByteSeq(guildGuid[4]);
         data.WriteByteSeq(guid[7]);
         data.WriteByteSeq(guildGuid[1]);
         data.WriteByteSeq(guid[3]);
-        data << uint8(player->GetByteValue(PLAYER_FIELD_HAIR_COLOR_ID, 2)); // hair 
+        data << uint8(player->GetByteValue(PLAYER_BYTES, 2)); // hair
         data.WriteByteSeq(guid[2]);
         data.WriteByteSeq(guid[0]);
         data << uint8(player->GetRace());
-        data << uint8(player->GetByteValue(PLAYER_FIELD_HAIR_COLOR_ID, 0)); // skin
+        data << uint8(player->GetByteValue(PLAYER_BYTES, 0)); // skin
         data.WriteByteSeq(guildGuid[7]);
 
         static EquipmentSlots const itemSlots[] =
@@ -1586,7 +1586,7 @@ void WorldSession::HandleMirrorImageDataRequest(WorldPacket& recvData)
         data.WriteByteSeq(guid[4]);
         data << uint8(player->GetClass());
         data << uint8(player->GetGender());
-        data << uint8(player->GetByteValue(PLAYER_FIELD_HAIR_COLOR_ID, 1)); // face
+        data << uint8(player->GetByteValue(PLAYER_BYTES, 1)); // face
         data.WriteByteSeq(guid[5]);
         data.WriteByteSeq(guildGuid[3]);
         data.WriteByteSeq(guildGuid[2]);

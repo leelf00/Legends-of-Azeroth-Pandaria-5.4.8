@@ -170,13 +170,34 @@ CREATE TABLE `armory_character_stats` (
 
 /*Data for the table `armory_character_stats` */
 
-/*Table structure for table `auctionhouse` */
+--
+-- Table structure for table `auctionbidders`
+--
+
+DROP TABLE IF EXISTS `auctionbidders`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `auctionbidders` (
+  `id` int(10) unsigned NOT NULL DEFAULT '0',
+  `bidderguid` int(10) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`,`bidderguid`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `auctionbidders`
+--
+
+--
+-- Table structure for table `auctionhouse`
+--
 
 DROP TABLE IF EXISTS `auctionhouse`;
-
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `auctionhouse` (
   `id` int(10) unsigned NOT NULL DEFAULT '0',
-  `auctioneerguid` int(10) unsigned NOT NULL DEFAULT '0',
+  `houseid` tinyint(3) unsigned NOT NULL DEFAULT '7',
   `itemguid` int(10) unsigned NOT NULL DEFAULT '0',
   `itemowner` int(10) unsigned NOT NULL DEFAULT '0',
   `buyoutprice` int(10) unsigned NOT NULL DEFAULT '0',
@@ -188,8 +209,11 @@ CREATE TABLE `auctionhouse` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `item_guid` (`itemguid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+/*!40101 SET character_set_client = @saved_cs_client */;
 
-/*Data for the table `auctionhouse` */
+--
+-- Dumping data for table `auctionhouse`
+--
 
 /*Table structure for table `banned_addons` */
 
@@ -2408,6 +2432,61 @@ CREATE TABLE `ticket_bug` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 /*Data for the table `ticket_bug` */
+
+--
+-- Table structure for table `updates`
+--
+
+DROP TABLE IF EXISTS `updates`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `updates` (
+  `name` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'filename with extension of the update.',
+  `hash` char(40) COLLATE utf8mb4_unicode_ci DEFAULT '' COMMENT 'sha1 hash of the sql file.',
+  `state` enum('RELEASED','ARCHIVED') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'RELEASED' COMMENT 'defines if an update is released or archived.',
+  `timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'timestamp when the query was applied.',
+  `speed` int(10) unsigned NOT NULL DEFAULT '0' COMMENT 'time the query takes to apply in ms.',
+  PRIMARY KEY (`name`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='List of all applied updates in this database.';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `updates`
+--
+
+LOCK TABLES `updates` WRITE;
+/*!40000 ALTER TABLE `updates` DISABLE KEYS */;
+INSERT INTO `updates` VALUES
+ ('2024_09_06_00_characters_auctionbidders.sql','0A664457BB1880267C74A9CF49E79E195907B825','RELEASED','2024-09-07 02:20:26',69),
+ ('2024_09_06_01_characters_auctionhouse_houseid.sql','F8682A431D50E54BDC4AC0E7DBED21AE8AAB6AD4','RELEASED','2024-09-07 02:41:38',1240);
+/*!40000 ALTER TABLE `updates` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `updates_include`
+--
+
+DROP TABLE IF EXISTS `updates_include`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `updates_include` (
+  `path` varchar(200) COLLATE utf8mb4_unicode_ci NOT NULL COMMENT 'directory to include. $ means relative to the source directory.',
+  `state` enum('RELEASED','ARCHIVED') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'RELEASED' COMMENT 'defines if the directory contains released or archived updates.',
+  PRIMARY KEY (`path`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='List of directories where we want to include sql updates.';
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `updates_include`
+--
+
+LOCK TABLES `updates_include` WRITE;
+/*!40000 ALTER TABLE `updates_include` DISABLE KEYS */;
+INSERT INTO `updates_include` VALUES
+ ('$/sql/archive/characters','ARCHIVED'),
+ ('$/sql/updates/characters','RELEASED');
+/*!40000 ALTER TABLE `updates_include` ENABLE KEYS */;
+UNLOCK TABLES;
 
 /*Table structure for table `warden_action` */
 

@@ -1216,9 +1216,9 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPacket& recvData)
         if (sWorld->IsFFAPvPRealm())
         {
             if (entered)
-                player->RemoveByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_FFA_PVP);
+                player->RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
             else
-                player->SetByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_FFA_PVP);
+                player->SetByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_FFA_PVP);
         }
 
         return;
@@ -1425,24 +1425,27 @@ void WorldSession::HandleSetActionButtonOpcode(WorldPacket& recvData)
         GetPlayer()->AddActionButton(slotId, button->id, button->type);
 }
 
-void WorldSession::HandleCompleteCinematic(WorldPacket& /*recvData*/)
+void WorldSession::HandleCompleteCinematic(WorldPackets::Misc::CompleteCinematic& /*packet*/)
 {
-    TC_LOG_DEBUG("network", "WORLD: Received CMSG_COMPLETE_CINEMATIC");
     // If player has sight bound to visual waypoint NPC we should remove it
     GetPlayer()->GetCinematicMgr()->EndCinematic();    
 }
 
-void WorldSession::HandleNextCinematicCamera(WorldPacket& /*recvData*/)
+void WorldSession::HandleNextCinematicCamera(WorldPackets::Misc::NextCinematicCamera& /*packet*/)
 {
-    TC_LOG_DEBUG("network", "WORLD: Received CMSG_NEXT_CINEMATIC_CAMERA");
     // Sent by client when cinematic actually begun. So we begin the server side process
     GetPlayer()->GetCinematicMgr()->NextCinematicCamera();
 }
 
-void WorldSession::HandleCompleteMovie(WorldPacket& /*recvData*/)
+void WorldSession::HandleCompleteMovie(WorldPackets::Misc::CompleteMovie& /*packet*/)
 {
     TC_LOG_DEBUG("network", "WORLD: Received CMSG_COMPLETE_MOVIE");
+    uint32 movie = _player->GetMovie();
+    if (!movie)
+        return;
 
+    _player->SetMovie(0);
+    //sScriptMgr->OnMovieComplete(_player, movie);
     if (_player)
         if (InstanceScript* instance = _player->GetInstanceScript())
             instance->OnMovieEnded(_player);
@@ -1558,7 +1561,7 @@ void WorldSession::HandleSetActionBarToggles(WorldPacket& recvData)
         return;
     }
 
-    GetPlayer()->SetByteValue(PLAYER_FIELD_LIFETIME_MAX_RANK, 2, actionBar);
+    GetPlayer()->SetByteValue(PLAYER_FIELD_BYTES, 2, actionBar);
 }
 
 void WorldSession::HandlePlayedTime(WorldPacket& recvData)
@@ -2129,9 +2132,9 @@ void WorldSession::HandleWorldStateUITimerUpdate(WorldPacket& /*recvData*/)
     // empty opcode
     TC_LOG_DEBUG("network", "WORLD: CMSG_WORLD_STATE_UI_TIMER_UPDATE");
 
-    WorldPacket data(SMSG_WORLD_STATE_UI_TIMER_UPDATE, 4);
-    data << uint32(time(NULL));
-    SendPacket(&data);
+    WorldPackets::Misc::UITime response;
+    response.Time = GameTime::GetGameTime();
+    SendPacket(response.Write());
 }
 
 void WorldSession::HandleReadyForAccountDataTimes(WorldPacket& /*recvData*/)
@@ -2658,6 +2661,14 @@ void WorldSession::SendLoadCUFProfiles()
     SendPacket(&data);
 }
 
+void WorldSession::SendStreamingMovie()
+{
+    WorldPackets::Misc::StreamingMovies packet;
+
+    // To-do: implement
+    SendPacket(packet.Write());
+}
+
 #define JOIN_THE_ALLIANCE 1
 #define JOIN_THE_HORDE    0
 
@@ -2673,7 +2684,7 @@ void WorldSession::HandleSelectFactionOpcode(WorldPacket& recvPacket)
 
     if (choice == JOIN_THE_HORDE)
     {
-        _player->SetByteValue(UNIT_FIELD_SEX, 0, RACE_PANDAREN_HORDE);
+        _player->SetByteValue(UNIT_FIELD_BYTES_0, 0, RACE_PANDAREN_HORDE);
         _player->setFactionForRace(RACE_PANDAREN_HORDE);
         _player->SaveToDB();
         WorldLocation location(1, 1357.62f, -4373.55f, 26.13f, 0.13f);
@@ -2684,7 +2695,7 @@ void WorldSession::HandleSelectFactionOpcode(WorldPacket& recvPacket)
     }
     else if (choice == JOIN_THE_ALLIANCE)
     {
-        _player->SetByteValue(UNIT_FIELD_SEX, 0, RACE_PANDAREN_ALLIANCE);
+        _player->SetByteValue(UNIT_FIELD_BYTES_0, 0, RACE_PANDAREN_ALLIANCE);
         _player->setFactionForRace(RACE_PANDAREN_ALLIANCE);
         _player->SaveToDB();
         WorldLocation location(0, -8960.02f, 516.10f, 96.36f, 0.67f);

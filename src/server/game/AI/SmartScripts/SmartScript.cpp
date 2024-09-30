@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -213,7 +213,11 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
                 {
                     if (IsUnit(*itr))
                     {
-                        (*itr)->SendPlaySound(e.action.sound.sound, e.action.sound.onlySelf > 0);
+                        if (e.action.sound.distance == 1)
+                            (*itr)->PlayDistanceSound(e.action.sound.sound, e.action.sound.onlySelf ? (*itr)->ToPlayer() : nullptr);
+                        else
+                            (*itr)->PlayDirectSound(e.action.sound.sound, e.action.sound.onlySelf ? (*itr)->ToPlayer() : nullptr);
+
                         TC_LOG_DEBUG("scripts.ai", "SmartScript::ProcessAction:: SMART_ACTION_SOUND: target: %s (GuidLow: %u), sound: %u, onlyself: %u",
                             (*itr)->GetName().c_str(), (*itr)->GetGUID().GetCounter(), e.action.sound.sound, e.action.sound.onlySelf);
                     }
@@ -275,10 +279,10 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
                     {
                         if (CreatureTemplate const* ci = sObjectMgr->GetCreatureTemplate(e.action.morphOrMount.creature))
                         {
-                            uint32 displayId = ObjectMgr::ChooseDisplayId(ci);
-                            (*itr)->ToCreature()->SetDisplayId(displayId);
+                            CreatureModel const* model = ObjectMgr::ChooseDisplayId(ci);
+                            (*itr)->ToCreature()->SetDisplayId(model->CreatureDisplayID, model->DisplayScale);
                             TC_LOG_DEBUG("scripts.ai", "SmartScript::ProcessAction:: SMART_ACTION_MORPH_TO_ENTRY_OR_MODEL: Creature entry %u, GuidLow %u set displayid to %u",
-                                (*itr)->GetEntry(), (*itr)->GetGUID().GetCounter(), displayId);
+                                (*itr)->GetEntry(), (*itr)->GetGUID().GetCounter(), model->CreatureDisplayID);
                         }
                     }
                     //if no param1, then use value from param2 (modelId)
@@ -641,8 +645,8 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
                     }
                     else
                     {
-                        (*itr)->ToUnit()->SetFlag(UNIT_FIELD_FLAGS2, e.action.unitFlag.flag);
-                        TC_LOG_DEBUG("scripts.ai", "SmartScript::ProcessAction:: SMART_ACTION_SET_UNIT_FLAG. Unit %u added flag %u to UNIT_FIELD_FLAGS2",
+                        (*itr)->ToUnit()->SetFlag(UNIT_FIELD_FLAGS_2, e.action.unitFlag.flag);
+                        TC_LOG_DEBUG("scripts.ai", "SmartScript::ProcessAction:: SMART_ACTION_SET_UNIT_FLAG. Unit %u added flag %u to UNIT_FIELD_FLAGS_2",
                         (*itr)->GetGUID().GetCounter(), e.action.unitFlag.flag);
                     }
                 }
@@ -669,8 +673,8 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
                     }
                     else
                     {
-                        (*itr)->ToUnit()->RemoveFlag(UNIT_FIELD_FLAGS2, e.action.unitFlag.flag);
-                        TC_LOG_DEBUG("scripts.ai", "SmartScript::ProcessAction:: SMART_ACTION_REMOVE_UNIT_FLAG. Unit %u removed flag %u to UNIT_FIELD_FLAGS2",
+                        (*itr)->ToUnit()->RemoveFlag(UNIT_FIELD_FLAGS_2, e.action.unitFlag.flag);
+                        TC_LOG_DEBUG("scripts.ai", "SmartScript::ProcessAction:: SMART_ACTION_REMOVE_UNIT_FLAG. Unit %u removed flag %u to UNIT_FIELD_FLAGS_2",
                         (*itr)->GetGUID().GetCounter(), e.action.unitFlag.flag);
                     }
                 }
@@ -1036,7 +1040,7 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
                     if (e.action.morphOrMount.creature > 0)
                     {
                         if (CreatureTemplate const* cInfo = sObjectMgr->GetCreatureTemplate(e.action.morphOrMount.creature))
-                            (*itr)->ToUnit()->Mount(ObjectMgr::ChooseDisplayId(cInfo));
+                            (*itr)->ToUnit()->Mount(ObjectMgr::ChooseDisplayId(cInfo)->CreatureDisplayID);
                     }
                     else
                         (*itr)->ToUnit()->Mount(e.action.morphOrMount.model);
@@ -1831,19 +1835,19 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
             delete targets;
             break;
         }
-        case SMART_ACTION_SET_UNIT_FIELD_ANIM_TIER:
+        case SMART_ACTION_SET_UNIT_FIELD_BYTES_1:
         {
             ObjectList* targets = GetTargets(e, unit);
             if (!targets)
                 break;
             for (ObjectList::const_iterator itr = targets->begin(); itr != targets->end(); ++itr)
                 if (IsUnit(*itr))
-                    (*itr)->ToUnit()->SetByteFlag(UNIT_FIELD_ANIM_TIER, e.action.setunitByte.type, e.action.setunitByte.byte1);
+                    (*itr)->ToUnit()->SetByteFlag(UNIT_FIELD_BYTES_1, e.action.setunitByte.type, e.action.setunitByte.byte1);
 
             delete targets;
             break;
         }
-        case SMART_ACTION_REMOVE_UNIT_FIELD_ANIM_TIER:
+        case SMART_ACTION_REMOVE_UNIT_FIELD_BYTES_1:
         {
             ObjectList* targets = GetTargets(e, unit);
             if (!targets)
@@ -1851,7 +1855,7 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
 
             for (ObjectList::const_iterator itr = targets->begin(); itr != targets->end(); ++itr)
                 if (IsUnit(*itr))
-                    (*itr)->ToUnit()->RemoveByteFlag(UNIT_FIELD_ANIM_TIER, e.action.delunitByte.type, e.action.delunitByte.byte1);
+                    (*itr)->ToUnit()->RemoveByteFlag(UNIT_FIELD_BYTES_1, e.action.delunitByte.type, e.action.delunitByte.byte1);
 
             delete targets;
             break;
@@ -2260,7 +2264,11 @@ void SmartScript::ProcessAction(SmartScriptHolder& e, Unit* unit, uint32 var0, u
                     if (IsUnit(obj))
                     {
                         uint32 sound = Trinity::Containers::SelectRandomContainerElement(sounds);
-                        obj->PlayDirectSound(sound, onlySelf ? obj->ToPlayer() : nullptr);
+                        if (e.action.randomSound.distance == 1)
+                            obj->PlayDistanceSound(sound, onlySelf ? obj->ToPlayer() : nullptr);
+                        else
+                            obj->PlayDirectSound(sound, onlySelf ? obj->ToPlayer() : nullptr);
+
                         TC_LOG_DEBUG("scripts.ai", "SmartScript::ProcessAction:: SMART_ACTION_RANDOM_SOUND: target: %s (" UI64FMTD "), sound: %u, onlyself: %s",
                             obj->GetName().c_str(), obj->GetGUID().GetRawValue(), sound, onlySelf ? "true" : "false");
                     }

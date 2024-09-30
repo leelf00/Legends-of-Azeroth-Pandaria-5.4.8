@@ -68,7 +68,7 @@ struct boss_drekthar : public ScriptedAI
         _events.ScheduleEvent(EVENT_DREKTHAR_RESET, 5s);
     }
 
-    void JustRespawned() override
+    void JustAppeared() override
     {
         Reset();
         Talk(YELL_RESPAWN);

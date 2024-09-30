@@ -361,7 +361,7 @@ void Player::UpdateSpellDamageAndHealingBonus()
     if (GetClass() == CLASS_MONK && HasAuraType(SPELL_AURA_OVERRIDE_ATTACK_POWER_BY_SPD))    // Prevents recursive call if some jerk apply both ap -> spd and spd -> ap auras
         UpdateAttackPowerAndDamage();
 
-    SetFloatValue(PLAYER_FIELD_OVERRIDE_SPELL_POWER_BY_APPERCENT, float(GetMaxPositiveAuraModifier(SPELL_AURA_OVERRIDE_SPELL_POWER_BY_AP_PCT)));
+    SetFloatValue(PLAYER_FIELD_OVERRIDE_SPELL_POWER_BY_AP_PERCENT, float(GetMaxPositiveAuraModifier(SPELL_AURA_OVERRIDE_SPELL_POWER_BY_AP_PCT)));
 }
 
 bool Player::UpdateAllStats()
@@ -578,7 +578,7 @@ void Player::UpdateAttackPowerAndDamage(bool ranged)
             guardian->UpdateAttackPowerAndDamage();
     }
 
-    SetFloatValue(PLAYER_FIELD_OVERRIDE_APBY_SPELL_POWER_PERCENT, float(GetMaxPositiveAuraModifier(SPELL_AURA_OVERRIDE_ATTACK_POWER_BY_SPD)));
+    SetFloatValue(PLAYER_FIELD_OVERRIDE_AP_BY_SPELL_POWER_PERCENT, float(GetMaxPositiveAuraModifier(SPELL_AURA_OVERRIDE_ATTACK_POWER_BY_SPD)));
 }
 
 void Player::CalculateMinMaxDamage(WeaponAttackType attType, bool normalized, bool addTotalPct, float& min_damage, float& max_damage)

@@ -2280,7 +2280,7 @@ class npc_ymirjar_deathbringer_10man_icc : public CreatureScript
             void JustSummoned(Creature* summon) override
             {
                 summon->m_Events.Schedule(1, [summon]() { summon->ToTempSummon()->SetTempSummonType(TEMPSUMMON_TIMED_DESPAWN_OUT_OF_COMBAT); });
-                summon->SetFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_INSTANTLY_APPEAR_MODEL);
+                summon->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_INSTANTLY_APPEAR_MODEL);
                 summon->CastSpell(summon, 26586, true);
             }
 
@@ -2513,9 +2513,9 @@ struct npc_ymirjar_icc_base : public ScriptedAI
         });
     }
 
-    void JustRespawned() override
+    void JustAppeared() override
     {
-        ScriptedAI::JustRespawned();
+        ScriptedAI::JustAppeared();
         if (me->GetEntry() == NPC_YMIRJAR_HUNTRESS)
             me->m_Events.Schedule(1000, [this]() { DoCastAOE(SPELL_SUMMON_WARHAWK, true); });
     }

@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -19,16 +19,15 @@
 #define SC_SCRIPTMGR_H
 
 #include "Common.h"
+#include "ObjectGuid.h"
 #include <atomic>
 
 #include "DBCStores.h"
 #include "SharedDefines.h"
 #include "Types.h"
-#include "World.h"
+#include "Tuples.h"
 #include "Weather.h"
-#include "ItemPrototype.h"
 #include "WorldStateBuilder.h"
-#include "QuestDef.h"
 
 class AreaTrigger;
 class AuctionHouseObject;
@@ -60,9 +59,11 @@ class SpellCastTargets;
 class Transport;
 class Unit;
 class Vehicle;
+class Weather;
 class WorldPacket;
 class WorldSocket;
 class WorldObject;
+class WorldSession;
 
 enum class QuestGiverStatus : uint32;
 enum QuestStatus : uint8;
@@ -1263,35 +1264,44 @@ class TC_GAME_API ScriptMgr
         std::atomic_long _scheduledScripts;
 };
 
-// template <typename... Ts>
-// class GenericSpellAndAuraScriptLoader : public SpellScriptLoader
-// {
-//     using SpellScriptType = typename Trinity::find_type_if_t<Trinity::SpellScripts::is_SpellScript, Ts...>;
-//     using AuraScriptType = typename Trinity::find_type_if_t<Trinity::SpellScripts::is_AuraScript, Ts...>;
-//     using ArgsType = typename Trinity::find_type_if_t<Trinity::is_tuple, Ts...>;
+namespace Trinity::SpellScripts
+{
+    template<typename T>
+    using is_SpellScript = std::is_base_of<SpellScript, T>;
 
-// public:
-//     GenericSpellAndAuraScriptLoader(char const* name, ArgsType&& args) : SpellScriptLoader(name), _args(std::move(args)) { }
+    template<typename T>
+    using is_AuraScript = std::is_base_of<AuraScript, T>;
+}
 
-// private:
-//     SpellScript* GetSpellScript() const override
-//     {
-//         if constexpr (!std::is_same_v<SpellScriptType, Trinity::find_type_end>)
-//             return Trinity::new_from_tuple<SpellScriptType>(_args);
-//         else
-//             return nullptr;
-//     }
+template <typename... Ts>
+class GenericSpellAndAuraScriptLoader : public SpellScriptLoader
+{
+    using SpellScriptType = typename Trinity::find_type_if_t<Trinity::SpellScripts::is_SpellScript, Ts...>;
+    using AuraScriptType = typename Trinity::find_type_if_t<Trinity::SpellScripts::is_AuraScript, Ts...>;
+    using ArgsType = typename Trinity::find_type_if_t<Trinity::is_tuple, Ts...>;
 
-//     AuraScript* GetAuraScript() const override
-//     {
-//         if constexpr (!std::is_same_v<AuraScriptType, Trinity::find_type_end>)
-//             return Trinity::new_from_tuple<AuraScriptType>(_args);
-//         else
-//             return nullptr;
-//     }
+public:
+    GenericSpellAndAuraScriptLoader(char const* name, ArgsType&& args) : SpellScriptLoader(name), _args(std::move(args)) { }
 
-//     ArgsType _args;
-// };
+private:
+    SpellScript* GetSpellScript() const override
+    {
+        if constexpr (!std::is_same_v<SpellScriptType, Trinity::find_type_end>)
+            return Trinity::new_from_tuple<SpellScriptType>(_args);
+        else
+            return nullptr;
+    }
+
+    AuraScript* GetAuraScript() const override
+    {
+        if constexpr (!std::is_same_v<AuraScriptType, Trinity::find_type_end>)
+            return Trinity::new_from_tuple<AuraScriptType>(_args);
+        else
+            return nullptr;
+    }
+
+    ArgsType _args;
+};
 
 template <class T>
 struct aura_script : SpellScriptLoader

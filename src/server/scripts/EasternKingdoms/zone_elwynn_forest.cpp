@@ -195,14 +195,14 @@ struct npc_stormwind_infantry : public ScriptedAI
 {
     npc_stormwind_infantry(Creature* creature) : ScriptedAI(creature)
     {
-        me->SetUInt32Value(EUnitFields::UNIT_FIELD_NPC_EMOTESTATE, Emote::EMOTE_STATE_READY1H);
+        me->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, Emote::EMOTE_STATE_READY1H);
     }
 
     uint32 tSeek, cYell,tYell;
 
     void Reset() override
     {
-        me->SetUInt32Value(EUnitFields::UNIT_FIELD_NPC_EMOTESTATE, Emote::EMOTE_STATE_READY1H);
+        me->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, Emote::EMOTE_STATE_READY1H);
         tSeek = urand(1 * TimeConstants::IN_MILLISECONDS, 2 * TimeConstants::IN_MILLISECONDS);
         cYell = urand(0, 100);
         tYell = urand(5 * TimeConstants::IN_MILLISECONDS, 60 * TimeConstants::IN_MILLISECONDS);
@@ -344,7 +344,7 @@ struct npc_brother_paxton : public ScriptedAI
     {
         _events.Reset();
 
-        me->SetFlag(EUnitFields::UNIT_FIELD_FLAGS, UnitFlags::UNIT_FLAG_IMMUNE_TO_PC | UnitFlags::UNIT_FLAG_IMMUNE_TO_NPC);
+        me->SetFlag(UNIT_FIELD_FLAGS, UnitFlags::UNIT_FLAG_IMMUNE_TO_PC | UnitFlags::UNIT_FLAG_IMMUNE_TO_NPC);
         DoCast(me, ElwynnForest::SPELL_FORTITUDE);
         me->InitializeReactState();
 

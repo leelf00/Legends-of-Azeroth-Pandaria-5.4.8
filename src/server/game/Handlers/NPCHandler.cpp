@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -738,8 +738,17 @@ void WorldSession::SendPetList(ObjectGuid guid, uint8 first, uint8 last)
         uint8 petStableState = itr.first <= PET_SLOT_ACTIVE_LAST ? 1 : 2;
 
         uint32 modelId = 0;
+
         if (CreatureTemplate const* cInfo = sObjectMgr->GetCreatureTemplate(petData.Entry))
-            modelId = cInfo->Modelid1 ? cInfo->Modelid1 : cInfo->Modelid2;
+        {
+            if (CreatureModel const* model1 = cInfo->GetModelByIdx(0))
+                modelId = model1->CreatureDisplayID;
+            else
+            {
+                CreatureModel const* model2 = cInfo->GetModelByIdx(1);
+                modelId = model2->CreatureDisplayID;
+            }
+        }
 
         buff << uint32(petData.Entry);
         buff << uint32(_player->GetLevel());    // All pets have equal level

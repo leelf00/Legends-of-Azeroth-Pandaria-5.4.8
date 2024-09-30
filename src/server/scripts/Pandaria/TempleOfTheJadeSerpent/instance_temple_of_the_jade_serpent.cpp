@@ -247,7 +247,7 @@ class instance_temple_of_jade_serpent : public InstanceMapScript
                             {
                                 creature->CastSpell(creature, SPELL_FIGMENT_OF_DOUBT, false);
                                 creature->SetDisplayId(summoner->GetDisplayId());
-                                creature->SetFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_MIRROR_IMAGE);
+                                creature->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_MIRROR_IMAGE);
                                 summoner->CastSpell(creature, SPELL_COPY_WEAPON, false);
                                 summoner->CastSpell(creature, SPELL_COPY_WEAPON_2, false);
 

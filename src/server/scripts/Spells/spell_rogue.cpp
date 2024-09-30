@@ -1684,7 +1684,7 @@ protected:
         if (rogue->HasAura(SPELL_ROG_SHADOW_FOCUS_TALENT))
             rogue->CastSpell(rogue, SPELL_ROG_SHADOW_FOCUS, true);
 
-        rogue->ForceValuesUpdateAtIndex(UNIT_FIELD_SHAPESHIFT_FORM);    // Needs for vanish + subterfuge
+        rogue->ForceValuesUpdateAtIndex(UNIT_FIELD_BYTES_2);    // Needs for vanish + subterfuge
     }
 
     void HandleRemove(AuraEffect const*, AuraEffectHandleModes)
@@ -1700,7 +1700,7 @@ protected:
             nightstalker->SetDuration(100); // Set duration instead of remove as stealth removal is done before spell-cast damage calculation
 
         rogue->RemoveAura(SPELL_ROG_SHADOW_FOCUS);
-        rogue->ForceValuesUpdateAtIndex(UNIT_FIELD_SHAPESHIFT_FORM);    // Needs for vanish + subterfuge
+        rogue->ForceValuesUpdateAtIndex(UNIT_FIELD_BYTES_2);    // Needs for vanish + subterfuge
 
         if (!rogue->HasStealthAura())
             rogue->RemoveOwnedAura(SPELL_ROGUE_SHROUD_OF_CONCEALMENT);

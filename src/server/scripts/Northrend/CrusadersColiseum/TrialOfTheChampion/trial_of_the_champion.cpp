@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -147,42 +147,42 @@ class npc_anstart : public CreatureScript
                             introTimer = 4000;
                             break;
                         case 1:
-                            me->MonsterSay("The Sunreavers are proud to present their representatives in this trial by combat.", LANG_UNIVERSAL, 0); // AN_1
+                            me->Say("The Sunreavers are proud to present their representatives in this trial by combat.", LANG_UNIVERSAL, 0); // AN_1
                             ++introPhase;
                             introTimer = 10000;
                             break;
                         case 2:
-                            me->MonsterSay("Welcome, champions. Today, before the eyes of your leeders and peers, you will prove youselves worthy combatants.", LANG_UNIVERSAL, 0); // AN_2
+                            me->Say("Welcome, champions. Today, before the eyes of your leeders and peers, you will prove youselves worthy combatants.", LANG_UNIVERSAL, 0); // AN_2
                             ++introPhase;
                             introTimer = 13000;
                             break;
                         case 3:
-                            Trall->MonsterYell("Fight well, Horde! Lok'tar Ogar!", LANG_UNIVERSAL, 0); // AN_3
+                            Trall->Yell("Fight well, Horde! Lok'tar Ogar!", LANG_UNIVERSAL, 0); // AN_3
                             ++introPhase;
                             introTimer = 8000;
                             break;
                         case 4:
-                            Garrosh->MonsterYell("Finally, a fight worth watching.", LANG_UNIVERSAL, 0); // AN_4
+                            Garrosh->Yell("Finally, a fight worth watching.", LANG_UNIVERSAL, 0); // AN_4
                             ++introPhase;
                             introTimer = 6000;
                             break;
                         case 5:
-                            King->MonsterYell("I did not come here to watch animals tear at each other senselessly, Tirion.", LANG_UNIVERSAL, 0); // AN_5
+                            King->Yell("I did not come here to watch animals tear at each other senselessly, Tirion.", LANG_UNIVERSAL, 0); // AN_5
                             ++introPhase;
                             introTimer = 8000;
                             break;
                         case 6:
-                            Highlord->MonsterYell("You will first be facing three of the Grand Champions of the Tournament! These fierce contenders have beaten out all others to reach the pinnacle of skill in the joust.", LANG_UNIVERSAL, 0); // AN_6
+                            Highlord->Yell("You will first be facing three of the Grand Champions of the Tournament! These fierce contenders have beaten out all others to reach the pinnacle of skill in the joust.", LANG_UNIVERSAL, 0); // AN_6
                             ++introPhase;
                             introTimer = 8000;
                             break;
                         case 7:
-                            Highlord->MonsterYell("Will tought! You next challenge comes from the Crusade's own ranks. You will be tested against their consederable prowess.", LANG_UNIVERSAL, 0); // AN_7
+                            Highlord->Yell("Will tought! You next challenge comes from the Crusade's own ranks. You will be tested against their consederable prowess.", LANG_UNIVERSAL, 0); // AN_7
                             ++introPhase;
                             introTimer = 3000;
                             break;
                         case 8:
-                            me->MonsterSay("You may begin!", LANG_UNIVERSAL, 0); // AN_8
+                            me->Say("You may begin!", LANG_UNIVERSAL, 0); // AN_8
                             ++introPhase;
                             introTimer = 4000;
                             break;
@@ -335,7 +335,7 @@ class npc_announcer_toc5 : public CreatureScript
                             instance->HandleGameObject(go->GetGUID(), false);
                         instance->SetData(DATA_MOVEMENT_DONE, 0);
 
-                        me->MonsterSay("Coming out of the gate Grand Champions other faction.", LANG_UNIVERSAL, 0); // SAY_START
+                        me->Say("Coming out of the gate Grand Champions other faction.", LANG_UNIVERSAL, 0); // SAY_START
                         DoSummonGrandChampion(firstBoss);
                         NextStep(10000, false, 1);
                         break;
@@ -493,7 +493,7 @@ class npc_announcer_toc5 : public CreatureScript
 
             void DoStartArgentChampionEncounter()
             {
-                me->MonsterSay("Coming out of the gate Crusader's Coliseum Champion.", LANG_UNIVERSAL, 0); // SAY_START3
+                me->Say("Coming out of the gate Crusader's Coliseum Champion.", LANG_UNIVERSAL, 0); // SAY_START3
                 me->GetMotionMaster()->MovePoint(1, 735.81f, 661.92f, 412.39f);
 
                 if (me->SummonCreature(argentChampion, SpawnPosition))
@@ -561,7 +561,7 @@ class npc_announcer_toc5 : public CreatureScript
                         if (GameObject* go = GameObject::GetGameObject(*me, instance->GetGuidData(DATA_MAIN_GATE)))
                             instance->HandleGameObject(go->GetGUID(), false);
 
-                        me->MonsterYell("What''s that, up near the rafters?", LANG_UNIVERSAL, 0); // SAY_START5
+                        me->Yell("What''s that, up near the rafters?", LANG_UNIVERSAL, 0); // SAY_START5
                     }
                 }
             }

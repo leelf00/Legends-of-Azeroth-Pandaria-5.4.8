@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -33,6 +33,7 @@
 #include "Pet.h"
 #include "Player.h"
 #include "Vehicle.h"
+#include "Transport.h"
 #include "World.h"
 #include "WorldPacket.h"
 #include <cmath>
@@ -41,7 +42,8 @@
 template<class T>
 void HashMapHolder<T>::Insert(T* o)
 {
-    static_assert(std::is_same<Player, T>::value,
+    static_assert(std::is_same<Player, T>::value
+        || std::is_same<Transport, T>::value,
                   "Only Player can be registered in global HashMapHolder");
 
     std::unique_lock<std::shared_mutex> lock(*GetLock());
@@ -86,6 +88,7 @@ HashMapHolder<Player>::MapType const& ObjectAccessor::GetPlayers()
 }
 
 template class TC_GAME_API HashMapHolder<Player>;
+template class TC_GAME_API HashMapHolder<Transport>;
 
 namespace PlayerNameMapHolder
 {
@@ -201,6 +204,9 @@ AreaTrigger* ObjectAccessor::GetAreaTrigger(WorldObject const& u, ObjectGuid con
 
 Unit* ObjectAccessor::GetUnit(WorldObject const& u, ObjectGuid const& guid)
 {
+    if (guid.IsEmpty())
+        return nullptr;
+
     if (guid.IsPlayer())
         return GetPlayer(u, guid);
 

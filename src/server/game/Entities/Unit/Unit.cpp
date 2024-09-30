@@ -1,4 +1,4 @@
-/*
+﻿/*
 * This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
@@ -26,6 +26,8 @@
 #include "CreatureGroups.h"
 #include "Creature.h"
 #include "CreatureTextMgr.h"
+#include "Chat.h"
+#include "ChatTextBuilder.h"
 #include "Formulas.h"
 #include "GridNotifiersImpl.h"
 #include "Group.h"
@@ -33,6 +35,7 @@
 #include "InstanceScript.h"
 #include "Log.h"
 #include "MapManager.h"
+#include "MiscPackets.h"
 #include "MoveSpline.h"
 #include "ObjectAccessor.h"
 #include "ObjectMgr.h"
@@ -2779,9 +2782,9 @@ bool Unit::CanUseAttackType(uint8 attacktype) const
         case BASE_ATTACK:
             return !HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISARMED);
         case OFF_ATTACK:
-            return !HasFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_DISARM_OFFHAND);
+            return !HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARM_OFFHAND);
         case RANGED_ATTACK:
-            return !HasFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_DISARM_RANGED);
+            return !HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_DISARM_RANGED);
         default:
             return true;
     }
@@ -8530,15 +8533,15 @@ ReputationRank Unit::GetReactionTo(Unit const* target) const
             }
 
             // check FFA_PVP
-            if (GetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1) & UNIT_BYTE2_FLAG_FFA_PVP
-                && target->GetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1) & UNIT_BYTE2_FLAG_FFA_PVP)
+            if (GetByteValue(UNIT_FIELD_BYTES_2, 1) & UNIT_BYTE2_FLAG_FFA_PVP
+                && target->GetByteValue(UNIT_FIELD_BYTES_2, 1) & UNIT_BYTE2_FLAG_FFA_PVP)
                 return REP_HOSTILE;
 
             if (selfPlayerOwner)
             {
                 if (FactionTemplateEntry const* targetFactionTemplateEntry = target->GetFactionTemplateEntry())
                 {
-                    if (!selfPlayerOwner->HasFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_IGNORE_REPUTATION))
+                    if (!selfPlayerOwner->HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_IGNORE_REPUTATION))
                     {
                         if (FactionEntry const* targetFactionEntry = sFactionStore.LookupEntry(targetFactionTemplateEntry->faction))
                         {
@@ -8582,7 +8585,7 @@ ReputationRank Unit::GetFactionReactionTo(FactionTemplateEntry const* factionTem
             return REP_HOSTILE;
         if (ReputationRank const* repRank = targetPlayerOwner->GetReputationMgr().GetForcedRankIfAny(factionTemplateEntry))
             return *repRank;
-        if (!target->HasFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_IGNORE_REPUTATION))
+        if (!target->HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_IGNORE_REPUTATION))
         {
             if (FactionEntry const* factionEntry = sFactionStore.LookupEntry(factionTemplateEntry->faction))
             {
@@ -9126,7 +9129,7 @@ void Unit::SetMinion(Minion *minion, bool apply)
         }
 
         // PvP, FFAPvP
-        minion->SetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1, GetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1));
+        minion->SetByteValue(UNIT_FIELD_BYTES_2, 1, GetByteValue(UNIT_FIELD_BYTES_2, 1));
 
         // Ghoul pets have energy instead of mana (is anywhere better place for this code?)
         if (minion->IsPetGhoul())
@@ -9282,7 +9285,7 @@ void Unit::SetCharm(Unit* charm, bool apply)
             charm->m_ControlledByPlayer = false;
 
         // PvP, FFAPvP
-        charm->SetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1, GetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1));
+        charm->SetByteValue(UNIT_FIELD_BYTES_2, 1, GetByteValue(UNIT_FIELD_BYTES_2, 1));
 
         if (!charm->AddGuidValue(UNIT_FIELD_CHARMED_BY, GetGUID()))
             TC_LOG_FATAL("entities.unit", "Unit %u is being charmed, but it already has a charmer " UI64FMTD "", charm->GetEntry(), charm->GetCharmerGUID().GetRawValue());
@@ -9314,13 +9317,13 @@ void Unit::SetCharm(Unit* charm, bool apply)
         {
             charm->m_ControlledByPlayer = true;
             charm->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);
-            charm->SetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1, player->GetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1));
+            charm->SetByteValue(UNIT_FIELD_BYTES_2, 1, player->GetByteValue(UNIT_FIELD_BYTES_2, 1));
         }
         else
         {
             charm->m_ControlledByPlayer = false;
             charm->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE);
-            charm->SetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1, 0);
+            charm->SetByteValue(UNIT_FIELD_BYTES_2, 1, 0);
         }
 
         if (charm->IsWalking() != _isWalkingBeforeCharm)
@@ -11523,28 +11526,9 @@ void Unit::Dismount()
     if (Player* thisPlayer = ToPlayer())
         thisPlayer->SendMovementSetCollisionHeight(thisPlayer->GetCollisionHeight());
 
-    ObjectGuid guid = GetGUID();
-    WorldPacket data(SMSG_DISMOUNT, 8);
-
-    data.WriteBit(guid [6]);
-    data.WriteBit(guid [3]);
-    data.WriteBit(guid [0]);
-    data.WriteBit(guid [7]);
-    data.WriteBit(guid [1]);
-    data.WriteBit(guid [2]);
-    data.WriteBit(guid [5]);
-    data.WriteBit(guid [4]);
-
-    data.WriteByteSeq(guid [3]);
-    data.WriteByteSeq(guid [6]);
-    data.WriteByteSeq(guid [7]);
-    data.WriteByteSeq(guid [5]);
-    data.WriteByteSeq(guid [1]);
-    data.WriteByteSeq(guid [4]);
-    data.WriteByteSeq(guid [2]);
-    data.WriteByteSeq(guid [0]);
-
-    SendMessageToSet(&data, true);
+    WorldPackets::Misc::Dismount packet;
+    packet.Guid = GetGUID();
+    SendMessageToSet(packet.Write(), IsPlayer());
 
     // dismount as a vehicle
     if (GetTypeId() == TYPEID_PLAYER && GetVehicleKit())
@@ -11944,7 +11928,7 @@ bool Unit::IsValidAttackTarget(Unit const* target, SpellInfo const* bySpell, Wor
     // PvP case - can't attack when attacker or target are in sanctuary
     // however, 13850 client doesn't allow to attack when one of the unit's has sanctuary flag and is pvp
     if (target->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE) && HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE)
-        && ((target->GetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1) & UNIT_BYTE2_FLAG_SANCTUARY) || (GetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1) & UNIT_BYTE2_FLAG_SANCTUARY)))
+        && ((target->GetByteValue(UNIT_FIELD_BYTES_2, 1) & UNIT_BYTE2_FLAG_SANCTUARY) || (GetByteValue(UNIT_FIELD_BYTES_2, 1) & UNIT_BYTE2_FLAG_SANCTUARY)))
     {
         if (ToPlayer() && !bySpell && error)
             *error = ATTACKSWING_CANNOT_ATTACK;
@@ -11954,15 +11938,15 @@ bool Unit::IsValidAttackTarget(Unit const* target, SpellInfo const* bySpell, Wor
     // additional checks - only PvP case
     if (playerAffectingAttacker && playerAffectingTarget)
     {
-        if (target->GetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1) & UNIT_BYTE2_FLAG_PVP)
+        if (target->GetByteValue(UNIT_FIELD_BYTES_2, 1) & UNIT_BYTE2_FLAG_PVP)
             return true;
 
-        if (GetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1) & UNIT_BYTE2_FLAG_FFA_PVP
-            && target->GetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1) & UNIT_BYTE2_FLAG_FFA_PVP)
+        if (GetByteValue(UNIT_FIELD_BYTES_2, 1) & UNIT_BYTE2_FLAG_FFA_PVP
+            && target->GetByteValue(UNIT_FIELD_BYTES_2, 1) & UNIT_BYTE2_FLAG_FFA_PVP)
             return true;
 
-        return (GetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1) & UNIT_BYTE2_FLAG_UNK1)
-            || (target->GetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1) & UNIT_BYTE2_FLAG_UNK1);
+        return (GetByteValue(UNIT_FIELD_BYTES_2, 1) & UNIT_BYTE2_FLAG_UNK1)
+            || (target->GetByteValue(UNIT_FIELD_BYTES_2, 1) & UNIT_BYTE2_FLAG_UNK1);
     }
     return true;
 }
@@ -12042,12 +12026,12 @@ bool Unit::_IsValidAssistTarget(Unit const* target, SpellInfo const* bySpell) co
                     return false;
             }
             // can't assist player in ffa_pvp zone from outside
-            if ((target->GetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1) & UNIT_BYTE2_FLAG_FFA_PVP)
-                && !(GetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1) & UNIT_BYTE2_FLAG_FFA_PVP))
+            if ((target->GetByteValue(UNIT_FIELD_BYTES_2, 1) & UNIT_BYTE2_FLAG_FFA_PVP)
+                && !(GetByteValue(UNIT_FIELD_BYTES_2, 1) & UNIT_BYTE2_FLAG_FFA_PVP))
                 return false;
             // can't assist player out of sanctuary from sanctuary if has pvp enabled
-            if (target->GetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1) & UNIT_BYTE2_FLAG_PVP)
-                if ((GetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1) & UNIT_BYTE2_FLAG_SANCTUARY) && !(target->GetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1) & UNIT_BYTE2_FLAG_SANCTUARY))
+            if (target->GetByteValue(UNIT_FIELD_BYTES_2, 1) & UNIT_BYTE2_FLAG_PVP)
+                if ((GetByteValue(UNIT_FIELD_BYTES_2, 1) & UNIT_BYTE2_FLAG_SANCTUARY) && !(target->GetByteValue(UNIT_FIELD_BYTES_2, 1) & UNIT_BYTE2_FLAG_SANCTUARY))
                     return false;
         }
     }
@@ -12055,7 +12039,7 @@ bool Unit::_IsValidAssistTarget(Unit const* target, SpellInfo const* bySpell) co
     // !target->HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE) &&
     else if (HasFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PVP_ATTACKABLE)
              && (!bySpell || !(bySpell->AttributesEx6 & SPELL_ATTR6_ASSIST_IGNORE_IMMUNE_FLAG))
-             && !((target->GetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 1) & UNIT_BYTE2_FLAG_PVP)))
+             && !((target->GetByteValue(UNIT_FIELD_BYTES_2, 1) & UNIT_BYTE2_FLAG_PVP)))
     {
         if (Creature const* creatureTarget = target->ToCreature())
             return creatureTarget->GetCreatureTemplate()->type_flags & CREATURE_TYPEFLAGS_PARTY_MEMBER || creatureTarget->GetCreatureTemplate()->type_flags & CREATURE_TYPEFLAGS_AID_PLAYERS;
@@ -13120,7 +13104,7 @@ uint32 Unit::GetCreatureTypeMask() const
 
 void Unit::SetShapeshiftForm(ShapeshiftForm form)
 {
-    SetByteValue(UNIT_FIELD_SHAPESHIFT_FORM, 3, form);
+    SetByteValue(UNIT_FIELD_BYTES_2, 3, form);
 }
 
 bool Unit::IsInFeralForm() const
@@ -13817,6 +13801,16 @@ void Unit::RemoveFromWorld()
             {
                 TC_LOG_FATAL("entities.unit", "Unit %u is in controlled list of %u when removed from world", GetEntry(), owner->GetEntry());
                 ASSERT(false);
+            }
+        }
+
+        if (GetTypeId() == TYPEID_PLAYER)
+        {
+            while (!m_summons.empty())
+            {
+                auto summon = m_summons.front();
+                m_summons.pop_front();
+                summon->UnSummon();
             }
         }
 
@@ -14961,7 +14955,7 @@ bool Unit::IsStandState() const
 
 void Unit::SetStandState(UnitStandStateType state)
 {
-    SetByteValue(UNIT_FIELD_ANIM_TIER, UNIT_BYTES_1_OFFSET_STAND_STATE, state);
+    SetByteValue(UNIT_FIELD_BYTES_1, UNIT_BYTES_1_OFFSET_STAND_STATE, state);
 
     if (state == UNIT_STAND_STATE_STAND)
        RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_NOT_SEATED);
@@ -14992,12 +14986,13 @@ void Unit::SetAnimTier(AnimTier tier)
     if (!IsCreature())
         return;
 
-    SetByteValue(UNIT_FIELD_ANIM_TIER, UNIT_BYTES_1_OFFSET_ANIM_TIER, static_cast<uint8>(tier));
+    SetByteValue(UNIT_FIELD_BYTES_1, UNIT_BYTES_1_OFFSET_ANIM_TIER, static_cast<uint8>(tier));
 }
 
-void Unit::SetDisplayId(uint32 modelId)
+void Unit::SetDisplayId(uint32 modelId, float displayScale /*= 1.f*/)
 {
     SetUInt32Value(UNIT_FIELD_DISPLAY_ID, modelId);
+    //SetFloatValue(UNIT_FIELD_DISPLAY_SCALE, displayScale);
 }
 
 void Unit::RestoreDisplayId()
@@ -17044,9 +17039,9 @@ bool Unit::IsContestedGuard() const
 void Unit::SetPvP(bool state)
 {
     if (state)
-        SetByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_PVP);
+        SetByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_PVP);
     else
-        RemoveByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_PVP);
+        RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_PVP);
 }
 
 Aura* Unit::AddAura(uint32 spellId, Unit* target)
@@ -17582,7 +17577,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
                 // Based on Hair color
                 if (GetRace() == RACE_NIGHTELF)
                 {
-                    uint8 hairColor = GetByteValue(PLAYER_FIELD_HAIR_COLOR_ID, 3);
+                    uint8 hairColor = GetByteValue(PLAYER_BYTES, 3);
                     switch (hairColor)
                     {
                         case 7: // Violet
@@ -17602,7 +17597,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
                 }
                 else if (GetRace() == RACE_TROLL)
                 {
-                    uint8 hairColor = GetByteValue(PLAYER_FIELD_HAIR_COLOR_ID, 3);
+                    uint8 hairColor = GetByteValue(PLAYER_BYTES, 3);
                     switch (hairColor)
                     {
                         case 0: // Red
@@ -17625,7 +17620,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
                 else if (GetRace() == RACE_WORGEN)
                 {
                     // Based on Skin color
-                    uint8 skinColor = GetByteValue(PLAYER_FIELD_HAIR_COLOR_ID, 0);
+                    uint8 skinColor = GetByteValue(PLAYER_BYTES, 0);
                     // Male
                     if (GetGender() == GENDER_MALE)
                     {
@@ -17669,7 +17664,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
                 // Based on Skin color
                 else if (GetRace() == RACE_TAUREN)
                 {
-                    uint8 skinColor = GetByteValue(PLAYER_FIELD_HAIR_COLOR_ID, 0);
+                    uint8 skinColor = GetByteValue(PLAYER_BYTES, 0);
                     // Male
                     if (GetGender() == GENDER_MALE)
                     {
@@ -17733,7 +17728,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
                 bool ursocsSon = HasAura(102558);
                 if (GetRace() == RACE_NIGHTELF)
                 {
-                    uint8 hairColor = GetByteValue(PLAYER_FIELD_HAIR_COLOR_ID, 3);
+                    uint8 hairColor = GetByteValue(PLAYER_BYTES, 3);
                     switch (hairColor)
                     {
                         case 0: // Green
@@ -17752,7 +17747,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
                 }
                 else if (GetRace() == RACE_TROLL)
                 {
-                    uint8 hairColor = GetByteValue(PLAYER_FIELD_HAIR_COLOR_ID, 3);
+                    uint8 hairColor = GetByteValue(PLAYER_BYTES, 3);
                     switch (hairColor)
                     {
                         case 0: // Red
@@ -17776,7 +17771,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
                 else if (GetRace() == RACE_WORGEN)
                 {
                     // Based on Skin color
-                    uint8 skinColor = GetByteValue(PLAYER_FIELD_HAIR_COLOR_ID, 0);
+                    uint8 skinColor = GetByteValue(PLAYER_BYTES, 0);
                     // Male
                     if (GetGender() == GENDER_MALE)
                     {
@@ -17820,7 +17815,7 @@ uint32 Unit::GetModelForForm(ShapeshiftForm form) const
                 // Based on Skin color
                 else if (GetRace() == RACE_TAUREN)
                 {
-                    uint8 skinColor = GetByteValue(PLAYER_FIELD_HAIR_COLOR_ID, 0);
+                    uint8 skinColor = GetByteValue(PLAYER_BYTES, 0);
                     // Male
                     if (GetGender() == GENDER_MALE)
                     {
@@ -18238,7 +18233,7 @@ bool Unit::HandleSpellClick(Unit* clicker, int8 seatId)
         creature->AI()->OnSpellClick(clicker, result);
 
     if (result)
-        clicker->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_USE);
+        clicker->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_LOOTING);
 
     return result;
 }
@@ -18447,7 +18442,7 @@ void Unit::WriteMovementInfo(WorldPacket& data, Movement::ExtraMovementStatusEle
     bool hasMountDisplayId = GetUInt32Value(UNIT_FIELD_MOUNT_DISPLAY_ID) != 0;
     bool hasMovementFlags = GetUnitMovementFlags() != 0;
     bool hasMovementFlags2 = GetExtraUnitMovementFlags() != 0;
-    bool hasTimestamp = true;
+    bool hasTimestamp = mi.time;
     bool hasOrientation = !G3D::fuzzyEq(GetOrientation(), 0.0f);
     bool hasTransportData = GetTransGUID() != 0;
     bool hasSpline = IsSplineEnabled();
@@ -18579,7 +18574,7 @@ void Unit::WriteMovementInfo(WorldPacket& data, Movement::ExtraMovementStatusEle
                 break;
             case MSETimestamp:
                 if (hasTimestamp)
-                    data << getMSTime();
+                    data << mi.time;
                 break;
             case MSEPositionX:
                 if (data.GetOpcode() == SMSG_MOVE_TELEPORT && hasTransportData)
@@ -19672,19 +19667,7 @@ void Unit::BuildValuesUpdate(uint8 updateType, ByteBuffer* data, Player* target)
                     if (cinfo->flags_extra & CREATURE_FLAG_EXTRA_TRIGGER)
                     {
                         if (target->IsGameMaster())
-                        {
-                            if (cinfo->Modelid1)
-                                displayId = cinfo->Modelid1;    // Modelid1 is a visible model for gms
-                            else
-                                displayId = 17519;              // world visible trigger's model
-                        }
-                        else
-                        {
-                            if (cinfo->Modelid2)
-                                displayId = cinfo->Modelid2;    // Modelid2 is an invisible model for players
-                            else
-                                displayId = 11686;              // world invisible trigger's model
-                        }
+                            displayId = cinfo->GetFirstVisibleModel()->CreatureDisplayID;
                     }
                 }
 
@@ -19714,13 +19697,13 @@ void Unit::BuildValuesUpdate(uint8 updateType, ByteBuffer* data, Player* target)
                         dynamicFlags &= ~UNIT_DYNFLAG_TRACK_UNIT;
 
                 if (dynamicFlags & UNIT_DYNFLAG_DEAD)
-                    if (HasFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_FEIGN_DEATH) && IsInRaidWith(target))
+                    if (HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH) && IsInRaidWith(target))
                         dynamicFlags &= ~UNIT_DYNFLAG_DEAD;
 
                 *data << dynamicFlags;
             }
             // FG: pretend that OTHER players in own group are friendly ("blue")
-            else if (index == UNIT_FIELD_SHAPESHIFT_FORM || index == UNIT_FIELD_FACTION_TEMPLATE)
+            else if (index == UNIT_FIELD_BYTES_2 || index == UNIT_FIELD_FACTION_TEMPLATE)
             {
                 FactionTemplateEntry const* ft1 = GetFactionTemplateEntry();
                 FactionTemplateEntry const* ft2 = target->GetFactionTemplateEntry();
@@ -19728,9 +19711,9 @@ void Unit::BuildValuesUpdate(uint8 updateType, ByteBuffer* data, Player* target)
                 {
                     if (ft1 && ft2 && !ft1->IsFriendlyTo(*ft2))
                     {
-                        if (index == UNIT_FIELD_SHAPESHIFT_FORM)
+                        if (index == UNIT_FIELD_BYTES_2)
                             // Allow targetting opposite faction in party when enabled in config
-                            *data << (m_uint32Values [UNIT_FIELD_SHAPESHIFT_FORM] & ((UNIT_BYTE2_FLAG_SANCTUARY /*| UNIT_BYTE2_FLAG_AURAS | UNIT_BYTE2_FLAG_UNK5*/) << 8)); // this flag is at uint8 offset 1 !!
+                            *data << (m_uint32Values [UNIT_FIELD_BYTES_2] & ((UNIT_BYTE2_FLAG_SANCTUARY /*| UNIT_BYTE2_FLAG_AURAS | UNIT_BYTE2_FLAG_UNK5*/) << 8)); // this flag is at uint8 offset 1 !!
                         else
                             // pretend that all other HOSTILE players have own faction, to allow follow, heal, rezz (trade wont work)
                             *data << uint32(target->GetFaction());
@@ -19764,6 +19747,87 @@ void Unit::BuildValuesUpdate(uint8 updateType, ByteBuffer* data, Player* target)
     builder.Finish();
 
     BuildDynamicValuesUpdate(updateType, data);
+}
+
+void Unit::Talk(std::string const& text, ChatMsg msgType, Language language, float textRange, WorldObject const* target)
+{
+    Trinity::CustomChatTextBuilder builder(this, msgType, text, language, target);
+    Trinity::LocalizedPacketDo<Trinity::CustomChatTextBuilder> localizer(builder);
+    Trinity::PlayerDistWorker<Trinity::LocalizedPacketDo<Trinity::CustomChatTextBuilder> > worker(this, textRange, localizer);
+    Cell::VisitWorldObjects(this, worker, textRange);
+}
+
+void Unit::Say(std::string const& text, Language language, WorldObject const* target /*= nullptr*/)
+{
+    Talk(text, CHAT_MSG_MONSTER_SAY, language, sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_SAY), target);
+}
+
+void Unit::Yell(std::string const& text, Language language, WorldObject const* target /*= nullptr*/)
+{
+    Talk(text, CHAT_MSG_MONSTER_YELL, language, sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_YELL), target);
+}
+
+void Unit::TextEmote(std::string const& text, WorldObject const* target /*= nullptr*/, bool isBossEmote /*= false*/)
+{
+    Talk(text, isBossEmote ? CHAT_MSG_RAID_BOSS_EMOTE : CHAT_MSG_MONSTER_EMOTE, LANG_UNIVERSAL, sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_TEXTEMOTE), target);
+}
+
+void Unit::Whisper(std::string const& text, Language language, Player* target, bool isBossWhisper /*= false*/)
+{
+    if (!target)
+        return;
+
+    LocaleConstant locale = target->GetSession()->GetSessionDbLocaleIndex();
+    WorldPacket data;
+    ChatHandler::BuildChatPacket(data, isBossWhisper ? CHAT_MSG_RAID_BOSS_WHISPER : CHAT_MSG_MONSTER_WHISPER, language, this, target, text, 0, "", locale);
+    target->SendDirectMessage(&data);
+}
+
+void Unit::Talk(uint32 textId, ChatMsg msgType, float textRange, WorldObject const* target)
+{
+    if (!sObjectMgr->GetBroadcastText(textId))
+    {
+        TC_LOG_ERROR("entities.unit", "WorldObject::MonsterText: `broadcast_text` (ID: %u) was not found", textId);
+        return;
+    }
+
+    Trinity::BroadcastTextBuilder builder(this, msgType, textId, GetGender(), target);
+    Trinity::LocalizedPacketDo<Trinity::BroadcastTextBuilder> localizer(builder);
+    Trinity::PlayerDistWorker<Trinity::LocalizedPacketDo<Trinity::BroadcastTextBuilder> > worker(this, textRange, localizer);
+    Cell::VisitWorldObjects(this, worker, textRange);
+}
+
+void Unit::Say(uint32 textId, WorldObject const* target /*= nullptr*/)
+{
+    Talk(textId, CHAT_MSG_MONSTER_SAY, sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_SAY), target);
+}
+
+void Unit::Yell(uint32 textId, WorldObject const* target /*= nullptr*/)
+{
+    Talk(textId, CHAT_MSG_MONSTER_YELL, sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_YELL), target);
+}
+
+void Unit::TextEmote(uint32 textId, WorldObject const* target /*= nullptr*/, bool isBossEmote /*= false*/)
+{
+    Talk(textId, isBossEmote ? CHAT_MSG_RAID_BOSS_EMOTE : CHAT_MSG_MONSTER_EMOTE, sWorld->getFloatConfig(CONFIG_LISTEN_RANGE_TEXTEMOTE), target);
+}
+
+void Unit::Whisper(uint32 textId, Player* target, bool isBossWhisper /*= false*/)
+{
+    if (!target)
+        return;
+
+    BroadcastText const* bct = sObjectMgr->GetBroadcastText(textId);
+    if (!bct)
+    {
+        TC_LOG_ERROR("entities.unit", "WorldObject::MonsterWhisper: `broadcast_text` was not %u found", textId);
+        return;
+    }
+
+    LocaleConstant locale = target->GetSession()->GetSessionDbLocaleIndex();
+    WorldPacket data;
+    ChatHandler::BuildChatPacket(data, isBossWhisper ? CHAT_MSG_RAID_BOSS_WHISPER : CHAT_MSG_MONSTER_WHISPER, LANG_UNIVERSAL, this, target, bct->GetText(locale, GetGender()), 0, "", locale);
+    target->SendDirectMessage(&data);
 }
 
 // Returns collisionheight of the unit. If it is 0, it returns DEFAULT_COLLISION_HEIGHT.

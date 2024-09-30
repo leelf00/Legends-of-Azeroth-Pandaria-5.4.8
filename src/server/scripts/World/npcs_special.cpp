@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -734,7 +734,7 @@ public:
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IN_COMBAT);
 
             //to make them lay with face down
-            me->SetUInt32Value(UNIT_FIELD_ANIM_TIER, UNIT_STAND_STATE_DEAD);
+            me->SetUInt32Value(UNIT_FIELD_BYTES_1, UNIT_STAND_STATE_DEAD);
 
             uint32 mobId = me->GetEntry();
 
@@ -775,7 +775,7 @@ public:
             me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IN_COMBAT);
 
             //stand up
-            me->SetUInt32Value(UNIT_FIELD_ANIM_TIER, UNIT_STAND_STATE_STAND);
+            me->SetUInt32Value(UNIT_FIELD_BYTES_1, UNIT_STAND_STATE_STAND);
 
             Talk(SAY_DOC);
 
@@ -3288,7 +3288,7 @@ struct npc_pandaren_firework_launcher : public ScriptedAI
 
     void Reset() override
     {
-        me->SetDisplayId(me->GetCreatureTemplate()->Modelid2);
+        me->SetDisplayFromModel(1);
 
         scheduler
             .Schedule(Milliseconds(500), [this](TaskContext context)

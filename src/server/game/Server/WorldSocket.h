@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -53,7 +53,13 @@ private:
 namespace WorldPackets
 {
     class ServerPacket;
+    namespace Auth
+    {
+        class AuthSession;
+        class Ping;
+    }
 }
+
 #pragma pack(push, 1)
 
 struct ClientPktHeader
@@ -140,7 +146,7 @@ private:
     void HandleAuthContinuedSessionCallback(WorldSession::ConnectToKey key, PreparedQueryResult result);
     void SendAuthResponseError(uint8 code);
 
-    bool HandlePing(WorldPacket& recvPacket);
+    bool HandlePing(WorldPackets::Auth::Ping& ping);
 
     std::array<uint8, 4> _authSeed;
     AuthCrypt _authCrypt;

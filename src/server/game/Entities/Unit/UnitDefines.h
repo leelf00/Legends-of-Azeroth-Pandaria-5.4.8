@@ -70,7 +70,7 @@ enum UnitBytes2Offsets : uint8
     UNIT_BYTES_2_OFFSET_SHAPESHIFT_FORM = 3
 };
 
-// byte flag value (UNIT_FIELD_ANIM_TIER, 2)
+// byte flag value (UNIT_FIELD_BYTES_1, 2)
 enum UnitStandFlags : uint8
 {
     UNIT_STAND_FLAGS_UNK1 = 0x01,
@@ -82,7 +82,7 @@ enum UnitStandFlags : uint8
 };
 
 // UNIT_FIELD_BYTES_1 (UNIT_BYTES_1_OFFSET_ANIM_TIER)
-// byte value (UNIT_FIELD_ANIM_TIER,3)
+// byte value (UNIT_FIELD_BYTES_1,3)
 // Used to switch between different animations sets for creatures that have them.
 // Last column in AnimationData.dbc specifies which tier does the animation belong to.
 // Second to last column specifies which animation behavior ID it is, same purpose animations from different tiers share the same behavior ID and it is used to find fallback animations in case the model is missing them.
@@ -139,7 +139,7 @@ enum UnitPetFlag : uint8
 
 DEFINE_ENUM_FLAG(UnitPetFlag);
 
-// byte (2 from 0..3) of UNIT_FIELD_SHAPESHIFT_FORM
+// byte (2 from 0..3) of UNIT_FIELD_BYTES_2
 enum UnitRename : uint8
 {
     UNIT_CAN_BE_RENAMED = 0x01,
@@ -186,7 +186,7 @@ enum UnitFlags : uint32
 
 DEFINE_ENUM_FLAG(UnitFlags);
 
-// Value masks for UNIT_FIELD_FLAGS2
+// Value masks for UNIT_FIELD_FLAGS_2
 enum UnitFlags2 : uint32
 {
     UNIT_FLAG2_FEIGN_DEATH                = 0x00000001,

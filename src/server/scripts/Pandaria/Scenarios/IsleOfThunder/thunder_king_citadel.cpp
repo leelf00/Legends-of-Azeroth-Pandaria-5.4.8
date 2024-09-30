@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -172,7 +172,7 @@ struct npc_thunder_king_treasure_stasis_rune : public ScriptedAI
 
     void InitializeAI() override
     {
-        me->SetDisplayId(me->GetCreatureTemplate()->Modelid1);
+        me->SetDisplayFromModel(0);
 
         hasTriggered = false;
 
@@ -212,7 +212,7 @@ struct npc_thunder_king_treasure_speed_rune : public ScriptedAI
 
     void InitializeAI() override
     {
-        me->SetDisplayId(me->GetCreatureTemplate()->Modelid1);
+        me->SetDisplayFromModel(0);
 
         scheduler
             .Schedule(Seconds(1), [this](TaskContext context)

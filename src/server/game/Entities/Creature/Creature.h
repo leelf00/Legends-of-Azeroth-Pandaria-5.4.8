@@ -105,13 +105,7 @@ struct CreatureData
     uint32 gameEventId = 0;
 };
 
-struct CreatureModelInfo
-{
-    float bounding_radius;
-    float combat_reach;
-    uint8 gender;
-    uint32 modelid_other_gender;
-};
+
 
 // Benchmarked: Faster than std::map (insert/find)
 typedef std::unordered_map<uint16, CreatureModelInfo> CreatureModelContainer;
@@ -260,7 +254,8 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
         void RemoveFromWorld() override;
 
         void SetObjectScale(float scale) override;
-        void SetDisplayId(uint32 modelId) override;
+        void SetDisplayId(uint32 displayId, float displayScale = 1.f) override;
+        void SetDisplayFromModel(uint32 modelIdx);
 
         void DisappearAndDie();
 
@@ -270,6 +265,7 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
         void LoadEquipment(int8 id = 1, bool force = false);
 
         uint32 GetDBTableGUIDLow() const { return m_spawnId; }
+        ObjectGuid::LowType GetSpawnId() const { return m_spawnId; }
 
         void Update(uint32 time) override;         // overwrited Unit::Update
         void GetRespawnPosition(float &x, float &y, float &z, float* ori = NULL, float* dist =NULL) const;
@@ -523,8 +519,6 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
 
         Unit* SelectVictim();
 
-        void PlayMusic(uint32 MusicID);
-
         void SetDisableReputationGain(bool disable) { DisableReputationGain = disable; }
         bool IsReputationGainDisabled() { return DisableReputationGain; }
         bool IsDamageEnoughForLootingAndReward() const { return m_PlayerDamageReq == 0; }
@@ -633,7 +627,7 @@ class TC_GAME_API Creature : public Unit, public GridObject<Creature>, public Ma
 
         //Formation var
         CreatureGroup* m_formation;
-        bool TriggerJustRespawned;
+        bool m_triggerJustAppeared;
 
         Spell const* _focusSpell;   ///> Locks the target during spell cast for proper facing
         CreatureTextRepeatGroup m_textRepeat;

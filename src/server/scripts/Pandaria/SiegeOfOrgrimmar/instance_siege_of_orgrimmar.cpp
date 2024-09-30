@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -705,7 +705,7 @@ class instance_siege_of_orgrimmar : public InstanceMapScript
                         zealGUID = creature->GetGUID();
                         break;
                     case NPC_PORTAL_TO_ORGRIMMAR:
-                        creature->SetDisplayId(creature->GetCreatureTemplate()->Modelid3);
+                        creature->SetDisplayFromModel(2);
                         break;
                     case NPC_LORTHEMAR_THERON:
                         lorthemarGUID = creature->GetGUID();
@@ -804,7 +804,7 @@ class instance_siege_of_orgrimmar : public InstanceMapScript
                         norushenRoomGUID = creature->GetGUID();
                         break;
                     case NPC_BLOOD_POOL:
-                        creature->SetDisplayId(creature->GetCreatureTemplate()->Modelid1);
+                        creature->SetDisplayFromModel(0);
                         break;
                     case NPC_EMBODIED_ANGUISH:
                         anguishGUID = creature->GetGUID();
@@ -843,7 +843,7 @@ class instance_siege_of_orgrimmar : public InstanceMapScript
                         miasmaGUID = creature->GetGUID();
                         break;
                     case NPC_SLG_GENERIC_MOP:
-                        creature->SetDisplayId(creature->GetCreatureTemplate()->Modelid2);
+                        creature->SetDisplayFromModel(1);
                         break;
                     case NPC_AKOLIK:
                         akolikGUID = creature->GetGUID();

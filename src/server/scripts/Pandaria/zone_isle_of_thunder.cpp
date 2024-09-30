@@ -1325,7 +1325,7 @@ struct npc_animated_warrior : public customCreatureAI
             ActivateGuard(nullptr);
     }
 
-    void JustRespawned() override
+    void JustAppeared() override
     {
         ResetGuard();
     }

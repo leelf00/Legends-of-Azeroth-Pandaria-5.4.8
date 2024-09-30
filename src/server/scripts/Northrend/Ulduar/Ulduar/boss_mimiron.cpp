@@ -1614,7 +1614,7 @@ class boss_vx_001 : public CreatureScript
                                 if (Creature* pTemp = me->SummonCreature(NPC_MIMIRON_FOCUS, target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN, 10*IN_MILLISECONDS))
                                 {
                                     pTemp->SetReactState(REACT_PASSIVE);
-                                    pTemp->SetDisplayId(pTemp->GetCreatureTemplate()->Modelid2);
+                                    pTemp->SetDisplayFromModel(1);
                                     pTemp->GetMotionMaster()->MoveIdle();
                                     pTemp->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
                                     pTemp->CombatStop();
@@ -1630,7 +1630,7 @@ class boss_vx_001 : public CreatureScript
                                     if (Creature* pTemp = me->SummonCreature(NPC_MIMIRON_FOCUS, target->GetPositionX(), target->GetPositionY(), target->GetPositionZ(), 0, TEMPSUMMON_TIMED_DESPAWN, 10*IN_MILLISECONDS))
                                     {
                                         pTemp->SetReactState(REACT_PASSIVE);
-                                        pTemp->SetDisplayId(pTemp->GetCreatureTemplate()->Modelid2);
+                                        pTemp->SetDisplayFromModel(1);
                                         pTemp->GetMotionMaster()->MoveIdle();
                                         pTemp->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE | UNIT_FLAG_NON_ATTACKABLE | UNIT_FLAG_NOT_SELECTABLE);
                                         pTemp->CombatStop();

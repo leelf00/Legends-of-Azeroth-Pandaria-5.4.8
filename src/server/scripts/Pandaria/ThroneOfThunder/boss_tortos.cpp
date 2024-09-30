@@ -188,7 +188,7 @@ class boss_tortos : public CreatureScript
                 me->SetMaxPower(POWER_ENERGY, 100);
                 DoCast(me, SPELL_ZERO_POWER);
                 me->SetPower(POWER_ENERGY, 0);
-                me->RemoveFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_REGENERATE_POWER);
+                me->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER);
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE);
 
                 breathScheduled = false;
@@ -635,7 +635,7 @@ class npc_rockfall_tortos : public CreatureScript
             void IsSummonedBy(Unit* /*summoner*/) override
             {
                 Reset();
-                me->SetDisplayId(me->GetCreatureTemplate()->Modelid1);
+                me->SetDisplayFromModel(0);
                 DoCast(me, SPELL_ROCKFALL, true);
                 me->DespawnOrUnsummon(10000);
             }

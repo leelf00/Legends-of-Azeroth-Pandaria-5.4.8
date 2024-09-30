@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -22,6 +22,7 @@
 #include "SharedDefines.h"
 #include "ObjectMgr.h"
 #include "SpellInfo.h"
+#include "SpellDefines.h"
 #include "PathGenerator.h"
 
 class Unit;
@@ -79,21 +80,6 @@ enum SpellRangeFlag
     SPELL_RANGE_DEFAULT             = 0,
     SPELL_RANGE_MELEE               = 1,     //melee
     SPELL_RANGE_RANGED              = 2      //hunter range and ranged weapon
-};
-
-struct SpellDestination
-{
-    SpellDestination();
-    SpellDestination(float x, float y, float z, float orientation = 0.0f, uint32 mapId = MAPID_INVALID);
-    SpellDestination(Position const& pos);
-    SpellDestination(WorldObject const& wObj);
-
-    void Relocate(Position const& pos);
-    void RelocateOffset(Position const& offset);
-
-    WorldLocation _position;
-    ObjectGuid _transportGUID;
-    Position _transportOffset;
 };
 
 struct SpellLogEnergyzeHelper
@@ -169,139 +155,6 @@ struct SpellLogHelper
 
         AddExtraAttacks(helper);
     }
-};
-
-class SpellCastTargets
-{
-    public:
-        SpellCastTargets();
-        SpellCastTargets(Unit* caster, uint32 targetMask, ObjectGuid targetGuid, ObjectGuid itemTargetGuid, ObjectGuid srcTransportGuid, ObjectGuid destTransportGuid, Position srcPos, Position destPos, float elevation, float missileSpeed, std::string targetString);
-        ~SpellCastTargets();
-
-        void Read(ByteBuffer& data, Unit* caster);
-        void Write(ByteBuffer& data);
-
-        void Initialize(uint32 flags, ObjectGuid target, ObjectGuid itemTarget, ObjectGuid dest, WorldLocation destPos, ObjectGuid src, WorldLocation srcPos)
-        {
-            m_targetMask = flags;
-            m_objectTargetGUID = target;
-            m_itemTargetGUID = itemTarget;
-
-            // dest
-            m_dst._transportGUID = dest;
-            m_dst._position = destPos;
-            if (dest)
-                m_dst._transportOffset = destPos;
-
-            // src
-            m_src._transportGUID = src;
-            m_src._position = srcPos;
-            if (src)
-                m_src._transportOffset = srcPos;
-        }
-
-        uint32 GetTargetMask() const { return m_targetMask; }
-        void SetTargetMask(uint32 newMask) { m_targetMask = newMask; }
-
-        void SetTargetFlag(SpellCastTargetFlags flag) { m_targetMask |= flag; }
-
-        ObjectGuid GetUnitTargetGUID() const;
-        Unit* GetUnitTarget() const;
-        void SetUnitTarget(Unit* target);
-
-        ObjectGuid GetGOTargetGUID() const;
-        GameObject* GetGOTarget() const;
-        void SetGOTarget(GameObject* target);
-
-        ObjectGuid GetCorpseTargetGUID() const;
-        Corpse* GetCorpseTarget() const;
-
-        WorldObject* GetObjectTarget() const;
-        ObjectGuid GetObjectTargetGUID() const;
-        void RemoveObjectTarget();
-
-        ObjectGuid GetItemTargetGUID() const { return m_itemTargetGUID; }
-        Item* GetItemTarget() const { return m_itemTarget; }
-        uint32 GetItemTargetEntry() const { return m_itemTargetEntry; }
-        void SetItemTarget(Item* item);
-        void SetTradeItemTarget(Player* caster);
-        void UpdateTradeSlotItem();
-
-        SpellDestination const* GetSrc() const;
-        Position const* GetSrcPos() const;
-        void SetSrc(float x, float y, float z);
-        void SetSrc(Position const& pos);
-        void SetSrc(WorldObject const& wObj);
-        void ModSrc(Position const& pos);
-        void RemoveSrc();
-
-        SpellDestination const* GetDst() const;
-        WorldLocation const* GetDstPos() const;
-        void SetDst(float x, float y, float z, float orientation, uint32 mapId = MAPID_INVALID);
-        void SetDst(Position const& pos);
-        void SetDst(WorldObject const& wObj);
-        void SetDst(SpellDestination const& spellDest);
-        void SetDst(SpellCastTargets const& spellTargets);
-        void ModDst(Position const& pos);
-        void ModDst(SpellDestination const& spellDest);
-        void RemoveDst();
-
-        bool HasSrc() const { return GetTargetMask() & TARGET_FLAG_SOURCE_LOCATION; }
-        bool HasDst() const { return GetTargetMask() & TARGET_FLAG_DEST_LOCATION; }
-        bool HasTraj() const { return m_speed != 0; }
-
-        float GetElevation() const { return m_elevation; }
-        void SetElevation(float elevation) { m_elevation = elevation; }
-        float GetSpeed() const { return m_speed; }
-        void SetSpeed(float speed) { m_speed = speed; }
-
-        float GetDist2d() const { return m_src._position.GetExactDist2d(&m_dst._position); }
-        float GetSpeedXY() const { return m_speed * std::cos(m_elevation); }
-        float GetSpeedZ() const { return m_speed * std::sin(m_elevation); }
-
-        void Update(Unit* caster);
-        void OutDebug() const;
-
-        void ClearExtraTargets()
-        {
-            m_extraTargets.clear();
-            m_targetMask &= ~TARGET_FLAG_EXTRA_TARGETS;
-        }
-
-        void AddExtraTarget(ObjectGuid guid, WorldLocation pos)
-        {
-            SpellDestination extraTarget;
-            extraTarget._position = pos;
-            extraTarget._transportGUID = guid;
-
-            m_extraTargets.push_back(extraTarget);
-
-            m_targetMask |= TARGET_FLAG_EXTRA_TARGETS;
-        }
-
-        size_t GetExtraTargetsCount() const { return m_extraTargets.size(); }
-        std::list<SpellDestination> const & GetExtraTargets() const { return m_extraTargets; }
-
-        std::string const& GetTargetString() { return m_strTarget; }
-
-    private:
-        uint32 m_targetMask;
-
-        // objects (can be used at spell creating and after Update at casting)
-        WorldObject* m_objectTarget;
-        Item* m_itemTarget;
-
-        // object GUID/etc, can be used always
-        ObjectGuid m_objectTargetGUID;
-        ObjectGuid m_itemTargetGUID;
-        uint32 m_itemTargetEntry;
-
-        SpellDestination m_src;
-        SpellDestination m_dst;
-        std::list<SpellDestination> m_extraTargets;
-
-        float m_elevation, m_speed;
-        std::string m_strTarget;
 };
 
 struct SpellValue

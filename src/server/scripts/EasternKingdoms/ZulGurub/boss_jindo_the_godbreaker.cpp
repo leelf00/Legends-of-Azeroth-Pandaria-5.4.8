@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -201,7 +201,7 @@ class boss_jindo_the_godbreaker : public CreatureScript
 
                         if (Player* realKiller = killer->GetCharmerOrOwnerPlayerOrPlayerItself())
                             if (Creature* pHakkar = me->FindNearestCreature(NPC_SPIRIT_OF_HAKKAR, 100.0f))
-                                pHakkar->SendPlaySound(SOUND_HAKKAR_BREAK_CHAINS, false); //realKiller->ToPlayer()->SendSoundToAll(SOUND_HAKKAR_BREAK_CHAINS, pHakkar->GetGUID());
+                                pHakkar->PlayDirectSound(SOUND_HAKKAR_BREAK_CHAINS); //realKiller->ToPlayer()->SendSoundToAll(SOUND_HAKKAR_BREAK_CHAINS, pHakkar->GetGUID());
                         events.ScheduleEvent(EVENT_END_1, 4000);                            
                     }
                 }    

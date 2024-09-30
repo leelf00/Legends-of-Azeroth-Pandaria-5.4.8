@@ -85,13 +85,13 @@ jobs:
           move ${{github.workspace}}/contrib/lua_scripts ${{github.workspace}}/build/bin/RelWithDebInfo/lua_scripts
           7z a -tzip ${{env.ARCHIVE_FILENAME}} RelWithDebInfo
     - name: Archive this artefact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
           name: snapshot-devbuild
           path: "${{github.workspace}}/build/bin/${{env.ARCHIVE_FILENAME}}"
 
     - name: Download artifact snapshot-Release
-      uses: actions/download-artifact@v1
+      uses: actions/download-artifact@v4
       with:
         name: snapshot-devbuild
         path: all_snapshots

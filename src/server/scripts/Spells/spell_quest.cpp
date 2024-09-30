@@ -21,16 +21,17 @@
  * Scriptnames of files in this file should be prefixed with "spell_q#questID_".
  */
 
+#include "CellImpl.h"
+#include "CreatureTextMgr.h"
+#include "GridNotifiers.h"
+#include "GridNotifiersImpl.h"
 #include "Player.h"
+#include "Random.h"
 #include "ScriptMgr.h"
 #include "ScriptedCreature.h"
 #include "SpellScript.h"
 #include "SpellAuraEffects.h"
 #include "Vehicle.h"
-#include "GridNotifiers.h"
-#include "GridNotifiersImpl.h"
-#include "CellImpl.h"
-#include "Random.h"
 
 class spell_generic_quest_update_entry_SpellScript : public SpellScript
 {
@@ -839,7 +840,7 @@ class spell_symbol_of_life_dummy : public SpellScriptLoader
                     {
                         target->RemoveAurasDueToSpell(SPELL_PERMANENT_FEIGN_DEATH);
                         target->SetUInt32Value(OBJECT_FIELD_DYNAMIC_FLAGS, 0);
-                        target->SetUInt32Value(UNIT_FIELD_FLAGS2, 0);
+                        target->SetUInt32Value(UNIT_FIELD_FLAGS_2, 0);
                         target->SetHealth(target->GetMaxHealth() / 2);
                         target->SetPower(POWER_MANA, uint32(target->GetMaxPower(POWER_MANA) * 0.75f));
                     }
@@ -1135,12 +1136,12 @@ class spell_q9452_cast_net: public SpellScriptLoader
         }
 };
 
-#define SAY_1 "Sons of Hodir! I humbly present to you..."
-#define SAY_2 "The Helm of Hodir!"
-
 enum HodirsHelm
 {
-    NPC_KILLCREDIT  = 30210 // Hodir's Helm KC Bunny
+    SAY_1               = 1,
+    SAY_2               = 2,
+    NPC_KILLCREDIT      = 30210, // Hodir's Helm KC Bunny
+    NPC_ICE_SPIKE_BUNNY = 30215
 };
 
 class spell_q12987_read_pronouncement : public SpellScriptLoader
@@ -1157,9 +1158,12 @@ public:
             // player must cast kill credit and do emote text, according to sniff
             if (Player* target = GetTarget()->ToPlayer())
             {
-                target->MonsterWhisper(SAY_1, target, true);
-                target->KilledMonsterCredit(NPC_KILLCREDIT, ObjectGuid::Empty);
-                target->MonsterWhisper(SAY_2, target, true);
+                if (Creature* trigger = target->FindNearestCreature(NPC_ICE_SPIKE_BUNNY, 25.0f))
+                {                
+                    sCreatureTextMgr->SendChat(trigger, SAY_1, target, CHAT_MSG_ADDON, LANG_ADDON, TEXT_RANGE_NORMAL, 0, TEAM_OTHER, false, target);
+                    target->KilledMonsterCredit(NPC_KILLCREDIT);
+                    sCreatureTextMgr->SendChat(trigger, SAY_2, target, CHAT_MSG_ADDON, LANG_ADDON, TEXT_RANGE_NORMAL, 0, TEAM_OTHER, false, target);
+                }                
             }
         }
 

@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -526,7 +526,7 @@ class boss_grand_champion_toc5 : public CreatureScript
                             break;
                         case 3:
                             _phase = 4;
-                            me->MonsterYell("Excellent work!", LANG_UNIVERSAL, 0); // SAY_START_1
+                            me->Yell("Excellent work!", LANG_UNIVERSAL); // SAY_START_1
                             me->InterruptNonMeleeSpells(true);
                             me->RemoveAurasDueToSpell(SPELL_BLADESTORM);
                             DoCast(me, SPELL_KNEEL, true);

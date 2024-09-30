@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -51,6 +51,7 @@ enum OpcodeClient : uint16
     CMSG_AUCTION_LIST_PENDING_SALES                       = 0x02DA,
     CMSG_AUCTION_PLACE_BID                                = 0x03C8,
     CMSG_AUCTION_REMOVE_ITEM                              = 0x0259,
+    CMSG_AUCTION_REPLICATE_ITEMS                          = 0x0743,
     CMSG_AUCTION_SELL_ITEM                                = 0x02EB,
     CMSG_AUTH_CONTINUED_SESSION                           = 0x0F49,
     CMSG_AUTH_SESSION                                     = 0x00B2,
@@ -143,7 +144,7 @@ enum OpcodeClient : uint16
     CMSG_CHAR_CREATE                                      = 0x0F1D,
     CMSG_CHAR_CUSTOMIZE                                   = 0x0A13,
     CMSG_CHAR_DELETE                                      = 0x04E2,
-    CMSG_CHAR_ENUM                                        = 0x00E0,
+    CMSG_ENUM_CHARACTERS                                  = 0x00E0,
     CMSG_CHAR_FACTION_OR_RACE_CHANGE                      = 0x0329,
     CMSG_CHAR_RENAME                                      = 0x0963,
     CMSG_CHAT_IGNORED                                     = 0x048A,
@@ -992,7 +993,7 @@ enum OpcodeServer : uint16
     SMSG_QUESTUPDATE_ADD_CREDIT                                  = 0x1645,
     SMSG_QUESTUPDATE_ADD_CREDIT_SIMPLE                           = 0x07F5,
     SMSG_QUESTUPDATE_ADD_PVP_KILL                                = 0x0256,
-    SMSG_QUEST_UPDATE_COMPLETE                                    = 0x0776,
+    SMSG_QUEST_UPDATE_COMPLETE                                   = 0x0776,
     SMSG_QUESTUPDATE_FAILED                                      = 0x07DD,
     SMSG_QUESTUPDATE_FAILEDTIMER                                 = 0x06FF,
     SMSG_QUEST_CONFIRM_ACCEPT                                    = 0x13C7,
@@ -1125,7 +1126,7 @@ enum OpcodeServer : uint16
     SMSG_START_TIMER                                             = 0x0E3F,
     SMSG_STOP_ELAPSED_TIMER                                      = 0x101E,
     SMSG_STOP_MIRROR_TIMER                                       = 0x1026,
-    SMSG_STREAMING_MOVIE                                         = 0x1843,
+    SMSG_STREAMING_MOVIES                                        = 0x1843,
     SMSG_SUMMON_REQUEST                                          = 0x081F,
     SMSG_SUPERCEDED_SPELL                                        = 0x1943,
     SMSG_SUSPEND_TOKEN                                           = 0x18BA,

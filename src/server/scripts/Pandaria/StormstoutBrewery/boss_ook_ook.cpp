@@ -465,7 +465,7 @@ class spell_ook_ook_barrel_ride : public SpellScriptLoader
                     {
                         //barrelBase->SetCharmedBy(GetCaster(), CHARM_TYPE_VEHICLE);
                         caster->CastSpell(barrelBase, SPELL_CANCEL_BARREL_AURA, true);
-                        caster->SetFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_FORCE_MOVEMENT);
+                        caster->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FORCE_MOVEMENT);
                         caster->CastSpell(caster, SPELL_ROLLING_BARREL_COSMETIC, true);
                     }
                 }
@@ -479,7 +479,7 @@ class spell_ook_ook_barrel_ride : public SpellScriptLoader
 
                 if (caster && target)
                 {
-                    caster->RemoveFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_FORCE_MOVEMENT);
+                    caster->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FORCE_MOVEMENT);
                     caster->RemoveAurasDueToSpell(SPELL_ROLLING_BARREL_COSMETIC);
                 }
             }

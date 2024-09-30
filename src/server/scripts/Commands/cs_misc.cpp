@@ -26,28 +26,27 @@
 #include "Group.h"
 #include "GroupMgr.h"
 #include "InstanceSaveMgr.h"
+#include "IPLocation.h"
 #include "Language.h"
+#include "LFG.h"
 #include "MapManager.h"
+#include "MiscPackets.h"
+#include "MMapFactory.h"
 #include "MovementGenerator.h"
 #include "ObjectAccessor.h"
 #include "Opcodes.h"
-#include "TargetedMovementGenerator.h"
-#include "WeatherMgr.h"
-#include "Player.h"
 #include "Pet.h"
-#include "LFG.h"
-#include "MMapFactory.h"
+#include "Player.h"
 #include "Realm.h"
 #include "ServiceMgr.h"
 #include "ScriptMgr.h"
 #include "ServiceMgr.h"
 #include "SpellAuras.h"
 #include "SpellHistory.h"
+#include "TargetedMovementGenerator.h"
+#include "WeatherMgr.h"
 #include "WordFilterMgr.h"
 #include "World.h"
-#include "IPLocation.h"
-
-
 #include <fstream>
 
 class misc_commandscript : public CommandScript
@@ -1599,10 +1598,7 @@ public:
         Player* player = handler->GetSession()->GetPlayer();
         uint32 zoneid = player->GetZoneId();
 
-        Weather* weather = WeatherMgr::FindWeather(zoneid);
-
-        if (!weather)
-            weather = WeatherMgr::AddWeather(zoneid);
+        Weather* weather = player->GetMap()->GetOrGenerateZoneDefaultWeather(zoneid);
         if (!weather)
         {
             handler->SendSysMessage(LANG_NO_WEATHER);
@@ -3234,27 +3230,11 @@ public:
             return false;
         }
 
-        ObjectGuid guid = handler->GetSession()->GetPlayer()->GetGUID();
+        WorldPackets::Misc::PlaySound packet;
+        packet.SourceObjectGUID = handler->GetSession()->GetPlayer()->GetGUID();
+        packet.SoundKitID = soundId;
 
-        WorldPacket data(SMSG_PLAY_SOUND, 4 + 9);
-        data.WriteBit(guid[2]);
-        data.WriteBit(guid[3]);
-        data.WriteBit(guid[7]);
-        data.WriteBit(guid[6]);
-        data.WriteBit(guid[0]);
-        data.WriteBit(guid[5]);
-        data.WriteBit(guid[4]);
-        data.WriteBit(guid[1]);
-        data << uint32(soundId);
-        data.WriteByteSeq(guid[3]);
-        data.WriteByteSeq(guid[2]);
-        data.WriteByteSeq(guid[4]);
-        data.WriteByteSeq(guid[7]);
-        data.WriteByteSeq(guid[5]);
-        data.WriteByteSeq(guid[0]);
-        data.WriteByteSeq(guid[6]);
-        data.WriteByteSeq(guid[1]);
-        sWorld->SendGlobalMessage(&data);
+        sWorld->SendGlobalMessage(packet.Write());
 
         handler->PSendSysMessage(LANG_COMMAND_PLAYED_TO_ALL, soundId);
         return true;
@@ -3321,7 +3301,7 @@ public:
                 waypoint->SetHomePosition(waypoint->GetPosition());
                 waypoint->InitStats(duration);
                 waypoint->SetDisableGravity(true);
-                waypoint->SetFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_INSTANTLY_APPEAR_MODEL);
+                waypoint->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_INSTANTLY_APPEAR_MODEL);
                 if (i)
                     waypoint->SetFloatValue(OBJECT_FIELD_SCALE, 2.5f);
                 source->GetMap()->AddToMap(waypoint->ToCreature());
@@ -3349,7 +3329,7 @@ public:
                 waypoint->SetHomePosition(waypoint->GetPosition());
                 waypoint->InitStats(duration);
                 waypoint->SetDisableGravity(true);
-                waypoint->SetFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_INSTANTLY_APPEAR_MODEL);
+                waypoint->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_INSTANTLY_APPEAR_MODEL);
                 source->GetMap()->AddToMap(waypoint->ToCreature());
                 waypoint->InitSummon();
                 waypoint->SetTempSummonType(TEMPSUMMON_TIMED_DESPAWN);

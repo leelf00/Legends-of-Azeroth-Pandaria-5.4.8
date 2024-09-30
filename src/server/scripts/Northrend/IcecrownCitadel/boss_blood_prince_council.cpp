@@ -373,7 +373,7 @@ class boss_prince_keleseth_icc : public CreatureScript
                         _spawnHealth = data->curhealth;
 
                 if (!me->isDead())
-                    JustRespawned();
+                    JustAppeared();
 
                 me->GetMap()->SetWorldState(WORLDSTATE_THE_ORB_WHISPERER, 1);
             }
@@ -431,7 +431,7 @@ class boss_prince_keleseth_icc : public CreatureScript
                 }
             }
 
-            void JustRespawned() override
+            void JustAppeared() override
             {
                 DoCast(me, SPELL_FEIGN_DEATH);
                 me->SetHealth(_spawnHealth);
@@ -481,7 +481,7 @@ class boss_prince_keleseth_icc : public CreatureScript
                         me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
                         me->RemoveFlag(OBJECT_FIELD_DYNAMIC_FLAGS, UNIT_DYNFLAG_DEAD);
                         me->RemoveFlag(OBJECT_FIELD_DYNAMIC_FLAGS, UNIT_FLAG_UNK_29); // used in Feing Death spell
-                        me->RemoveFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_FEIGN_DEATH);
+                        me->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH);
                         me->ForceValuesUpdateAtIndex(UNIT_FIELD_NPC_FLAGS);   // was in sniff. don't ask why
                         me->m_Events.Schedule(1000, [this]()
                         {
@@ -597,7 +597,7 @@ class boss_prince_taldaram_icc : public CreatureScript
                         _spawnHealth = data->curhealth;
 
                 if (!me->isDead())
-                    JustRespawned();
+                    JustAppeared();
 
                 me->GetMap()->SetWorldState(WORLDSTATE_THE_ORB_WHISPERER, 1);
             }
@@ -645,7 +645,7 @@ class boss_prince_taldaram_icc : public CreatureScript
                 }
             }
 
-            void JustRespawned() override
+            void JustAppeared() override
             {
                 DoCast(me, SPELL_FEIGN_DEATH);
                 me->SetHealth(_spawnHealth);
@@ -701,7 +701,7 @@ class boss_prince_taldaram_icc : public CreatureScript
                         me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
                         me->RemoveFlag(OBJECT_FIELD_DYNAMIC_FLAGS, UNIT_DYNFLAG_DEAD);
                         me->RemoveFlag(OBJECT_FIELD_DYNAMIC_FLAGS, UNIT_FLAG_UNK_29); // used in Feing Death spell
-                        me->RemoveFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_FEIGN_DEATH);
+                        me->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH);
                         me->ForceValuesUpdateAtIndex(UNIT_FIELD_NPC_FLAGS);   // was in sniff. don't ask why
                         me->m_Events.Schedule(1000, [this]()
                         {
@@ -826,7 +826,7 @@ class boss_prince_valanar_icc : public CreatureScript
                         _spawnHealth = data->curhealth;
 
                 if (!me->isDead())
-                    JustRespawned();
+                    JustAppeared();
 
                 me->GetMap()->SetWorldState(WORLDSTATE_THE_ORB_WHISPERER, 1);
             }
@@ -874,7 +874,7 @@ class boss_prince_valanar_icc : public CreatureScript
                 }
             }
 
-            void JustRespawned() override
+            void JustAppeared() override
             {
                 DoCast(me, SPELL_FEIGN_DEATH);
                 me->SetHealth(_spawnHealth);
@@ -946,7 +946,7 @@ class boss_prince_valanar_icc : public CreatureScript
                         me->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_NOT_SELECTABLE | UNIT_FLAG_NON_ATTACKABLE);
                         me->RemoveFlag(OBJECT_FIELD_DYNAMIC_FLAGS, UNIT_DYNFLAG_DEAD);
                         me->RemoveFlag(OBJECT_FIELD_DYNAMIC_FLAGS, UNIT_FLAG_UNK_29); // used in Feing Death spell
-                        me->RemoveFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_FEIGN_DEATH);
+                        me->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH);
                         me->ForceValuesUpdateAtIndex(UNIT_FIELD_NPC_FLAGS);   // was in sniff. don't ask why
                         me->m_Events.Schedule(1000, [this]()
                         {

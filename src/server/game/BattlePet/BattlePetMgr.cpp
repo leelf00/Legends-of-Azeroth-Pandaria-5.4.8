@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -642,7 +642,7 @@ void BattlePetMgr::SendBattlePetJournal()
             journalData << uint16(battlePet->GetFlags());
 
         journalData << uint32(creatureTemplate->Entry);
-        journalData << uint32(creatureTemplate->Modelid1);
+        journalData << uint32(creatureTemplate->GetModelByIdx(0)->CreatureDisplayID);
         journalData << uint32(battlePet->GetSpeed());
         journalData.WriteString(battlePet->GetNickname());
         journalData.WriteByteSeq(petEntry[6]);
@@ -792,7 +792,7 @@ void BattlePetMgr::SendBattlePetUpdate(BattlePet* battlePet, bool notification)
         data << uint16(battlePet->GetFlags());
 
     data.WriteByteSeq(petEntry[5]);
-    data << uint32(creatureTemplate->Modelid1);
+    data << uint32(creatureTemplate->GetModelByIdx(0)->CreatureDisplayID);
     data << uint16(battlePet->GetLevel());
 
     m_owner->GetSession()->SendPacket(&data);

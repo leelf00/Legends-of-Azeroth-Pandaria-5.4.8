@@ -15,19 +15,19 @@
 * with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "DatabaseEnv.h"
 #include "Mail.h"
-#include "Log.h"
-#include "World.h"
-#include "ObjectMgr.h"
-#include "Player.h"
-#include "Unit.h"
-#include "BattlegroundMgr.h"
-#include "Item.h"
 #include "AuctionHouseMgr.h"
+#include "BattlegroundMgr.h"
 #include "BlackMarketMgr.h"
 #include "CalendarMgr.h"
+#include "DatabaseEnv.h"
+#include "GameTime.h"
+#include "Item.h"
 #include "Language.h"
+#include "Log.h"
+#include "ObjectMgr.h"
+#include "Player.h"
+#include "World.h"
 
 MailSender::MailSender(Object* sender, MailStationery stationery) : m_stationery(stationery)
 {
@@ -95,7 +95,7 @@ void MailDraft::prepareItems(Player* receiver, CharacterDatabaseTransaction tran
     Loot mailLoot;
 
     // can be empty
-    mailLoot.FillLoot(NULL, m_mailTemplateId, LootTemplates_Mail, receiver, true, true);
+    mailLoot.FillLoot(nullptr, m_mailTemplateId, LootTemplates_Mail, receiver, true, true);
 
     uint32 max_slot = mailLoot.GetMaxSlotInLootFor(receiver);
     for (uint32 i = 0; m_items.size() < MAX_MAIL_ITEMS && i < max_slot; ++i)
@@ -132,11 +132,12 @@ void MailDraft::deleteIncludedItems(CharacterDatabaseTransaction trans, bool inD
 
 void MailDraft::SendReturnToSender(uint32 sender_acc, uint32 sender_guid, uint32 receiver_guid, CharacterDatabaseTransaction trans)
 {
-    Player* receiver = ObjectAccessor::FindPlayer(ObjectGuid(HighGuid::Player, receiver_guid));
+    ObjectGuid receiverGuid(HighGuid::Player, receiver_guid);
+    Player* receiver = ObjectAccessor::FindConnectedPlayer(receiverGuid);
 
     uint32 rc_account = 0;
     if (!receiver)
-        rc_account = sObjectMgr->GetPlayerAccountIdByGUID(ObjectGuid(HighGuid::Player, receiver_guid));
+        rc_account = sObjectMgr->GetPlayerAccountIdByGUID(receiverGuid);
 
     if (!receiver && !rc_account)                            // sender not exist
     {
@@ -182,7 +183,7 @@ void MailDraft::SendMailTo(CharacterDatabaseTransaction trans, MailReceiver cons
 
     uint32 mailId = sObjectMgr->GenerateMailID();
 
-    time_t deliver_time = time(NULL) + deliver_delay;
+    time_t deliver_time = GameTime::GetGameTime() + deliver_delay;
 
     //expire time if COD 3 days, if no COD 30 days, if auction sale pending 1 hour
     uint32 expire_delay;
@@ -236,43 +237,35 @@ void MailDraft::SendMailTo(CharacterDatabaseTransaction trans, MailReceiver cons
     {
         pReceiver->AddNewMailDeliverTime(deliver_time);
 
-        if (pReceiver->IsMailsLoaded())
+        Mail* m = new Mail;
+        m->messageID = mailId;
+        m->mailTemplateId = GetMailTemplateId();
+        m->subject = GetSubject();
+        m->body = GetBody();
+        m->money = GetMoney();
+        m->COD = GetCOD();
+
+        for (MailItemMap::const_iterator mailItemIter = m_items.begin(); mailItemIter != m_items.end(); ++mailItemIter)
         {
-            Mail* m = new Mail;
-            m->messageID = mailId;
-            m->mailTemplateId = GetMailTemplateId();
-            m->subject = GetSubject();
-            m->body = GetBody();
-            m->money = GetMoney();
-            m->COD = GetCOD();
-
-            for (MailItemMap::const_iterator mailItemIter = m_items.begin(); mailItemIter != m_items.end(); ++mailItemIter)
-            {
-                Item* item = mailItemIter->second;
-                m->AddItem(item->GetGUID().GetCounter(), item->GetEntry());
-            }
-
-            m->messageType = sender.GetMailMessageType();
-            m->stationery = sender.GetStationery();
-            m->sender = sender.GetSenderId();
-            m->receiver = receiver.GetPlayerGUIDLow();
-            m->expire_time = expire_time;
-            m->deliver_time = deliver_time;
-            m->checked = checked;
-            m->state = MAIL_STATE_UNCHANGED;
-
-            pReceiver->AddMail(m);                           // to insert new mail to beginning of maillist
-
-            if (!m_items.empty())
-            {
-                for (MailItemMap::iterator mailItemIter = m_items.begin(); mailItemIter != m_items.end(); ++mailItemIter)
-                    pReceiver->AddMItem(mailItemIter->second);
-            }
+            Item* item = mailItemIter->second;
+            m->AddItem(item->GetGUID().GetCounter(), item->GetEntry());
         }
-        else if (!m_items.empty())
+
+        m->messageType = sender.GetMailMessageType();
+        m->stationery = sender.GetStationery();
+        m->sender = sender.GetSenderId();
+        m->receiver = receiver.GetPlayerGUIDLow();
+        m->expire_time = expire_time;
+        m->deliver_time = deliver_time;
+        m->checked = checked;
+        m->state = MAIL_STATE_UNCHANGED;
+
+        pReceiver->AddMail(m);                           // to insert new mail to beginning of maillist
+
+        if (!m_items.empty())
         {
-            CharacterDatabaseTransaction temp = CharacterDatabaseTransaction(nullptr);
-            deleteIncludedItems(temp);
+            for (MailItemMap::iterator mailItemIter = m_items.begin(); mailItemIter != m_items.end(); ++mailItemIter)
+                pReceiver->AddMItem(mailItemIter->second);
         }
     }
     else if (!m_items.empty())

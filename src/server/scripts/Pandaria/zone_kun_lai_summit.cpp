@@ -1175,6 +1175,14 @@ class go_yaungol_banner : public GameObjectScript
         }
 };
 
+enum ExplosivesBarrelMiscs 
+{
+    EMOTE_EXPLO_BARREL_THREE = 0,
+    EMOTE_EXPLO_BARREL_TWO   = 1,
+    EMOTE_EXPLO_BARREL_ONE   = 2,
+    EMOTE_EXPLO_BARREL_BOOM  = 3
+};
+
 struct npc_explosives_barrel : public ScriptedAI
 {
     npc_explosives_barrel(Creature* creature) : ScriptedAI(creature) { }
@@ -1193,20 +1201,17 @@ struct npc_explosives_barrel : public ScriptedAI
         if (tickTimer <= diff)
         {
             --phase;
-            std::string text = "";
-
-            if (phase == 3)
-                text = "Three...";
-            else if (phase == 2)
-                text = "Two...";
-            else if (phase == 1)
-                text = "One...";
-            else if (phase == 0)
-                text = "Boom";
 
             if (auto owner = me->GetCharmerOrOwnerPlayerOrPlayerItself())
             {
-                owner->MonsterTextEmote(text.c_str(), owner, true);
+                if (phase == 3)
+                    Talk(EMOTE_EXPLO_BARREL_THREE);
+                else if (phase == 2)
+                    Talk(EMOTE_EXPLO_BARREL_TWO);
+                else if (phase == 1)
+                    Talk(EMOTE_EXPLO_BARREL_ONE);
+                else if (phase == 0)
+                    Talk(EMOTE_EXPLO_BARREL_BOOM);
 
                 if (phase == 0)
                 {

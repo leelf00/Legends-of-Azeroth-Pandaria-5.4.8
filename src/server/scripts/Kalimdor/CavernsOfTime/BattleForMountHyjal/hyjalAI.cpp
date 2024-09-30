@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -39,7 +39,10 @@ enum Spawns
     SPAWN_NEAR_TOWER    = 2,
 };
 
-#define YELL_HURRY  "Hurry, we don't have much time"
+enum NPCTEXTS
+{
+    JAINA_RETREAT_HORDE_BASE    = 7
+};
 
 // Locations for summoning gargoyls and frost wyrms in special cases
 float SpawnPointSpecial[3][3]=
@@ -959,7 +962,6 @@ void hyjalAI::WaypointReached(uint32 waypointId)
 {
     if (waypointId == 1 || (waypointId == 0 && me->GetEntry() == THRALL))
     {
-        me->MonsterYell(YELL_HURRY, 0, 0);
         WaitForTeleport = true;
         TeleportTimer = 20000;
         if (me->GetEntry() == JAINA)
@@ -969,6 +971,7 @@ void hyjalAI::WaypointReached(uint32 waypointId)
             if (Creature* creature = Unit::GetCreature(*me, DummyGuid))
             {
                 hyjalAI* ai = CAST_AI(hyjalAI, creature->AI());
+                ai->Talk(JAINA_RETREAT_HORDE_BASE);
                 ai->DoMassTeleport = true;
                 ai->MassTeleportTimer = 20000;
                 creature->CastSpell(me, SPELL_MASS_TELEPORT, false);

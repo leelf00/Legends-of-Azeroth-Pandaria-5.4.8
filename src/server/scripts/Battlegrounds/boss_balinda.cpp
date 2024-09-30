@@ -158,7 +158,7 @@ struct boss_balinda : public ScriptedAI
         _events.ScheduleEvent(EVENT_BALINDA_RESET, 5s);
     }
 
-    void JustRespawned() override
+    void JustAppeared() override
     {
         Reset();
     }

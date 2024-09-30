@@ -399,8 +399,12 @@ void WorldSession::HandleMovementOpcodes(WorldPacket& recvPacket)
         plrMover->SanitizeMovementInfo(&movementInfo, true);
     }
 
+    uint32 mstime = getMSTime();
+    if(m_clientTimeDelay == 0)
+        m_clientTimeDelay = mstime - movementInfo.time;
+
     /* process position-change */
-    movementInfo.time = getMSTime();
+    movementInfo.time = movementInfo.time + m_clientTimeDelay + MOVEMENT_PACKET_TIME_DELAY;
     movementInfo.guid = mover->GetGUID();
     mover->m_movementInfo = movementInfo;
 

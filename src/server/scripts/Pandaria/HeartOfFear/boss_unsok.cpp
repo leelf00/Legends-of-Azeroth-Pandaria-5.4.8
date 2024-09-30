@@ -1456,7 +1456,7 @@ class spell_unsok_reshape_of_life : public AuraScript
         if (Player* owner = GetOwner()->ToPlayer())
         {
             owner->SummonCreature(NPC_MUTATED_CONSTRUCT, *owner, TEMPSUMMON_MANUAL_DESPAWN);
-            owner->SetByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_UNK1);
+            owner->SetByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_UNK1);
         }
     }
 
@@ -1468,7 +1468,7 @@ class spell_unsok_reshape_of_life : public AuraScript
 
             // Temp hack:: SPELL_AURA_MOD_INCREASE_HEALTH not right calculated at remove
             owner->SetHealth(owner->GetMaxHealth());
-            owner->RemoveByteFlag(UNIT_FIELD_SHAPESHIFT_FORM, 1, UNIT_BYTE2_FLAG_UNK1);
+            owner->RemoveByteFlag(UNIT_FIELD_BYTES_2, 1, UNIT_BYTE2_FLAG_UNK1);
         }
     }
 

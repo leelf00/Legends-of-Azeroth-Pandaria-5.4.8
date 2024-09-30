@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -487,14 +487,14 @@ class instance_throne_of_thunder : public InstanceMapScript
                         overchargeConduitGUID = creature->GetGUID();
                         break;
                     case NPC_EXIT_CHAMBER:
-                        creature->SetDisplayId(creature->GetCreatureTemplate()->Modelid2);
+                        creature->SetDisplayFromModel(1);
                         chamberExitGUID = creature->GetGUID();
 
                         if (GetData(DATA_JI_KUN_EVENT))
                             creature->CastSpell(creature, SPELL_EXIT_CHAMBER_AT, true);
                         break;
                     case NPC_SLG_GENERIC_MOP:
-                        creature->SetDisplayId(creature->GetCreatureTemplate()->Modelid2);
+                        creature->SetDisplayFromModel(1);
 
                         if (creature->GetPositionZ() < -194.0f)
                             megaeraAnnouncerGUID = creature->GetGUID();
@@ -516,7 +516,7 @@ class instance_throne_of_thunder : public InstanceMapScript
                     case NPC_SPLASH_GRATE:
                     case NPC_GARAJAL_THRASH_SOUL:
                     case NPC_INVIS_STALKER_UNK:
-                        creature->SetDisplayId(creature->GetCreatureTemplate()->Modelid2);
+                        creature->SetDisplayFromModel(1);
                         break;
                     case NPC_FADED_IMAGE_OF_CHI_JI:
                         fadedChijiGUID = creature->GetGUID();

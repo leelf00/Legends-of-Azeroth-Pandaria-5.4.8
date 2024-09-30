@@ -1089,7 +1089,7 @@ void PathGenerator::VisualizePath(uint32 duration)
             waypoint->SetHomePosition(waypoint->GetPosition());
             waypoint->InitStats(duration);
             waypoint->SetDisableGravity(true);
-            waypoint->SetFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_INSTANTLY_APPEAR_MODEL);
+            waypoint->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_INSTANTLY_APPEAR_MODEL);
             if (prevGUID)
             {
                 waypoint->SetUInt32Value(UNIT_FIELD_CHANNEL_SPELL, 54491);
@@ -1161,7 +1161,7 @@ void PathGenerator::VisualizeNavmesh(uint32 duration)
             waypoint->SetHomePosition(waypoint->GetPosition());
             waypoint->InitStats(duration);
             waypoint->SetDisableGravity(true);
-            waypoint->SetFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_INSTANTLY_APPEAR_MODEL);
+            waypoint->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_INSTANTLY_APPEAR_MODEL);
             if (prevGUID)
             {
                 waypoint->SetUInt32Value(UNIT_FIELD_CHANNEL_SPELL, 56223);

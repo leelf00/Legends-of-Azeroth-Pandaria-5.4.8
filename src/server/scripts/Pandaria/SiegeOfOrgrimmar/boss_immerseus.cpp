@@ -209,7 +209,7 @@ class boss_immerseus : public CreatureScript
                 DoCast(me, SPELL_ZERO_POWER);
                 me->SetReactState(REACT_DEFENSIVE);
 
-                me->RemoveFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_REGENERATE_POWER);
+                me->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER);
                 me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_DISABLE_MOVE);
                 me->SetAnimTier(AnimTier::Fly);
                 me->SetDisableGravity(true);

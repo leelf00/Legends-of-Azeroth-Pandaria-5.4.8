@@ -750,7 +750,7 @@ public:
         void StartEvent()
         {
             me->SetUInt32Value(UNIT_FIELD_NPC_FLAGS, 0);
-            me->SetUInt32Value(UNIT_FIELD_ANIM_TIER, 0);
+            me->SetUInt32Value(UNIT_FIELD_BYTES_1, 0);
             Unit* Illidan = me->SummonCreature(C_ILLIDAN, -5107.83f, 602.584f, 85.2393f, 4.92598f, TEMPSUMMON_CORPSE_DESPAWN, 0);
             if (Illidan)
             {
@@ -823,7 +823,7 @@ public:
                     return 4500;
                     break;
                 case 8:
-                    me->SetUInt32Value(UNIT_FIELD_ANIM_TIER, 8);
+                    me->SetUInt32Value(UNIT_FIELD_BYTES_1, 8);
                     return 2500;
                     break;
                 case 9:
@@ -902,7 +902,7 @@ public:
                     return 1000;
                     break;
                 case 23:
-                    me->SetUInt32Value(UNIT_FIELD_ANIM_TIER, 0);
+                    me->SetUInt32Value(UNIT_FIELD_BYTES_1, 0);
                     return 2000;
                     break;
                 case 24:
@@ -1304,10 +1304,10 @@ public:
             switch (AnimationCount)
             {
             case 0:
-                me->SetUInt32Value(UNIT_FIELD_ANIM_TIER, 8);
+                me->SetUInt32Value(UNIT_FIELD_BYTES_1, 8);
                 break;
             case 3:
-                me->RemoveFlag(UNIT_FIELD_ANIM_TIER, 8);
+                me->RemoveFlag(UNIT_FIELD_BYTES_1, 8);
                 break;
             case 5:
                 if (Player* AggroTarget = ObjectAccessor::GetPlayer(*me, AggroTargetGUID))

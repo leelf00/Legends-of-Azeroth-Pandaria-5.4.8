@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -72,7 +72,6 @@ enum FathomlordKarathress
     SPELL_CYCLONE_CYCLONE           = 29538,
 
     //Yells and Quotes
-    SOUND_GAIN_BLESSING_OF_TIDES    = 11278,
     SOUND_MISC                      = 11283,
 
     //Summoned Unit GUIDs
@@ -91,7 +90,6 @@ enum FathomlordKarathress
 #define OLUM_Z                     -7.54773f
 #define OLUM_O                     0.401581f
 
-#define SAY_GAIN_BLESSING_OF_TIDES      "Your overconfidence will be your undoing! Guards, lend me your strength!"
 #define SAY_MISC                        "Alana be'lendor!" //don't know what use this
 
 #define MAX_ADVISORS 3
@@ -292,8 +290,7 @@ public:
                 if (continueTriggering)
                 {
                     DoCast(me, SPELL_BLESSING_OF_THE_TIDES);
-                    me->MonsterYell(SAY_GAIN_BLESSING_OF_TIDES, LANG_UNIVERSAL, 0);
-                    DoPlaySoundToSet(me, SOUND_GAIN_BLESSING_OF_TIDES);
+                    Talk(SAY_GAIN_BLESSING);
                 }
             }
 

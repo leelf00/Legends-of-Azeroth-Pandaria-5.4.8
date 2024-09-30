@@ -17,19 +17,20 @@
 
 #include "Battlefield.h"
 #include "BattlefieldMgr.h"
-#include "ObjectAccessor.h"
-#include "ObjectMgr.h"
-#include "Map.h"
-#include "MapManager.h"
-#include "Group.h"
-#include "WorldPacket.h"
-#include "GridNotifiers.h"
-#include "GridNotifiersImpl.h"
-#include "GridNotifiers.h"
-#include "GridNotifiersImpl.h"
 #include "CellImpl.h"
 #include "CreatureTextMgr.h"
+#include "GridNotifiers.h"
+#include "GridNotifiersImpl.h"
+#include "GridNotifiers.h"
+#include "GridNotifiersImpl.h"
+#include "Group.h"
 #include "GroupMgr.h"
+#include "Map.h"
+#include "MapManager.h"
+#include "MiscPackets.h"
+#include "ObjectAccessor.h"
+#include "ObjectMgr.h"
+#include "WorldPacket.h"
 
 Battlefield::Battlefield()
 {
@@ -353,10 +354,7 @@ void Battlefield::EndBattle(bool endByTimer)
 
 void Battlefield::DoPlaySoundToAll(uint32 SoundID)
 {
-    for (int team = 0; team < BG_TEAMS_COUNT; team++)
-        for (GuidSet::const_iterator itr = m_PlayersInWar[team].begin(); itr != m_PlayersInWar[team].end(); ++itr)
-            if (Player* player = ObjectAccessor::FindPlayer(*itr))
-                player->SendPlaySound(SoundID, true);
+    BroadcastPacketToWar(WorldPackets::Misc::PlaySound(ObjectGuid::Empty, SoundID).Write());
 }
 
 bool Battlefield::HasPlayer(Player* player) const
@@ -431,12 +429,12 @@ void Battlefield::BroadcastPacketToQueue(WorldPacket& data) const
                 player->GetSession()->SendPacket(&data);
 }
 
-void Battlefield::BroadcastPacketToWar(WorldPacket& data) const
+void Battlefield::BroadcastPacketToWar(WorldPacket const* data) const
 {
     for (uint8 team = 0; team < BG_TEAMS_COUNT; ++team)
         for (GuidSet::const_iterator itr = m_PlayersInWar[team].begin(); itr != m_PlayersInWar[team].end(); ++itr)
             if (Player* player = ObjectAccessor::FindPlayer(*itr))
-                player->GetSession()->SendPacket(&data);
+                player->SendDirectMessage(data);
 }
 
 WorldPacket Battlefield::BuildWarningAnnPacket(std::string const& msg)

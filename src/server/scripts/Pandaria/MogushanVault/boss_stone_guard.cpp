@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -587,7 +587,7 @@ class boss_generic_guardian : public CreatureScript
         {
             boss_generic_guardianAI(Creature* creature) : BossAI(creature, DATA_STONE_GUARD), summons(creature) 
             {
-                me->RemoveFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_REGENERATE_POWER);
+                me->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER);
             }
 
             EventMap events;
@@ -628,7 +628,7 @@ class boss_generic_guardian : public CreatureScript
                 me->SetReactState(REACT_DEFENSIVE);
                 me->SetPowerType(POWER_ENERGY);
                 me->SetPower(POWER_ENERGY, 0);
-                me->RemoveFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_REGENERATE_POWER);
+                me->RemoveFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_REGENERATE_POWER);
 
                 me->CastSpell(me, SPELL_SOLID_STONE, true);
                 me->CastSpell(me, SPELL_ANIM_SIT,    true);
@@ -922,7 +922,6 @@ class boss_generic_guardian : public CreatureScript
                         {
                             if (me->GetPower(POWER_ENERGY) >= me->GetMaxPower(POWER_ENERGY))
                             {
-                                //me->MonsterTextEmote(sSpellMgr->GetSpellInfo(spellOverloadId)->SpellName, 0, true);
                                 me->CastSpell(me, spellOverloadId, false);
                                 me->RemoveAurasDueToSpell(spellPetrificationId);
                                 if (instance)

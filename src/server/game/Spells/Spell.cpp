@@ -3584,7 +3584,7 @@ void Spell::prepare(SpellCastTargets const* targets, AuraEffect const* triggered
                     break;
                 }
             if (targets->GetGOTarget())
-                m_caster->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_USE);
+                m_caster->RemoveAurasWithInterruptFlags(AURA_INTERRUPT_FLAG_LOOTING);
             if (m_spellInfo->Effects[EFFECT_0].Effect == SPELL_EFFECT_OPEN_LOCK && m_caster->IsMounted() && !m_caster->HasAura(134359)) // Sky Golem
             {
                 auto bounds = sSpellMgr->GetSkillLineAbilityMapBounds(m_spellInfo->Id);
@@ -6271,7 +6271,7 @@ SpellCastResult Spell::CheckCast(bool strict)
                 return SPELL_FAILED_NOT_READY;
     }
 
-    if (m_spellInfo->AttributesEx7 & SPELL_ATTR7_IS_CHEAT_SPELL && !m_caster->HasFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_ALLOW_CHEAT_SPELLS))
+    if (m_spellInfo->AttributesEx7 & SPELL_ATTR7_IS_CHEAT_SPELL && !m_caster->HasFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_ALLOW_CHEAT_SPELLS))
     {
         m_customError = SPELL_CUSTOM_ERROR_GM_ONLY;
         return SPELL_FAILED_CUSTOM_ERROR;

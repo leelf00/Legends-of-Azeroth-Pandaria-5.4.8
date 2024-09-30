@@ -790,7 +790,7 @@ struct npc_captive_pitescale_scout : public ScriptedAI
 {
     npc_captive_pitescale_scout(Creature* creature) : ScriptedAI(creature) { }
 
-    void JustRespawned() override
+    void JustAppeared() override
     {
         if (GameObject* caje = me->FindNearestGameObject(201968, 30.0f))
             caje->ResetDoorOrButton();

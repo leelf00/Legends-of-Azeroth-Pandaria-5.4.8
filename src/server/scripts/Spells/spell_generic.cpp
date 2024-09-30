@@ -925,7 +925,7 @@ class spell_gen_creature_permanent_feign_death : public SpellScriptLoader
             {
                 Unit* target = GetTarget();
                 target->SetFlag(OBJECT_FIELD_DYNAMIC_FLAGS, UNIT_DYNFLAG_DEAD);
-                target->SetFlag(UNIT_FIELD_FLAGS2, UNIT_FLAG2_FEIGN_DEATH);
+                target->SetFlag(UNIT_FIELD_FLAGS_2, UNIT_FLAG2_FEIGN_DEATH);
 
                 if (target->GetTypeId() == TYPEID_UNIT)
                     target->ToCreature()->SetReactState(REACT_PASSIVE);
@@ -4337,7 +4337,10 @@ class spell_gen_flesh_to_stone : public AuraScript
     {
         if (Unit* owner = GetUnitOwner())
             if (CreatureTemplate const* creatureTemplate = sObjectMgr->GetCreatureTemplate(aurEff->GetMiscValue()))
-                owner->SetDisplayId(creatureTemplate->Modelid2);
+            {
+                CreatureModel const* model2 = creatureTemplate->GetModelByIdx(1);
+                owner->SetDisplayId(model2->CreatureDisplayID);
+            }
     }
 
     void HandleRemoveEffect(AuraEffect const* /*aurEff*/, AuraEffectHandleModes /*mode*/)
