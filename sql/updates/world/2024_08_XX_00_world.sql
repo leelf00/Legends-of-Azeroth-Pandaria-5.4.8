@@ -1,17 +1,15 @@
--- The Mission (29548) Pandria part
-DELETE FROM `phase_area` WHERE `AreaId`=5853 AND `PhaseId`=1685;
-INSERT INTO `phase_area` (`AreaId`, `PhaseId`, `Comment`) 
-VALUES (5853, 1685, 'Cosmetic - Jade Forest - Paw\'don Village - Doors Closed');
+-- gossip_menu
+ALTER TABLE `gossip_menu` 
+MODIFY COLUMN `VerifiedBuild` int NOT NULL DEFAULT 0 AFTER `TextID`;
+ALTER TABLE `npc_text` 
+MODIFY COLUMN `VerifiedBuild` int NULL DEFAULT 0 AFTER `Emote7_2`;
 
-DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId`=29 AND `SourceEntry`=1074;
-INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry`, `SourceId`, `ElseGroup`, `ConditionTypeOrReference`, `ConditionTarget`, `ConditionValue1`, `ConditionValue2`, `ConditionValue3`, `NegativeCondition`, `ErrorType`, `ErrorTextId`, `ScriptName`, `Comment`) VALUES 
-(29, 0, 1074, 0, 0, 8, 0, 29548, 0, 0, 1, 0, 0, '', 'Player has not quest The Mission (29548) rewarded');
--- 1074 wrong
 
 -- 1740 Alliance Intro Scene - Pandaria
 -- 1706 Cosmetic - Stormwind - Can See Portal to Paw'Don
 
--- phase 
+-- The Mission (29548) Pandria part
+-- Phase 
 -- 1780 Cosmetic - Ally Gunship Bombing NPCs
 -- 1708 Cosmetic - Spawned Player Gyrocopter
 -- 1789 Cosmetic - See Spawned Rogers on Skyfire
@@ -23,10 +21,18 @@ INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry
 -- 1685 Cosmetic - Jade Forest - Paw'don Village - Doors Closed
 -- 1700 Alliance Arrival - Garrosh'ar Point - Bombing Run
 -- 2108 Cosmetic - Ally Stygian Scar NPCs
+DELETE FROM `phase_area` WHERE `AreaId`=5853 AND `PhaseId`=1685;
+INSERT INTO `phase_area` (`AreaId`, `PhaseId`, `Comment`) 
+VALUES (5853, 1685, 'Cosmetic - Jade Forest - Paw\'don Village - Doors Closed');
 
--- after complete 
--- 1708, 1789, 1791, 1793, 1868, 1795, 1685, 1700, 2108
--- remove 1708 Spawned Player Gyrocopter
+-- After The Mission (29548) complete 
+-- Phase 1708, 1789, 1791, 1793, 1868, 1795, 1685, 1700, 2108
+-- Remove 1708 Spawned Player Gyrocopter
+DELETE FROM `conditions` WHERE `SourceTypeOrReferenceId`=29 AND `SourceEntry` IN (1708,);
+INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry`, `SourceId`, `ElseGroup`, `ConditionTypeOrReference`, `ConditionTarget`, `ConditionValue1`, `ConditionValue2`, `ConditionValue3`, `NegativeCondition`, `ErrorType`, `ErrorTextId`, `ScriptName`, `Comment`) VALUES 
+(29, 0, 1708, 0, 0, 8, 0, 29548, 0, 0, 1, 0, 0, '', 'Player has not quest The Mission (29548) rewarded');
+
+
 -- in mission
 -- 1787 Cosmetic - Paratroopers for Rogers Speech
 -- --
@@ -40,13 +46,6 @@ INSERT INTO `conditions` (`SourceTypeOrReferenceId`, `SourceGroup`, `SourceEntry
 -- 
 -- 1789 Cosmetic - See Spawned Rogers on Skyfire
 -- 
-
-
--- gossip_menu
-ALTER TABLE `gossip_menu` 
-MODIFY COLUMN `VerifiedBuild` int NOT NULL DEFAULT 0 AFTER `TextID`;
-ALTER TABLE `npc_text` 
-MODIFY COLUMN `VerifiedBuild` int NULL DEFAULT 0 AFTER `Emote7_2`;
 
 -- Mishka
 DELETE FROM `npc_text` WHERE `ID` IN (18718,18720);
@@ -73,7 +72,7 @@ DELETE FROM `gossip_menu` WHERE (`MenuID`=13117 AND `TextID`=18451);
 INSERT INTO `gossip_menu` (`MenuID`, `TextID`, `VerifiedBuild`) VALUES 
 (13117, 18451, 55960);
 
-UPDATE `creature_template` SET `gossip_menu_id`= 13117, `npcflag`=`npcflag`|1 WHERE `entry`=54615; 
+UPDATE `creature_template` SET `gossip_menu_id`= 13117, `npcflag`=`npcflag`|1 WHERE `entry`=54615; -- Nodd Codejack
 UPDATE `creature_template` SET `gossip_menu_id`= 13265, `npcflag`=`npcflag`|1 WHERE `entry`=66527; -- Mishka
 UPDATE `creature_template` SET `gossip_menu_id`= 13518, `npcflag`=`npcflag`|1 WHERE `entry`=54618; -- Nimm Codejack
 
