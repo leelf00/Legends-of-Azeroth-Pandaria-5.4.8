@@ -634,20 +634,32 @@ void WorldSession::HandleLogoutCancelOpcode(WorldPacket& /*recvData*/)
     TC_LOG_DEBUG("network", "WORLD: Sent SMSG_LOGOUT_CANCEL_ACK Message");
 }
 
-void WorldSession::HandleSetPvP(WorldPacket& recvData)
+void WorldSession::HandleSetPvP(WorldPackets::Misc::SetPvP& packet)
 {
-    if (recvData.ReadBit())
+    if (packet.EnablePVP) // TODO missing PVP timer
+    {
         GetPlayer()->SetFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_IN_PVP);
+    }
     else
+    {
         GetPlayer()->RemoveFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_IN_PVP);
+    }
 
     GetPlayer()->UpdatePvP(GetPlayer()->HasFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_IN_PVP));
 }
 
-void WorldSession::HandleTogglePvP(WorldPacket& recvData)
+void WorldSession::HandleTogglePvP(WorldPackets::Misc::TogglePvP& togglePvP)
 {
-    GetPlayer()->ToggleFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_IN_PVP);
-
+    // this opcode can be used in two ways: Either set explicit new status or toggle old status
+    if (togglePvP.Enable) // TODO missing PVP timer
+    {
+        GetPlayer()->ApplyModFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_IN_PVP, *togglePvP.Enable);
+    }
+    else
+    {
+        GetPlayer()->ToggleFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_IN_PVP);
+    }
+    
     GetPlayer()->UpdatePvP(GetPlayer()->HasFlag(PLAYER_FIELD_PLAYER_FLAGS, PLAYER_FLAGS_IN_PVP));
 }
 

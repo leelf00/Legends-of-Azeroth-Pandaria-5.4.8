@@ -69,6 +69,8 @@ namespace WorldPackets
         class CompleteMovie;
         class NextCinematicCamera;
         class OpeningCinematic;
+        class TogglePvP;
+        class SetPvP;
     }
 }
 
@@ -577,8 +579,8 @@ class TC_GAME_API WorldSession
         // Gm Bug Ticket
         void HandleSubmitBugOpcode(WorldPacket& recvPacket);
 
-        void HandleTogglePvP(WorldPacket& recvPacket);
-        void HandleSetPvP(WorldPacket& recvPacket);
+        void HandleTogglePvP(WorldPackets::Misc::TogglePvP& togglePvP);
+        void HandleSetPvP(WorldPackets::Misc::SetPvP& setPvP);
 
         void HandleZoneUpdateOpcode(WorldPacket& recvPacket);
         void HandleSetSelectionOpcode(WorldPacket& recvPacket);

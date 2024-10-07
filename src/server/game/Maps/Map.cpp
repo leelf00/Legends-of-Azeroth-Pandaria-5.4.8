@@ -266,6 +266,8 @@ i_scriptLock(false), _defaultLight(GetDefaultMapLight(id))
     //lets initialize visibility distance for map
     Map::InitVisibilityDistance();
 
+    _weatherUpdateTimer.SetInterval(time_t(1 * IN_MILLISECONDS));
+
     _poolData = sPoolMgr->InitPoolsForMap(this);
 
     sScriptMgr->OnCreateMap(this);

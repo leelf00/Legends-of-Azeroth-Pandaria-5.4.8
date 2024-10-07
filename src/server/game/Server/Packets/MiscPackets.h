@@ -187,7 +187,6 @@ namespace WorldPackets
             ObjectGuid Guid;
         };
 
-
         class CorpseReclaimDelay : public ServerPacket
         {
         public:
@@ -206,6 +205,28 @@ namespace WorldPackets
             void Read() override;
 
             bool Enable = false;
+        };
+
+        class SetPvP final : public ClientPacket
+        {
+        public:
+            SetPvP(WorldPacket&& packet) : ClientPacket(CMSG_SET_PVP, std::move(packet)) { }
+
+            void Read() override;
+
+            bool EnablePVP = false;
+        };
+
+        class TogglePvP final : public ClientPacket
+        {
+        public:
+            TogglePvP(WorldPacket&& packet) : ClientPacket(CMSG_TOGGLE_PVP, std::move(packet)) { }
+
+            void Read() override;
+
+            bool HasPvPStatus() const { return GetSize() == 1; }
+
+            Optional<bool> Enable;
         };
 
         class OverrideLight final : public ServerPacket

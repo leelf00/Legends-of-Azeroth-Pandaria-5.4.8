@@ -632,7 +632,7 @@ enum OpcodeServer : uint16
     SMSG_CALENDAR_SEND_EVENT                                     = 0x12AE,
     SMSG_CALENDAR_SEND_NUM_PENDING                               = 0x0A3F,
     SMSG_CANCEL_AUTO_REPEAT                                      = 0x1E0F,
-    SMSG_CANCEL_COMBAT                                           = 0x0534,
+    SMSG_CANCEL_COMBAT                                           = 0x0E8B,
     SMSG_CANCEL_SCENE                                            = 0x120E,
     SMSG_CAST_FAILED                                             = 0x143A,
     SMSG_CHALLENGE_MODE_ALL_MAP_STATS                            = 0x11C2,
@@ -1013,7 +1013,7 @@ enum OpcodeServer : uint16
     SMSG_RANDOM_ROLL                                             = 0x141A,
     SMSG_RANDOMIZE_CHAR_NAME                                     = 0x169F,
     SMSG_READ_ITEM_RESULT_OK                                     = 0x0305,
-    SMSG_READ_ITEM_RESULT_FAILED                                 = 0x0E8B,
+    SMSG_READ_ITEM_RESULT_FAILED                                 = 0x0000, // @TODO
     SMSG_REALM_SPLIT                                             = 0x1A2E,
     SMSG_RECEIVED_MAIL                                           = 0x182B,
     SMSG_REFER_A_FRIEND_EXPIRED                                  = 0x1143,

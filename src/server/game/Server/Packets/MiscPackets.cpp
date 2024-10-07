@@ -190,6 +190,17 @@ void WorldPackets::Misc::FarSight::Read()
     Enable = _worldPacket.ReadBit();
 }
 
+void WorldPackets::Misc::SetPvP::Read()
+{
+    EnablePVP = _worldPacket.ReadBit();
+}
+
+void WorldPackets::Misc::TogglePvP::Read()
+{
+    if (HasPvPStatus())
+        Enable = _worldPacket.read<uint8>() != 0;
+}
+
 WorldPacket const* WorldPackets::Misc::OverrideLight::Write()
 {
     _worldPacket << int32(AreaLightID);
