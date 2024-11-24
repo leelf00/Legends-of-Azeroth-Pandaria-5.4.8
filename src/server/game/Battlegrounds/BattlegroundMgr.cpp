@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -1027,7 +1027,7 @@ void BattlegroundMgr::CreateInitialBattlegrounds(bool reload /*= false*/)
         data.StartMaxDist = dist * dist;
 
         data.scriptId = sObjectMgr->GetScriptId(fields[11].GetCString());
-        data.BattlegroundName = bl->name[DEFAULT_LOCALE];
+        data.BattlegroundName = bl->name;
         data.MapID = bl->mapid[0];
 
         if (data.MaxPlayersPerTeam == 0 || data.MinPlayersPerTeam > data.MaxPlayersPerTeam)

@@ -5648,9 +5648,9 @@ void Player::UpdateLocalChannels(uint32 newZone)
                     if (channel->flags & CHANNEL_DBC_FLAG_CITY_ONLY)
                         currentNameExt = sObjectMgr->GetTrinityString(LANG_CHANNEL_CITY, LocaleConstant(sWorld->getIntConfig(CONFIG_CHANNEL_CONSTANT_LOCALE)));
                     else
-                        currentNameExt = current_zone->area_name[GetSession()->GetSessionDbcLocale()];
+                        currentNameExt = current_zone->area_name;
 
-                    snprintf(new_channel_name_buf, 200, channel->pattern[sWorld->getIntConfig(CONFIG_CHANNEL_CONSTANT_LOCALE)], currentNameExt);
+                    snprintf(new_channel_name_buf, 200, channel->pattern, currentNameExt);
 
                     joinChannel = cMgr->GetJoinChannel(new_channel_name_buf, channel->ChannelID);
                     if (usedChannel)
@@ -5665,7 +5665,7 @@ void Player::UpdateLocalChannels(uint32 newZone)
                     }
                 }
                 else
-                    joinChannel = cMgr->GetJoinChannel(channel->pattern[sWorld->getIntConfig(CONFIG_CHANNEL_CONSTANT_LOCALE)], channel->ChannelID);
+                    joinChannel = cMgr->GetJoinChannel(channel->pattern, channel->ChannelID);
             }
             else
                 removeChannel = usedChannel;
@@ -20367,7 +20367,7 @@ void Player::_LoadBoundInstances(PreparedQueryResult result)
             bool deleteInstance = false;
 
             MapEntry const* mapEntry = sMapStore.LookupEntry(mapId);
-            std::string mapname = mapEntry ? mapEntry->name[sObjectMgr->GetDBCLocaleIndex()] : "Unknown";
+            std::string mapname = mapEntry ? mapEntry->name : "Unknown";
 
             if (!mapEntry || (!mapEntry->IsDungeon() && !mapEntry->IsScenario()))
             {
@@ -20381,7 +20381,7 @@ void Player::_LoadBoundInstances(PreparedQueryResult result)
             }
             else
             {
-                MapDifficulty const* mapDiff = GetMapDifficultyData(mapId, Difficulty(difficulty));
+                MapDifficulty const* mapDiff = sDBCManager.GetMapDifficultyData(mapId, Difficulty(difficulty));
                 if (!mapDiff && !mapEntry->IsScenario())
                 {
                     TC_LOG_ERROR("entities.player", "_LoadBoundInstances: player %s(%d) has bind to not existed difficulty %d instance for map %u (%s)", GetName().c_str(), GetGUID().GetCounter(), difficulty, mapId, mapname.c_str());
@@ -20417,7 +20417,7 @@ void Player::_LoadBoundInstances(PreparedQueryResult result)
 InstancePlayerBind* Player::GetBoundInstance(uint32 mapid, Difficulty difficulty)
 {
     // some instances only have one difficulty
-    MapDifficulty const* mapDiff = GetDownscaledMapDifficultyData(mapid, difficulty);
+    MapDifficulty const* mapDiff = sDBCManager.GetDownscaledMapDifficultyData(mapid, difficulty);
     if (!mapDiff)
         return nullptr;
 
@@ -20763,7 +20763,7 @@ bool Player::Satisfy(AccessRequirement const* ar, uint32 target_map, bool report
                 missingAchievement = ar->achievement;
 
         Difficulty target_difficulty = GetDifficulty(mapEntry->IsRaid());
-        MapDifficulty const* mapDiff = GetDownscaledMapDifficultyData(target_map, target_difficulty);
+        MapDifficulty const* mapDiff = sDBCManager.GetDownscaledMapDifficultyData(target_map, target_difficulty);
         if (LevelMin || LevelMax || missingItem || missingQuest || missingAchievement)
         {
             if (report)

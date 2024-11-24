@@ -16,6 +16,7 @@
 */
 
 #include "Common.h"
+#include "DB2Stores.h"
 #include "Player.h"
 #include "GridNotifiers.h"
 #include "Log.h"
@@ -382,7 +383,7 @@ void InstanceSaveManager::LoadResetTimes()
             Difficulty difficulty = Difficulty(fields[1].GetUInt8());
             time_t oldresettime = fields[2].GetUInt32();
 
-            MapDifficulty const* mapDiff = GetMapDifficultyData(mapid, difficulty);
+            MapDifficulty const* mapDiff = sDBCManager.GetMapDifficultyData(mapid, difficulty);
             if (!mapDiff)
             {
                 TC_LOG_ERROR("misc", "InstanceSaveManager::LoadResetTimes: invalid mapid(%u)/difficulty(%u) pair in instance_reset!", mapid, difficulty);

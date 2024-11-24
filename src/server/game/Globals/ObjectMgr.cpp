@@ -1981,7 +1981,7 @@ void ObjectMgr::LoadCreatures()
     for (uint32 i = 0; i < sMapStore.GetNumRows(); ++i)
         if (sMapStore.LookupEntry(i))
             for (int k = 0; k < MAX_DIFFICULTY; ++k)
-                if (GetMapDifficultyData(i, Difficulty(k)))
+                if (sDBCManager.GetMapDifficultyData(i, Difficulty(k)))
                     spawnMasks[i] |= (1 << k);
 
     _creatureDataStore.rehash(result->GetRowCount());
@@ -2350,7 +2350,7 @@ void ObjectMgr::LoadGameobjects()
     for (uint32 i = 0; i < sMapStore.GetNumRows(); ++i)
         if (sMapStore.LookupEntry(i))
             for (int k = 0; k < MAX_DIFFICULTY; ++k)
-                if (GetMapDifficultyData(i, Difficulty(k)))
+                if (sDBCManager.GetMapDifficultyData(i, Difficulty(k)))
                     spawnMasks[i] |= (1 << k);
 
     _gameObjectDataStore.rehash(result->GetRowCount());
@@ -5695,7 +5695,7 @@ void ObjectMgr::LoadInstanceEncounters()
 
         if (lastEncounterDungeon && !sLFGMgr->GetLFGDungeonEntry(lastEncounterDungeon))
         {
-            TC_LOG_ERROR("sql.sql", "Table `instance_encounters` has an encounter %u (%s) marked as final for invalid dungeon id %u, skipped!", entry, dungeonEncounter->encounterName.m_impl[0], lastEncounterDungeon);
+            TC_LOG_ERROR("sql.sql", "Table `instance_encounters` has an encounter %u (%s) marked as final for invalid dungeon id %u, skipped!", entry, dungeonEncounter->encounterName, lastEncounterDungeon);
             continue;
         }
 
@@ -5704,7 +5704,7 @@ void ObjectMgr::LoadInstanceEncounters()
         {
             if (itr != dungeonLastBosses.end())
             {
-                TC_LOG_ERROR("sql.sql", "Table `instance_encounters` specified encounter %u (%s) as last encounter but %u (%s) is already marked as one, skipped!", entry, dungeonEncounter->encounterName.m_impl[0], itr->second->id, itr->second->encounterName.m_impl[0]);
+                TC_LOG_ERROR("sql.sql", "Table `instance_encounters` specified encounter %u (%s) as last encounter but %u (%s) is already marked as one, skipped!", entry, dungeonEncounter->encounterName, itr->second->id, itr->second->encounterName);
                 continue;
             }
 
@@ -5718,7 +5718,7 @@ void ObjectMgr::LoadInstanceEncounters()
                 CreatureTemplate const* creatureInfo = GetCreatureTemplate(creditEntry);
                 if (!creatureInfo)
                 {
-                    TC_LOG_ERROR("sql.sql", "Table `instance_encounters` has an invalid creature (entry %u) linked to the encounter %u (%s), skipped!", creditEntry, entry, dungeonEncounter->encounterName.m_impl[0]);
+                    TC_LOG_ERROR("sql.sql", "Table `instance_encounters` has an invalid creature (entry %u) linked to the encounter %u (%s), skipped!", creditEntry, entry, dungeonEncounter->encounterName);
                     continue;
                 }
                 const_cast<CreatureTemplate*>(creatureInfo)->flags_extra |= CREATURE_FLAG_EXTRA_DUNGEON_BOSS;
@@ -5727,12 +5727,12 @@ void ObjectMgr::LoadInstanceEncounters()
             case ENCOUNTER_CREDIT_CAST_SPELL:
                 if (!sSpellMgr->GetSpellInfo(creditEntry))
                 {
-                    TC_LOG_ERROR("sql.sql", "Table `instance_encounters` has an invalid spell (entry %u) linked to the encounter %u (%s), skipped!", creditEntry, entry, dungeonEncounter->encounterName.m_impl[0]);
+                    TC_LOG_ERROR("sql.sql", "Table `instance_encounters` has an invalid spell (entry %u) linked to the encounter %u (%s), skipped!", creditEntry, entry, dungeonEncounter->encounterName);
                     continue;
                 }
                 break;
             default:
-                TC_LOG_ERROR("sql.sql", "Table `instance_encounters` has an invalid credit type (%u) for encounter %u (%s), skipped!", creditType, entry, dungeonEncounter->encounterName.m_impl[0]);
+                TC_LOG_ERROR("sql.sql", "Table `instance_encounters` has an invalid credit type (%u) for encounter %u (%s), skipped!", creditType, entry, dungeonEncounter->encounterName);
                 continue;
         }
 
@@ -5740,7 +5740,7 @@ void ObjectMgr::LoadInstanceEncounters()
         {
             for (uint32 i = 0; i < MAX_DIFFICULTY; ++i)
             {
-                if (GetMapDifficultyData(dungeonEncounter->mapId, Difficulty(i)))
+                if (sDBCManager.GetMapDifficultyData(dungeonEncounter->mapId, Difficulty(i)))
                 {
                     DungeonEncounterList& encounters = _dungeonEncounterStore[MAKE_PAIR32(dungeonEncounter->mapId, i)];
                     encounters.push_back(new DungeonEncounter(dungeonEncounter, EncounterCreditType(creditType), creditEntry, lastEncounterDungeon));
@@ -9956,9 +9956,9 @@ void ObjectMgr::LoadHotfixData()
     {
         Field* fields = result->Fetch();
 
-        HotfixInfo info;
+        HotfixNotify info;
         info.Entry = fields[0].GetUInt32();
-        info.Type = fields[1].GetUInt32();
+        info.TableHash = fields[1].GetUInt32();
         info.Timestamp = fields[2].GetUInt64();
         _hotfixData.push_back(info);
 
@@ -9973,46 +9973,11 @@ time_t ObjectMgr::GetHotfixDate(uint32 entry, uint32 type) const
 {
     time_t ret = 0;
     for (HotfixData::const_iterator itr = _hotfixData.begin(); itr != _hotfixData.end(); ++itr)
-        if (itr->Entry == entry && itr->Type == type)
+        if (itr->Entry == entry && itr->TableHash == type)
             if (itr->Timestamp > ret)
                 ret = itr->Timestamp;
 
-    return ret ? ret : time(NULL);
-}
-
-void ObjectMgr::LoadMissingKeyChains()
-{
-    uint32 oldMSTime = getMSTime();
-
-    QueryResult result = WorldDatabase.Query("SELECT keyId, k1, k2, k3, k4, k5, k6, k7, k8, "
-                                                     "k9, k10, k11, k12, k13, k14, k15, k16, "
-                                                     "k17, k18, k19, k20, k21, k22, k23, k24, "
-                                                     "k25, k26, k27, k28, k29, k30, k31, k32 "
-                                                     "FROM keychain_db2 ORDER BY keyId DESC");
-
-    if (!result)
-    {
-        TC_LOG_INFO("server.loading", ">> Loaded 0 KeyChain entries. DB table `keychain_db2` is empty.");
-        return;
-    }
-
-    uint32 count = 0;
-
-    do
-    {
-        Field* fields = result->Fetch();
-        uint32 id = fields[0].GetUInt32();
-
-        KeyChainEntry* kce = sKeyChainStore.CreateEntry(id, true);
-        kce->Id = id;
-        for (uint32 i = 0; i < KEYCHAIN_SIZE; ++i)
-            kce->Key[i] = fields[1 + i].GetUInt8();
-
-        ++count;
-    }
-    while (result->NextRow());
-
-    TC_LOG_INFO("server.loading", ">> Loaded %u KeyChain entries in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
+    return ret ? ret : time(nullptr);
 }
 
 void ObjectMgr::LoadFactionChangeSpells()
