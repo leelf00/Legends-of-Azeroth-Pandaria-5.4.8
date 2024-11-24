@@ -1037,7 +1037,7 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder const& holder)
     {
         data << uint32(hotfix[i].Timestamp);
         data << uint32(hotfix[i].Entry);
-        data << uint32(hotfix[i].Type);
+        data << uint32(hotfix[i].TableHash);
     }
 
     SendPacket(&data);

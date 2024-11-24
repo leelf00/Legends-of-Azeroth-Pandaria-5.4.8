@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -22,38 +22,36 @@
 #include "DB2Structure.h"
 #include <string>
 
-extern DB2Storage<BattlePetAbilityEntry> sBattlePetAbilityStore;
-extern DB2Storage<BattlePetAbilityStateEntry> sBattlePetAbilityStateStore;
-extern DB2Storage<BattlePetAbilityEffectEntry> sBattlePetAbilityEffectStore;
-extern DB2Storage<BattlePetAbilityTurnEntry> sBattlePetAbilityTurnStore;
-extern DB2Storage<BattlePetBreedQualityEntry> sBattlePetBreedQualityStore;
-extern DB2Storage<BattlePetBreedStateEntry> sBattlePetBreedStateStore;
-extern DB2Storage<BattlePetSpeciesEntry> sBattlePetSpeciesStore;
-extern DB2Storage<BattlePetSpeciesStateEntry> sBattlePetSpeciesStateStore;
-extern DB2Storage<BattlePetSpeciesXAbilityEntry> sBattlePetSpeciesXAbilityStore;
-extern DB2Storage<BattlePetStateEntry> sBattlePetStateStore;
-extern DB2Storage<ItemToBattlePetEntry> sItemToBattlePetStore;
+TC_GAME_API extern DB2Storage<BattlePetAbilityEntry> sBattlePetAbilityStore;
+TC_GAME_API extern DB2Storage<BattlePetAbilityStateEntry> sBattlePetAbilityStateStore;
+TC_GAME_API extern DB2Storage<BattlePetAbilityEffectEntry> sBattlePetAbilityEffectStore;
+TC_GAME_API extern DB2Storage<BattlePetAbilityTurnEntry> sBattlePetAbilityTurnStore;
+TC_GAME_API extern DB2Storage<BattlePetBreedQualityEntry> sBattlePetBreedQualityStore;
+TC_GAME_API extern DB2Storage<BattlePetBreedStateEntry> sBattlePetBreedStateStore;
+TC_GAME_API extern DB2Storage<BattlePetSpeciesEntry> sBattlePetSpeciesStore;
+TC_GAME_API extern DB2Storage<BattlePetSpeciesStateEntry> sBattlePetSpeciesStateStore;
+TC_GAME_API extern DB2Storage<BattlePetSpeciesXAbilityEntry> sBattlePetSpeciesXAbilityStore;
+TC_GAME_API extern DB2Storage<BattlePetStateEntry> sBattlePetStateStore;
+TC_GAME_API extern DB2Storage<ItemToBattlePetEntry> sItemToBattlePetStore;
 
-extern BattlePetBreedSet sBattlePetBreedSet;
-extern BattlePetItemXSpeciesStore sBattlePetItemXSpeciesStore;
+TC_GAME_API extern BattlePetBreedSet sBattlePetBreedSet;
+TC_GAME_API extern BattlePetItemXSpeciesStore sBattlePetItemXSpeciesStore;
 
-extern DB2Storage<BroadcastTextEntry> sBroadcastTextStore;
-extern DB2Storage<ItemEntry> sItemStore;
-extern DB2Storage<ItemCurrencyCostEntry> sItemCurrencyCostStore;
-extern DB2Storage<ItemExtendedCostEntry> sItemExtendedCostStore;
-extern DB2Storage<ItemSparseEntry> sItemSparseStore;
-extern DB2Storage<ItemUpgradeEntry> sItemUpgradeStore;
-extern DB2Storage<ItemToMountSpellEntry> sItemItemToMountSpellStore;
-extern DB2Storage<KeyChainEntry> sKeyChainStore;
-extern DB2Storage <MapChallengeModeEntry> sMapChallengeModeStore;
-extern DB2Storage<QuestPackageItemEntry> sQuestPackageItemStore;
-extern DB2Storage <RulesetItemUpgradeEntry> sRulesetItemUpgradeStore;
-extern DB2Storage<SceneScriptEntry> sSceneScriptStore;
-extern DB2Storage<SceneScriptPackageEntry> sSceneScriptPackageStore;
-extern DB2Storage<SpellReagentsEntry> sSpellReagentsStore;
-extern DB2Storage <VignetteEntry> sVignetteStore;
-
-void LoadDB2Stores(std::string const& dataPath, uint32& availableDb2Locales);
+TC_GAME_API extern DB2Storage<BroadcastTextEntry> sBroadcastTextStore;
+TC_GAME_API extern DB2Storage<ItemEntry> sItemStore;
+TC_GAME_API extern DB2Storage<ItemCurrencyCostEntry> sItemCurrencyCostStore;
+TC_GAME_API extern DB2Storage<ItemExtendedCostEntry> sItemExtendedCostStore;
+TC_GAME_API extern DB2Storage<ItemSparseEntry> sItemSparseStore;
+TC_GAME_API extern DB2Storage<ItemUpgradeEntry> sItemUpgradeStore;
+TC_GAME_API extern DB2Storage<ItemToMountSpellEntry> sItemItemToMountSpellStore;
+TC_GAME_API extern DB2Storage<KeyChainEntry> sKeyChainStore;
+TC_GAME_API extern DB2Storage<MapChallengeModeEntry> sMapChallengeModeStore;
+TC_GAME_API extern DB2Storage<QuestPackageItemEntry> sQuestPackageItemStore;
+TC_GAME_API extern DB2Storage<RulesetItemUpgradeEntry> sRulesetItemUpgradeStore;
+TC_GAME_API extern DB2Storage<SceneScriptEntry> sSceneScriptStore;
+TC_GAME_API extern DB2Storage<SceneScriptPackageEntry> sSceneScriptPackageStore;
+TC_GAME_API extern DB2Storage<SpellReagentsEntry> sSpellReagentsStore;
+TC_GAME_API extern DB2Storage<VignetteEntry> sVignetteStore;
 
 float BattlePetSpeciesMainStat(uint16 stateId, uint16 speciesId);
 float BattlePetBreedMainStatModifier(uint16 stateId, uint8 speciesId);
@@ -83,5 +81,34 @@ uint32 GetUpgradeId(uint32 itemId);
 bool IsMountCanBeAllowedForPlayer(uint32 spellId, uint32 raceMask);
 std::vector<QuestPackageItemEntry const*> const* GetQuestPackageItems(uint32 questPackageID);
 std::vector<QuestPackageItemEntry const*> const* GetQuestPackageItemsFallback(uint32 questPackageID);
+
+struct HotfixNotify
+{
+    uint32 TableHash;
+    uint32 Timestamp;
+    uint32 Entry;
+};
+
+typedef std::vector<HotfixNotify> HotfixData;
+
+class TC_GAME_API DB2Manager
+{
+public:
+    typedef std::map<uint32 /*hash*/, DB2StorageBase*> StorageMap;
+
+    static DB2Manager& Instance();
+
+    uint32 LoadStores(std::string const& dataPath, uint32 defaultLocale);
+    DB2StorageBase const* GetStorage(uint32 type) const;
+
+    void LoadHotfixData();
+    HotfixData const* GetHotfixData() const { return &_hotfixData; }
+
+private:
+    StorageMap _stores;
+    HotfixData _hotfixData;
+};
+
+#define sDB2Manager DB2Manager::Instance()
 
 #endif

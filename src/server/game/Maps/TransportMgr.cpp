@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -89,6 +89,18 @@ void TransportMgr::LoadTransportTemplates()
 
     TC_LOG_INFO("server.loading", ">> Loaded %u transport templates in %u ms", count, GetMSTimeDiffToNow(oldMSTime));
 }
+
+void TransportMgr::LoadTransportAnimationAndRotation()
+{
+    for (uint32 i = 0; i < sTransportAnimationStore.GetNumRows(); ++i)
+        if (TransportAnimationEntry const* anim = sTransportAnimationStore.LookupEntry(i))
+            AddPathNodeToTransport(anim->TransportID, anim->TimeIndex, anim);
+
+    for (uint32 i = 0; i < sTransportRotationStore.GetNumRows(); ++i)
+        if (TransportRotationEntry const* rot = sTransportRotationStore.LookupEntry(i))
+            AddPathRotationToTransport(rot->GameObjectsID, rot->TimeIndex, rot);
+}
+
 
 class SplineRawInitializer
 {

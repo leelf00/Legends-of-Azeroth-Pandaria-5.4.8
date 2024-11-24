@@ -19,6 +19,7 @@
 #include "Battleground.h"
 #include "BattlePetSpawnMgr.h"
 #include "CellImpl.h"
+#include "DB2Stores.h"
 #include "DisableMgr.h"
 #include "DynamicTree.h"
 #include "GridNotifiers.h"
@@ -2964,7 +2965,7 @@ bool Map::CheckGridIntegrity(T* c, bool moved) const
 
 char const* Map::GetMapName() const
 {
-    return i_mapEntry ? i_mapEntry->name[sObjectMgr->GetDBCLocaleIndex()] : "UNNAMEDMAP\x0";
+    return i_mapEntry ? i_mapEntry->name : "UNNAMEDMAP\x0";
 }
 
 void Map::UpdateObjectVisibility(WorldObject* obj, Cell cell, CellCoord cellpair)
@@ -3784,7 +3785,7 @@ void InstanceMap::SetResetSchedule(bool on)
 
 MapDifficulty const* Map::GetMapDifficulty() const
 {
-    return GetMapDifficultyData(GetId(), GetDifficulty());
+    return sDBCManager.GetMapDifficultyData(GetId(), GetDifficulty());
 }
 
 uint32 InstanceMap::GetMaxPlayers() const
@@ -3795,7 +3796,7 @@ uint32 InstanceMap::GetMaxPlayers() const
             return mapDiff->maxPlayers;
         else                                                // DBC have 0 maxplayers for heroic instances with expansion < 2
         {                                                   // The heroic entry exists, so we don't have to check anything, simply return normal max players
-            MapDifficulty const* normalDiff = GetMapDifficultyData(GetId(), REGULAR_DIFFICULTY);
+            MapDifficulty const* normalDiff = sDBCManager.GetMapDifficultyData(GetId(), REGULAR_DIFFICULTY);
             return normalDiff ? normalDiff->maxPlayers : 0;
         }
     }
