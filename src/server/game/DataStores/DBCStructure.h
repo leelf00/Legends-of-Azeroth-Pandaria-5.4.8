@@ -1693,16 +1693,16 @@ struct ItemSpecOverrideEntry
 struct LFGDungeonEntry
 {
     uint32  ID;                                             // 0
-    char const*  name;                                           // 1
+    char const*  name;                                      // 1
     uint32  minlevel;                                       // 2
     uint32  maxlevel;                                       // 3
     uint32  reclevel;                                       // 4
     uint32  recminlevel;                                    // 5
     uint32  recmaxlevel;                                    // 6
-    int32   map;                                            // 7
-    uint32  difficulty;                                     // 8
-    uint32  flags;                                          // 9
-    uint32  type;                                           // 10
+    int32   MapID;                                          // 7
+    uint32  DifficultyID;                                   // 8
+    uint32  Flags;                                          // 9
+    uint32  TypeID;                                         // 10
     int32   faction;                                        // 11
     //char const*  iconname;                                     // 12
     uint32  expansion;                                      // 13
@@ -1723,7 +1723,7 @@ struct LFGDungeonEntry
     //uint32  unk_10;                                       // 28
 
     // Helpers
-    uint32 Entry() const { return ID + (type << 24); }
+    uint32 Entry() const { return ID + (TypeID << 24); }
 };
 
 struct LightEntry
@@ -1788,9 +1788,9 @@ struct PhaseEntry
 
 struct PhaseGroupEntry
 {
-    uint32 ID;
-    uint32 PhaseId;
-    uint32 GroupId;
+    uint32 ID;                                              // 1
+    uint32 PhaseID;                                         // 2
+    uint32 PhaseGroupID;                                    // 3
 };
 
 struct MailTemplateEntry
@@ -2682,8 +2682,8 @@ struct UnitPowerBarEntry
 struct TransportAnimationEntry
 {
     //uint32  Id;
-    uint32  TransportEntry;
-    uint32  TimeSeg;
+    uint32  TransportID;
+    uint32  TimeIndex;
     float   X;
     float   Y;
     float   Z;
@@ -2692,9 +2692,9 @@ struct TransportAnimationEntry
 
 struct TransportRotationEntry
 {
-    //uint32  Id;
-    uint32  TransportEntry;
-    uint32  TimeSeg;
+    //uint32  ID;
+    uint32  GameObjectsID;
+    uint32  TimeIndex;
     float   X;
     float   Y;
     float   Z;
@@ -2803,21 +2803,21 @@ struct VehicleSeatEntry
 
 struct WMOAreaTableEntry
 {
-    uint32 Id;                                              // 0 index
-    int32 rootId;                                           // 1 used in root WMO
-    int32 adtId;                                            // 2 used in adt file
-    int32 groupId;                                          // 3 used in group WMO
-    //uint32 field4;
-    //uint32 field5;
-    //uint32 field6;
-    //uint32 field7;
-    //uint32 field8;
-    uint32 Flags;                                           // 9 used for indoor/outdoor determination
-    uint32 AreaTableID;                                     // 10 link to AreaTableEntry.ID
-    //char *Name;                                           // 11       m_AreaName_lang
-    //uint32 field12;                                       // 12
-    //uint32 field13;                                       // 13
-    //uint32 field14;                                       // 14
+    uint32  ID;                                             // 0 index
+    int32   WMOID;                                          // 1 used in root WMO
+    int32   NameSetID;                                      // 2 used in adt file
+    int32   WMOGroupID;                                     // 3 used in group WMO
+    //uint32  SoundProviderPref;                            // 4
+    //uint32  SoundProviderPrefUnderwater;                  // 5
+    //uint32  AmbienceID;                                   // 6
+    //uint32  ZoneMusic;                                    // 7
+    //uint32  IntroSound;                                   // 8
+    uint32  Flags;                                          // 9 used for indoor/outdoor determination
+    uint32  AreaTableID;                                    // 10 link to AreaTableEntry.ID
+    //char*   AreaName;                                     // 11
+    //uint32  UwIntroSound;                                 // 12
+    //uint32  UwZoneMusic;                                  // 13
+    //uint32  UwAmbience;                                   // 14
 };
 
 struct WorldMapAreaEntry
@@ -2911,7 +2911,7 @@ struct WorldStateUI
 #pragma pack(pop)
 #endif
 
-typedef std::unordered_map<uint32, std::set<uint32>> PhaseGroupContainer;
+typedef std::unordered_map<uint32, std::vector<uint32>> PhaseGroupContainer;
 
 struct VectorArray
 {

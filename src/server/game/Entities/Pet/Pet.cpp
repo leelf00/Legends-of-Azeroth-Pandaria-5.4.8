@@ -1422,7 +1422,7 @@ void Pet::resetTalentsForAllPetsOf(Player* owner, Pet* onlinePet /*= NULL*/)
 
         uint32 spell = fields[0].GetUInt32();
 
-        if (!GetTalentSpellCost(spell))
+        if (!sDBCManager.GetTalentSpellCost(spell))
             continue;
 
         if (need_execute)

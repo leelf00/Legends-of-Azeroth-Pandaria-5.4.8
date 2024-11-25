@@ -20,6 +20,7 @@
 
 #include "DB2Store.h"
 #include "DB2Structure.h"
+#include <map>
 #include <string>
 
 TC_GAME_API extern DB2Storage<BattlePetAbilityEntry> sBattlePetAbilityStore;
@@ -74,13 +75,9 @@ namespace db2
     BattlePetAbilities const* GetAbilitiesForPetSpecies(uint32 speciesId);
 }
 
-DB2StorageBase const* GetDB2Storage(uint32 type);
-
 bool GetQuestRewardItemCountFromPackage(uint32 itemid, uint32 package, uint32& count);
 uint32 GetUpgradeId(uint32 itemId);
 bool IsMountCanBeAllowedForPlayer(uint32 spellId, uint32 raceMask);
-std::vector<QuestPackageItemEntry const*> const* GetQuestPackageItems(uint32 questPackageID);
-std::vector<QuestPackageItemEntry const*> const* GetQuestPackageItemsFallback(uint32 questPackageID);
 
 struct HotfixNotify
 {
@@ -103,6 +100,9 @@ public:
 
     void LoadHotfixData();
     HotfixData const* GetHotfixData() const { return &_hotfixData; }
+
+    std::vector<QuestPackageItemEntry const*> const* GetQuestPackageItems(uint32 questPackageID) const;
+    std::vector<QuestPackageItemEntry const*> const* GetQuestPackageItemsFallback(uint32 questPackageID) const;
 
 private:
     StorageMap _stores;

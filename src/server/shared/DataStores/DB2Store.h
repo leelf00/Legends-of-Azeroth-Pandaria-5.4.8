@@ -45,7 +45,7 @@ protected:
 template<class T>
 class DB2Storage : public DB2StorageBase
 {
-    typedef std::list<char*> StringPoolList;
+    typedef std::vector<char*> StringPoolList;
 public:
     typedef DBStorageIterator<T> iterator;
 
@@ -107,6 +107,13 @@ public:
                     entry += sizeof(LocalizedString*);
                     break;
                 }
+                case FT_NA:
+                case FT_SORT:
+                    buffer << uint32(0);
+                    break;
+                case FT_NA_BYTE:
+                    buffer << uint8(0);
+                    break;                
             }
         }
     }

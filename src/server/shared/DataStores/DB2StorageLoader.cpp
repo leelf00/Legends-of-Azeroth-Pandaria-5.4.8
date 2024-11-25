@@ -170,7 +170,7 @@ bool DB2FileLoader::Load(char const* filename, char const* fmt)
     for (uint32 i = 1; i < fieldCount; i++)
     {
         fieldsOffset[i] = fieldsOffset[i - 1];
-        if (fmt[i - 1] == 'b')
+        if (fmt[i - 1] == 'b' || fmt[i - 1] == 'X')
             fieldsOffset[i] += 1;
         else
             fieldsOffset[i] += 4;
@@ -296,7 +296,7 @@ char* DB2FileLoader::AutoProduceData(char const* format, uint32& records, char**
             {
                 case FT_FLOAT:
                     *((float*)(&dataTable[offset])) = getRecord(y).getFloat(x);
-                    offset += 4;
+                    offset += sizeof(float);;
                     break;
                 case FT_IND:
                 case FT_INT:
@@ -311,6 +311,13 @@ char* DB2FileLoader::AutoProduceData(char const* format, uint32& records, char**
                     *((char**)(&dataTable[offset])) = nullptr;   // will be replaces non-empty or "" strings in AutoProduceStrings
                     offset += sizeof(char*);
                     break;
+                case FT_NA:
+                case FT_NA_BYTE:
+                case FT_SORT:
+                    break;
+                default:
+                    ASSERT(false && "Unknown field format character in DB2fmt.h");
+                    break;                    
             }
         }
     }
@@ -369,6 +376,10 @@ char* DB2FileLoader::AutoProduceStringsArrayHolders(char const* format, char* da
                     offset += sizeof(char*);
                     break;
                 }
+                case FT_NA:
+                case FT_NA_BYTE:
+                case FT_SORT:
+                    break;                
                 default:
                     ASSERT(false, "unknown format character %c", format[x]);
             }
@@ -423,7 +434,7 @@ char* DB2FileLoader::AutoProduceStrings(char const* format, char* dataTable, uin
     return stringPool;
 }
 
-char* DB2DatabaseLoader::Load(const char* format, int32 preparedStatement, uint32& records, char**& indexTable, char*& stringHolders, std::list<char*>& stringPool)
+char* DB2DatabaseLoader::Load(const char* format, int32 preparedStatement, uint32& records, char**& indexTable, char*& stringHolders, std::vector<char*>& stringPool)
 {
     // Even though this query is executed only once, prepared statement is used to send data from mysql server in binary format
     PreparedQueryResult result = WorldDatabase.Query(WorldDatabase.GetPreparedStatement(WorldDatabaseStatements(preparedStatement)));
@@ -564,7 +575,7 @@ char* DB2DatabaseLoader::Load(const char* format, int32 preparedStatement, uint3
     return dataTable;
 }
 
-void DB2DatabaseLoader::LoadStrings(const char* format, int32 preparedStatement, uint32 locale, char**& indexTable, std::list<char*>& stringPool)
+void DB2DatabaseLoader::LoadStrings(const char* format, int32 preparedStatement, uint32 locale, char**& indexTable, std::vector<char*>& stringPool)
 {
     WorldDatabasePreparedStatement* stmt = WorldDatabase.GetPreparedStatement(WorldDatabaseStatements(preparedStatement));
     stmt->setString(0, localeNames[locale]);
