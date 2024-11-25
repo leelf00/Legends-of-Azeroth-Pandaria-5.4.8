@@ -111,8 +111,8 @@ class DB2DatabaseLoader
 public:
     explicit DB2DatabaseLoader(std::string const& storageName) : _storageName(storageName) { }
 
-    char* Load(const char* format, int32 preparedStatement, uint32& records, char**& indexTable, char*& stringHolders, std::list<char*>& stringPool);
-    void LoadStrings(const char* format, int32 preparedStatement, uint32 locale, char**& indexTable, std::list<char*>& stringPool);
+    char* Load(const char* format, int32 preparedStatement, uint32& records, char**& indexTable, char*& stringHolders, std::vector<char*>& stringPool);
+    void LoadStrings(const char* format, int32 preparedStatement, uint32 locale, char**& indexTable, std::vector<char*>& stringPool);
     static char* AddLocaleString(LocalizedString* holder, uint32 locale, std::string const& value);
 
 private:

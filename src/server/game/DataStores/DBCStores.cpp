@@ -51,7 +51,8 @@ struct WMOAreaTableTripple
     int32 adtId;
 };
 
-typedef std::map<WMOAreaTableTripple, WMOAreaTableEntry const*> WMOAreaInfoByTripple;
+typedef std::tuple<int16, int8, int32> WMOAreaTableKey;
+typedef std::map<WMOAreaTableKey, WMOAreaTableEntry const*> WMOAreaInfoByTripple;
 
 DBCStorage <AreaTableEntry> sAreaTableStore(AreaTableEntryfmt);
 DBCStorage <AreaGroupEntry> sAreaGroupStore(AreaGroupEntryfmt);
@@ -582,10 +583,9 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sPhaseStore, dbcPath, "Phase.dbc"); // 18414
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sPhaseGroupStore, dbcPath, "PhaseXPhaseGroup.dbc"); // 18414
-    for (uint32 i = 0; i < sPhaseGroupStore.GetNumRows(); ++i)
-        if (PhaseGroupEntry const* group = sPhaseGroupStore.LookupEntry(i))
-            if (PhaseEntry const* phase = sPhaseStore.LookupEntry(group->PhaseId))
-                sPhasesByGroup[group->GroupId].insert(phase->ID);
+    for (PhaseGroupEntry const* group : sPhaseGroupStore)
+        if (PhaseEntry const* phase = sPhaseStore.LookupEntry(group->PhaseID))
+            sPhasesByGroup[group->PhaseGroupID].push_back(phase->ID);
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sPlayerConditionStore,        dbcPath, "PlayerCondition.dbc"); // 18414
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sPvPDifficultyStore,          dbcPath, "PvpDifficulty.dbc");//15595
@@ -869,9 +869,10 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sVehicleStore,                dbcPath, "Vehicle.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sVehicleSeatStore,            dbcPath, "VehicleSeat.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sWMOAreaTableStore,           dbcPath, "WMOAreaTable.dbc");//15595
-    for (uint32 i = 0; i < sWMOAreaTableStore.GetNumRows(); ++i)
-        if (WMOAreaTableEntry const* entry = sWMOAreaTableStore.LookupEntry(i))
-            sWMOAreaInfoByTripple.insert(WMOAreaInfoByTripple::value_type(WMOAreaTableTripple(entry->rootId, entry->adtId, entry->groupId), entry));
+
+    for (WMOAreaTableEntry const* entry : sWMOAreaTableStore)
+        sWMOAreaInfoByTripple[WMOAreaTableKey(entry->WMOID, entry->NameSetID, entry->WMOGroupID)] = entry;
+
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sWorldMapAreaStore,           dbcPath, "WorldMapArea.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sWorldMapOverlayStore,        dbcPath, "WorldMapOverlay.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sWorldSafeLocsStore,          dbcPath, "WorldSafeLocs.dbc");//15595
@@ -911,31 +912,28 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
     TC_LOG_INFO("server.loading", ">> Initialized %d DBC data stores in %u ms", DBCFileCount, GetMSTimeDiffToNow(oldMSTime));
 }
 
-const std::string* GetRandomCharacterName(uint8 race, uint8 gender)
+std::string const& DBCManager::GetRandomCharacterName(uint8 race, uint8 gender)
 {
-    uint32 size = sGenNameVectoArraysMap[race].stringVectorArray[gender].size();
-    uint32 randPos = urand(0, size-1);
-
-    return &sGenNameVectoArraysMap[race].stringVectorArray[gender][randPos];
+    return Trinity::Containers::SelectRandomContainerElement(sGenNameVectoArraysMap[race].stringVectorArray[gender]);
 }
 
-SimpleFactionsList const* GetFactionTeamList(uint32 faction)
+SimpleFactionsList const* DBCManager::GetFactionTeamList(uint32 faction)
 {
     FactionTeamMap::const_iterator itr = sFactionTeamMap.find(faction);
     if (itr != sFactionTeamMap.end())
         return &itr->second;
 
-    return NULL;
+    return nullptr;
 }
 
-char const* GetPetName(uint32 petfamily, uint32 dbclang)
+char const* DBCManager::GetPetName(uint32 petfamily, uint32 /*dbclang*/)
 {
     if (!petfamily)
-        return NULL;
+        return nullptr;
     CreatureFamilyEntry const* pet_family = sCreatureFamilyStore.LookupEntry(petfamily);
     if (!pet_family)
-        return NULL;
-    return pet_family->Name ? pet_family->Name : NULL;
+        return nullptr;
+    return pet_family->Name ? pet_family->Name : nullptr;
 }
 
 SpellEffectEntry const* GetSpellEffectEntry(uint32 spellId, uint32 effect, uint32 difficulty)
@@ -950,16 +948,16 @@ SpellEffectEntry const* GetSpellEffectEntry(uint32 spellId, uint32 effect, uint3
     return itr->second.effects[REGULAR_DIFFICULTY][effect];
 }
 
-TalentSpellPos const* GetTalentSpellPos(uint32 spellId)
+TalentSpellPos const* DBCManager::GetTalentSpellPos(uint32 spellId)
 {
     TalentSpellPosMap::const_iterator itr = sTalentSpellPosMap.find(spellId);
     if (itr == sTalentSpellPosMap.end())
-        return NULL;
+        return nullptr;
 
     return &itr->second;
 }
 
-uint32 GetTalentSpellCost(uint32 spellId)
+uint32 DBCManager::GetTalentSpellCost(uint32 spellId)
 {
     if (TalentSpellPos const* pos = GetTalentSpellPos(spellId))
         return pos->rank+1;
@@ -967,27 +965,28 @@ uint32 GetTalentSpellCost(uint32 spellId)
     return 0;
 }
 
-WMOAreaTableEntry const* GetWMOAreaTableEntryByTripple(int32 rootid, int32 adtid, int32 groupid)
+WMOAreaTableEntry const* DBCManager::GetWMOAreaTableEntryByTripple(int32 rootid, int32 adtid, int32 groupid)
 {
-    WMOAreaInfoByTripple::iterator i = sWMOAreaInfoByTripple.find(WMOAreaTableTripple(rootid, adtid, groupid));
-        if (i == sWMOAreaInfoByTripple.end())
-            return NULL;
+    auto i = sWMOAreaInfoByTripple.find(WMOAreaTableKey(int16(rootid), int8(adtid), groupid));
+    if (i != sWMOAreaInfoByTripple.end())
         return i->second;
+    
+    return nullptr;
 }
 
-char const* GetRaceName(uint8 race, uint8 locale)
+char const* DBCManager::GetRaceName(uint8 race, uint8 locale)
 {
     ChrRacesEntry const* raceEntry = sChrRacesStore.LookupEntry(race);
     return raceEntry ? raceEntry->name : nullptr;
 }
 
-char const* GetClassName(uint8 class_, uint8 locale)
+char const* DBCManager::GetClassName(uint8 class_, uint8 locale)
 {
     ChrClassesEntry const* classEntry = sChrClassesStore.LookupEntry(class_);
     return classEntry ? classEntry->name : nullptr;
 }
 
-uint32 GetVirtualMapForMapAndZone(uint32 mapid, uint32 zoneId)
+uint32 DBCManager::GetVirtualMapForMapAndZone(uint32 mapid, uint32 zoneId)
 {
     if (mapid != 530 && mapid != 571 && mapid != 732)   // speed for most cases
         return mapid;
@@ -998,7 +997,7 @@ uint32 GetVirtualMapForMapAndZone(uint32 mapid, uint32 zoneId)
     return mapid;
 }
 
-uint32 GetMaxLevelForExpansion(uint32 expansion)
+uint32 DBCManager::GetMaxLevelForExpansion(uint32 expansion)
 {
     switch (expansion)
     {
@@ -1022,7 +1021,7 @@ uint32 GetMaxLevelForExpansion(uint32 expansion)
 Used only for calculate xp gain by content lvl.
 Calculation on Gilneas and group maps of LostIslands calculated as CONTENT_1_60.
 */
-ContentLevels GetContentLevelsForMapAndZone(uint32 mapid, uint32 zoneId)
+ContentLevels DBCManager::GetContentLevelsForMapAndZone(uint32 mapid, uint32 zoneId)
 {
     mapid = GetVirtualMapForMapAndZone(mapid, zoneId);
     if (mapid < 2)
@@ -1066,20 +1065,22 @@ bool IsTotemCategoryCompatiableWith(uint32 itemTotemCategoryId, uint32 requiredT
     return (itemEntry->categoryMask & reqEntry->categoryMask) == reqEntry->categoryMask;
 }
 
-void Zone2MapCoordinates(float& x, float& y, uint32 zone)
+bool DBCManager::Zone2MapCoordinates(float& x, float& y, uint32 zone) const
 {
     WorldMapAreaEntry const* maEntry = sWorldMapAreaStore.LookupEntry(zone);
 
     // if not listed then map coordinates (instance)
     if (!maEntry)
-        return;
+        return false;
 
     std::swap(x, y);                                         // at client map coords swapped
     x = x*((maEntry->x2-maEntry->x1)/100)+maEntry->x1;
     y = y*((maEntry->y2-maEntry->y1)/100)+maEntry->y1;      // client y coord from top to down
+
+    return true;
 }
 
-void Map2ZoneCoordinates(float& x, float& y, uint32 zone)
+void DBCManager::Map2ZoneCoordinates(float& x, float& y, uint32 zone)
 {
     WorldMapAreaEntry const* maEntry = sWorldMapAreaStore.LookupEntry(zone);
 
@@ -1116,13 +1117,13 @@ std::vector<uint32> const* dbc::GetSpecializetionSpells(uint32 specializationId)
     return &it->second;
 }
 
-MapDifficulty const* GetMapDifficultyData(uint32 mapId, Difficulty difficulty)
+MapDifficulty const* DBCManager::GetMapDifficultyData(uint32 mapId, Difficulty difficulty)
 {
     MapDifficultyMap::const_iterator itr = sMapDifficultyMap.find(MAKE_PAIR32(mapId, difficulty));
-    return itr != sMapDifficultyMap.end() ? &itr->second : NULL;
+    return itr != sMapDifficultyMap.end() ? &itr->second : nullptr;
 }
 
-MapDifficulty const* GetDownscaledMapDifficultyData(uint32 mapId, Difficulty &difficulty)
+MapDifficulty const* DBCManager::GetDownscaledMapDifficultyData(uint32 mapId, Difficulty &difficulty)
 {
     uint32 tmpDiff = uint32(difficulty);
     MapDifficulty const* mapDiff = GetMapDifficultyData(mapId, Difficulty(tmpDiff));
@@ -1159,7 +1160,7 @@ MapDifficulty const* GetDownscaledMapDifficultyData(uint32 mapId, Difficulty &di
     return mapDiff;
 }
 
-PvPDifficultyEntry const* GetBattlegroundBracketByLevel(uint32 mapid, uint32 level)
+PvPDifficultyEntry const* DBCManager::GetBattlegroundBracketByLevel(uint32 mapid, uint32 level)
 {
     PvPDifficultyEntry const* maxEntry = NULL;              // used for level > max listed level case
     for (uint32 i = 0; i < sPvPDifficultyStore.GetNumRows(); ++i)
@@ -1183,14 +1184,14 @@ PvPDifficultyEntry const* GetBattlegroundBracketByLevel(uint32 mapid, uint32 lev
     return maxEntry;
 }
 
-PvPDifficultyEntry const* GetBattlegroundBracketById(uint32 mapid, BattlegroundBracketId id)
+PvPDifficultyEntry const* DBCManager::GetBattlegroundBracketById(uint32 mapid, BattlegroundBracketId id)
 {
     for (uint32 i = 0; i < sPvPDifficultyStore.GetNumRows(); ++i)
         if (PvPDifficultyEntry const* entry = sPvPDifficultyStore.LookupEntry(i))
             if (entry->mapId == mapid && entry->GetBracketId() == id)
                 return entry;
 
-    return NULL;
+    return nullptr;
 }
 
 dbc::TalentTabs dbc::GetClassSpecializations(uint8 classId)
@@ -1201,7 +1202,7 @@ dbc::TalentTabs dbc::GetClassSpecializations(uint8 classId)
     return sSpecializationClassStore[classId];
 }
 
-uint32 GetLiquidFlags(uint32 liquidType)
+uint32 DBCManager::GetLiquidFlags(uint32 liquidType)
 {
     if (LiquidTypeEntry const* liq = sLiquidTypeStore.LookupEntry(liquidType))
         return 1 << liq->SoundBank;
@@ -1209,19 +1210,18 @@ uint32 GetLiquidFlags(uint32 liquidType)
     return 0;
 }
 
-CharStartOutfitEntry const* GetCharStartOutfitEntry(uint8 race, uint8 class_, uint8 gender)
+CharStartOutfitEntry const* DBCManager::GetCharStartOutfitEntry(uint8 race, uint8 class_, uint8 gender)
 {
     std::map<uint32, CharStartOutfitEntry const*>::const_iterator itr = sCharStartOutfitMap.find(race | (class_ << 8) | (gender << 16));
     if (itr == sCharStartOutfitMap.end())
-        return NULL;
+        return nullptr;
 
     return itr->second;
 }
 
-uint32 GetPowerIndexByClass(uint32 powerType, uint32 classId)
+uint32 DBCManager::GetPowerIndexByClass(Powers power, uint32 classId)
 {
-    ASSERT(powerType < MAX_POWERS && classId < MAX_CLASSES);
-    return PowersByClass[classId][powerType];
+    return PowersByClass[classId][power];
 }
 
 uint32 ScalingStatValuesEntry::GetStatMultiplier(uint32 inventoryType) const
@@ -1388,7 +1388,7 @@ DigsitePOIPolygon const* GetDigsitePOIPolygon(uint32 digsiteId)
 }
 
 /// Returns LFGDungeonEntry for a specific map and difficulty. Will return first found entry if multiple dungeons use the same map (such as Scarlet Monastery)
-LFGDungeonEntry const* GetLFGDungeon(uint32 mapId, Difficulty difficulty)
+LFGDungeonEntry const* DBCManager::GetLFGDungeon(uint32 mapId, Difficulty difficulty)
 {
     for (uint32 i = 0; i < sLFGDungeonStore.GetNumRows(); ++i)
     {
@@ -1396,11 +1396,11 @@ LFGDungeonEntry const* GetLFGDungeon(uint32 mapId, Difficulty difficulty)
         if (!dungeon)
             continue;
 
-        if (dungeon->map == int32(mapId) && Difficulty(dungeon->difficulty) == difficulty)
+        if (dungeon->MapID == int32(mapId) && Difficulty(dungeon->DifficultyID) == difficulty)
             return dungeon;
     }
 
-    return NULL;
+    return nullptr;
 }
 
 uint32 GetDefaultMapLight(uint32 mapId)
@@ -1467,9 +1467,13 @@ void dbc::FillSpellPowers(uint32 spellId, std::vector<SpellPowerEntry const*>& p
         powers.push_back(it->second);
 }
 
-std::set<uint32> const& GetPhasesForGroup(uint32 group)
+std::vector<uint32> const* DBCManager::GetPhasesForGroup(uint32 group)
 {
-    return sPhasesByGroup[group];
+    auto itr = sPhasesByGroup.find(group);
+    if (itr != sPhasesByGroup.end())
+        return &itr->second;
+
+    return nullptr;
 }
 
 bool IsInArea(uint32 objectAreaId, uint32 areaId)

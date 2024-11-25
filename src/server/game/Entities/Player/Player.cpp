@@ -677,7 +677,7 @@ bool Player::Create(uint32 guidlow, CharacterCreateInfo* createInfo)
     }
 
     // original items
-    if (CharStartOutfitEntry const* oEntry = GetCharStartOutfitEntry(createInfo->Race, createInfo->Class, createInfo->Gender))
+    if (CharStartOutfitEntry const* oEntry = sDBCManager.GetCharStartOutfitEntry(createInfo->Race, createInfo->Class, createInfo->Gender))
     {
         for (int j = 0; j < MAX_OUTFIT_ITEMS; ++j)
         {
@@ -3503,7 +3503,7 @@ bool Player::AddTalent(uint32 spellId, uint8 spec, bool learning)
     PlayerTalentMap::iterator itr = GetTalentMap(spec)->find(spellId);
     if (itr == GetTalentMap(spec)->end())
     {
-        if (TalentSpellPos const* talentPos = GetTalentSpellPos(spellId))
+        if (TalentSpellPos const* talentPos = sDBCManager.GetTalentSpellPos(spellId))
         {
             PlayerTalent* newtalent = new PlayerTalent();
 
@@ -3785,7 +3785,7 @@ bool Player::AddSpell(uint32 spellId, bool active, bool learning, bool dependent
         GetBattlePetMgr().Create(species);
     }
 
-    uint32 talentCost = GetTalentSpellCost(spellId);
+    uint32 talentCost = sDBCManager.GetTalentSpellCost(spellId);
 
     // cast talents with SPELL_EFFECT_LEARN_SPELL (other dependent spells will learned later as not auto-learned)
     // note: all spells with SPELL_EFFECT_LEARN_SPELL isn't passive
@@ -3994,7 +3994,7 @@ void Player::RemoveSpell(uint32 spell_id, bool disabled, bool learn_low_rank)
     // unlearn non talent higher ranks (recursive)
     if (uint32 nextSpell = sSpellMgr->GetNextSpellInChain(spell_id))
     {
-        if (HasSpell(nextSpell) && !GetTalentSpellPos(nextSpell))
+        if (HasSpell(nextSpell) && !sDBCManager.GetTalentSpellPos(nextSpell))
             RemoveSpell(nextSpell, disabled, false);
     }
     //unlearn spells dependent from recently removed spells
@@ -4048,7 +4048,7 @@ void Player::RemoveSpell(uint32 spell_id, bool disabled, bool learn_low_rank)
         atrigger->Remove();
 
     // free talent points
-    uint32 talentCosts = GetTalentSpellCost(spell_id);
+    uint32 talentCosts = sDBCManager.GetTalentSpellCost(spell_id);
     if (talentCosts > 0 && giveTalentPoints)
     {
         if (talentCosts < GetUsedTalentCount())
@@ -6059,7 +6059,7 @@ bool Player::UpdateGatherSkill(uint32 skillId, uint32 skillValue, uint32 redLeve
             }
             if (GameObject const* gobject = lootObject->ToGameObject())
             {
-                uint32 gain = Trinity::XP::BaseGain(GetLevel(), gobject->GetGOInfo()->chest.xpLevel, GetContentLevelsForMapAndZone(GetMapId(), GetZoneId()));
+                uint32 gain = Trinity::XP::BaseGain(GetLevel(), gobject->GetGOInfo()->chest.xpLevel, sDBCManager.GetContentLevelsForMapAndZone(GetMapId(), GetZoneId()));
                 gain *= sWorld->getRate(RATE_XP_GATHER);
                 gain += GetXPRestBonus(gain);
 
@@ -16238,7 +16238,7 @@ bool Player::CanRewardQuest(Quest const* quest, uint32 rewardId, bool msg)
     if (quest->GetQuestPackageID())
     {
         bool hasFilteredQuestPackageReward = false;
-        if (std::vector<QuestPackageItemEntry const*> const* questPackageItems = GetQuestPackageItems(quest->GetQuestPackageID()))
+        if (std::vector<QuestPackageItemEntry const*> const* questPackageItems = sDB2Manager.GetQuestPackageItems(quest->GetQuestPackageID()))
         {
             for (QuestPackageItemEntry const* questPackageItem : *questPackageItems)
             {
@@ -16260,7 +16260,7 @@ bool Player::CanRewardQuest(Quest const* quest, uint32 rewardId, bool msg)
 
         if (!hasFilteredQuestPackageReward)
         {
-            if (std::vector<QuestPackageItemEntry const*> const* questPackageItems = GetQuestPackageItemsFallback(quest->GetQuestPackageID()))
+            if (std::vector<QuestPackageItemEntry const*> const* questPackageItems = sDB2Manager.GetQuestPackageItemsFallback(quest->GetQuestPackageID()))
             {
                 for (QuestPackageItemEntry const* questPackageItem : *questPackageItems)
                 {
@@ -25522,7 +25522,7 @@ void Player::ResetSpells(bool myClassOnly)
 
             // skip spells with first rank learned as talent (and all talents then also)
             uint32 firstRank = spellInfo->GetFirstRankSpell()->Id;
-            if (GetTalentSpellCost(firstRank) > 0)
+            if (sDBCManager.GetTalentSpellCost(firstRank) > 0)
                 continue;
 
             // skip broken spells
@@ -27743,7 +27743,7 @@ bool Player::IsKnowHowFlyIn(uint32 mapid, uint32 zone) const
         return true;
 
     // continent checked in SpellInfo::CheckLocation at cast and area update
-    uint32 v_map = GetVirtualMapForMapAndZone(mapid, zone);
+    uint32 v_map = sDBCManager.GetVirtualMapForMapAndZone(mapid, zone);
     switch (v_map)
     {
         case 0:   // Eastern Kingdoms

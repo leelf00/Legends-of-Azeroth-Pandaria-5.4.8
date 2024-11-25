@@ -26,19 +26,7 @@
 
 enum LocaleConstant : uint8;
 
-char const* GetPetName(uint32 petfamily, uint32 dbclang);
 SpellEffectEntry const* GetSpellEffectEntry(uint32 spellId, uint32 effect, uint32 difficulty);
-uint32 GetTalentSpellCost(uint32 spellId);
-TalentSpellPos const* GetTalentSpellPos(uint32 spellId);
-
-char const* GetRaceName(uint8 race, uint8 locale);
-char const* GetClassName(uint8 class_, uint8 locale);
-
-WMOAreaTableEntry const* GetWMOAreaTableEntryByTripple(int32 rootid, int32 adtid, int32 groupid);
-
-uint32 GetVirtualMapForMapAndZone(uint32 mapid, uint32 zoneId);
-
-const std::string* GetRandomCharacterName(uint8 race, uint8 gender);
 
 enum ContentLevels
 {
@@ -50,36 +38,21 @@ enum ContentLevels
     MAX_CONTENT
 };
 
-uint32 GetMaxLevelForExpansion(uint32 expansion);
-
-ContentLevels GetContentLevelsForMapAndZone(uint32 mapid, uint32 zoneId);
 
 bool IsTotemCategoryCompatiableWith(uint32 itemTotemCategoryId, uint32 requiredTotemCategoryId);
 
-void Zone2MapCoordinates(float &x, float &y, uint32 zone);
-void Map2ZoneCoordinates(float &x, float &y, uint32 zone);
 uint32 GetClassBySkillId(uint32 skillId);
 uint32 GetSkillIdByClass(uint32 classId);
 
-uint32 GetLiquidFlags(uint32 liquidType);
-
-PvPDifficultyEntry const* GetBattlegroundBracketByLevel(uint32 mapid, uint32 level);
-PvPDifficultyEntry const* GetBattlegroundBracketById(uint32 mapid, BattlegroundBracketId id);
-
-CharStartOutfitEntry const* GetCharStartOutfitEntry(uint8 race, uint8 class_, uint8 gender);
 
 typedef std::vector<std::pair<int32, int32> > DigsitePOIPolygon;
 typedef std::map<uint32 /*digsiteId*/, DigsitePOIPolygon> DigsitePOIPolygonContainer;
 DigsitePOIPolygon const* GetDigsitePOIPolygon(uint32 digsiteId);
 
-uint32 GetPowerIndexByClass(uint32 powerType, uint32 classId);
-LFGDungeonEntry const* GetLFGDungeon(uint32 mapId, Difficulty difficulty);
-
 uint32 GetDefaultMapLight(uint32 mapId);
 
 uint32 GetQuestUniqueBitFlag(uint32 questId);
 
-std::set<uint32> const& GetPhasesForGroup(uint32 group);
 bool IsInArea(uint32 objectAreaId, uint32 areaId);
 
 typedef std::list<uint32> SimpleFactionsList;
@@ -255,6 +228,8 @@ TC_GAME_API extern TaxiMask                                  sAllianceTaxiNodesM
 TC_GAME_API extern TaxiMask                                  sDeathKnightTaxiNodesMask;
 TC_GAME_API extern TaxiPathSetBySource                       sTaxiPathSetBySource;
 TC_GAME_API extern TaxiPathNodesByPath                       sTaxiPathNodesByPath;
+TC_GAME_API extern DBCStorage <TransportAnimationEntry>      sTransportAnimationStore;
+TC_GAME_API extern DBCStorage <TransportRotationEntry>       sTransportRotationStore;
 TC_GAME_API extern DBCStorage <TotemCategoryEntry>           sTotemCategoryStore;
 TC_GAME_API extern DBCStorage <UnitPowerBarEntry>            sUnitPowerBarStore;
 TC_GAME_API extern DBCStorage <VehicleEntry>                 sVehicleStore;

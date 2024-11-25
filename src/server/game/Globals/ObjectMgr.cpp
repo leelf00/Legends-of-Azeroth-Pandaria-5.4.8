@@ -2115,7 +2115,7 @@ void ObjectMgr::LoadCreatures()
             data.phaseMask = 1;
         }
 
-        if (data.phaseGroup && GetPhasesForGroup(data.phaseGroup).empty())
+        if (data.phaseGroup && sDBCManager.GetPhasesForGroup(data.phaseGroup)->empty())
         {
             TC_LOG_ERROR("sql.sql", "Table `creature` has creature (GUID: %u Entry: %u) with non-existing `phasegroup` (%u) set, `phasegroup` set to 0", guid, data.id, data.phaseGroup);
             data.phaseGroup = 0;
@@ -2474,7 +2474,7 @@ void ObjectMgr::LoadGameobjects()
             data.phaseMask = 1;
         }
 
-        if (data.phaseGroup && GetPhasesForGroup(data.phaseGroup).empty())
+        if (data.phaseGroup && sDBCManager.GetPhasesForGroup(data.phaseGroup)->empty())
         {
             TC_LOG_ERROR("sql.sql", "Table `gameobject` has gameobject (GUID: %u Entry: %u) with non-existing `phasegroup` (%u) set, `phasegroup` set to 0", guid, data.id, data.phaseGroup);
             data.phaseGroup = 0;
@@ -3526,7 +3526,7 @@ void ObjectMgr::PlayerCreateInfoAddItemHelper(uint32 race_, uint32 class_, uint3
 
         for (uint32 gender = 0; gender < GENDER_NONE; ++gender)
         {
-            if (CharStartOutfitEntry const* entry = GetCharStartOutfitEntry(race_, class_, gender))
+            if (CharStartOutfitEntry const* entry = sDBCManager.GetCharStartOutfitEntry(race_, class_, gender))
             {
                 bool found = false;
                 for (uint8 x = 0; x < MAX_OUTFIT_ITEMS; ++x)
@@ -4823,7 +4823,7 @@ void ObjectMgr::LoadQuests()
                 qinfo->_rewardSpell = 0;                        // no spell reward will display for this quest
             }
 
-            else if (GetTalentSpellCost(qinfo->_rewardSpell))
+            else if (sDBCManager.GetTalentSpellCost(qinfo->_rewardSpell))
             {
                 TC_LOG_ERROR("sql.sql", "Quest %u has `RewardSpell` = %u but spell %u is talent, quest will not have a spell reward.",
                     qinfo->GetQuestId(), qinfo->_rewardSpell, qinfo->_rewardSpell);
@@ -7450,7 +7450,7 @@ std::string ObjectMgr::GeneratePetName(uint32 entry)
         if (!cinfo)
             return std::string();
 
-        char const* petname = GetPetName(cinfo->family, sWorld->GetDefaultDbcLocale());
+        char const* petname = sDBCManager.GetPetName(cinfo->family, sWorld->GetDefaultDbcLocale());
         if (petname)
             return std::string(petname);
         else
@@ -9053,7 +9053,7 @@ void ObjectMgr::AddSpellToTrainer(uint32 entry, uint32 spell, uint32 spellCost, 
         return;
     }
 
-    if (GetTalentSpellCost(spell))
+    if (sDBCManager.GetTalentSpellCost(spell))
     {
         TC_LOG_ERROR("sql.sql", "Table `npc_trainer` contains an entry (Entry: %u) for a non-existing spell (Spell: %u) which is a talent, ignoring", entry, spell);
         return;
@@ -10959,7 +10959,7 @@ CreatureDifficultyInfo const* ObjectMgr::SelectDifficultyInfo(Map const* map, ui
 {
     Difficulty difficulty = map->GetDifficulty();
     if (map->IsBattleground())
-        if (auto newBracket = GetBattlegroundBracketByLevel(map->GetId(), ((BattlegroundMap*)map)->GetBG()->GetMinLevel()))
+        if (auto newBracket = sDBCManager.GetBattlegroundBracketByLevel(map->GetId(), ((BattlegroundMap*)map)->GetBG()->GetMinLevel()))
             difficulty = Difficulty(newBracket->bracketId + MAX_DIFFICULTY);
 
     auto difficultyInfo = GetCreatureDifficultyInfo(difficulty, entry);

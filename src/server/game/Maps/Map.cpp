@@ -2561,7 +2561,7 @@ bool Map::IsOutdoors(float x, float y, float z) const
         return true;
 
     AreaTableEntry const* atEntry = 0;
-    WMOAreaTableEntry const* wmoEntry= GetWMOAreaTableEntryByTripple(rootId, adtId, groupId);
+    WMOAreaTableEntry const* wmoEntry = sDBCManager.GetWMOAreaTableEntryByTripple(rootId, adtId, groupId);
     if (wmoEntry)
     {
         TC_LOG_DEBUG("maps", "Got WMOAreaTableEntry! flag %u, areaid %u", wmoEntry->Flags, wmoEntry->AreaTableID);
@@ -2638,7 +2638,7 @@ uint32 Map::GetAreaId(uint32 phaseMask, float x, float y, float z) const
     if (hasVmapArea && G3D::fuzzyGe(z, vmapZ - GROUND_HEIGHT_TOLERANCE) && (G3D::fuzzyLt(z, gridMapHeight - GROUND_HEIGHT_TOLERANCE) || vmapZ > gridMapHeight))
     {
         // wmo found
-        if (WMOAreaTableEntry const* wmoEntry = GetWMOAreaTableEntryByTripple(rootId, adtId, groupId))
+        if (WMOAreaTableEntry const* wmoEntry = sDBCManager.GetWMOAreaTableEntryByTripple(rootId, adtId, groupId))
             areaId = wmoEntry->AreaTableID;
 
         if (!areaId)
@@ -2811,7 +2811,7 @@ void Map::GetFullTerrainStatusForPosition(uint32 phaseMask, float x, float y, fl
         {
             data.areaInfo.emplace(wmoData->areaInfo->adtId, wmoData->areaInfo->rootId, wmoData->areaInfo->groupId, wmoData->areaInfo->mogpFlags);
             // wmo found
-            WMOAreaTableEntry const* wmoEntry = GetWMOAreaTableEntryByTripple(wmoData->areaInfo->rootId, wmoData->areaInfo->adtId, wmoData->areaInfo->groupId);
+            WMOAreaTableEntry const* wmoEntry = sDBCManager.GetWMOAreaTableEntryByTripple(wmoData->areaInfo->rootId, wmoData->areaInfo->adtId, wmoData->areaInfo->groupId);
             data.outdoors = (wmoData->areaInfo->mogpFlags & 0x8) != 0;
             if (wmoEntry)
             {

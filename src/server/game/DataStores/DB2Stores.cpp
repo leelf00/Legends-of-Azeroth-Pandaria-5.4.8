@@ -20,9 +20,9 @@
 #include "DB2fmt.h"
 #include "DB2Utility.h"
 #include "Common.h"
+#include "Hash.h"
 #include "Log.h"
 #include "World.h"
-#include "DBCStores.h"
 #include "ObjectMgr.h"
 
 DB2Storage<BattlePetAbilityEntry> sBattlePetAbilityStore("BattlePetAbility.db2", BattlePetAbilityfmt);
@@ -80,11 +80,17 @@ struct QuestPackageItem
 static std::multimap<uint32, QuestPackageItem> sQuestPackageItemMap;
 static std::map<uint32, uint32> sItemUpgradeIdMap;
 static std::multimap<uint32, uint32> sMountSpellToItemMap;
-QuestPackageItemContainer _questPackages;
+
 
 std::map<uint32, uint32> sBattlePetSpellXSpeciesStore;
 
 static std::map<uint32, BattlePetAbilities> sBattlePetSpeciesXAbilityMap;
+
+namespace
+{
+    QuestPackageItemContainer _questPackages;
+}
+
 
 template<class T>
 inline void LoadDB2(uint32& availableDb2Locales, DB2StoreProblemList& errlist, DB2Manager::StorageMap& stores, DB2Storage<T>* storage, std::string const& db2Path, uint32 defaultLocale)
@@ -137,6 +143,8 @@ inline void LoadDB2(uint32& availableDb2Locales, DB2StoreProblemList& errlist, D
 
 uint32 DB2Manager::LoadStores(std::string const& dataPath, uint32 defaultLocale)
 {
+    uint32 oldMSTime = getMSTime();
+
     std::string db2Path = dataPath + "dbc/";
 
     DB2StoreProblemList bad_db2_files;
@@ -220,19 +228,22 @@ uint32 DB2Manager::LoadStores(std::string const& dataPath, uint32 defaultLocale)
         }
     }
 
+TC_LOG_INFO("server.loading", "07 size %d , field count %d crash below", sQuestPackageItemStore.GetNumRows(), sQuestPackageItemStore.GetFieldCount());
+
     for (size_t i = 0; i < sQuestPackageItemStore.GetNumRows(); ++i)
     {
         if (auto entry = sQuestPackageItemStore.LookupEntry(i))
-        {
             sQuestPackageItemMap.insert({ entry->PackageID, { entry->ItemID, entry->ItemQuantity} });
-
-            if (entry->DisplayType != QUEST_PACKAGE_FILTER_UNMATCHED)
-                _questPackages[entry->PackageID].first.push_back(entry);
-            else
-                _questPackages[entry->PackageID].second.push_back(entry);
-        }
     }
 
+    for (QuestPackageItemEntry const* questPackageItem : sQuestPackageItemStore)
+    {
+        if (questPackageItem->DisplayType != QUEST_PACKAGE_FILTER_UNMATCHED)
+            _questPackages[questPackageItem->PackageID].first.push_back(questPackageItem);
+        else
+            _questPackages[questPackageItem->PackageID].second.push_back(questPackageItem);
+    }
+TC_LOG_INFO("server.loading", "08");
     // error checks
     if (bad_db2_files.size() >= DB2FilesCount)
     {
@@ -264,7 +275,7 @@ uint32 DB2Manager::LoadStores(std::string const& dataPath, uint32 defaultLocale)
         exit(1);
     }
 
-    TC_LOG_INFO("server.loading", ">> Initialized %d DB2 data stores.", DB2FilesCount);
+    TC_LOG_INFO("server.loading", ">> Initialized %d DB2 data stores in %u ms", DB2FilesCount, GetMSTimeDiffToNow(oldMSTime));
 }
 
 DB2StorageBase const* DB2Manager::GetStorage(uint32 type) const
@@ -449,7 +460,7 @@ bool IsMountCanBeAllowedForPlayer(uint32 spellId, uint32 raceMask)
     return false;
 }
 
-std::vector<QuestPackageItemEntry const*> const* GetQuestPackageItems(uint32 questPackageID)
+std::vector<QuestPackageItemEntry const*> const* DB2Manager::GetQuestPackageItems(uint32 questPackageID) const
 {
     auto itr = _questPackages.find(questPackageID);
     if (itr != _questPackages.end())
@@ -458,7 +469,7 @@ std::vector<QuestPackageItemEntry const*> const* GetQuestPackageItems(uint32 que
     return nullptr;
 }
 
-std::vector<QuestPackageItemEntry const*> const* GetQuestPackageItemsFallback(uint32 questPackageID)
+std::vector<QuestPackageItemEntry const*> const* DB2Manager::GetQuestPackageItemsFallback(uint32 questPackageID) const
 {
     auto itr = _questPackages.find(questPackageID);
     if (itr != _questPackages.end())
