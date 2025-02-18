@@ -39,8 +39,6 @@ enum ContentLevels
 };
 
 
-bool IsTotemCategoryCompatiableWith(uint32 itemTotemCategoryId, uint32 requiredTotemCategoryId);
-
 typedef std::vector<std::pair<int32, int32> > DigsitePOIPolygon;
 typedef std::map<uint32 /*digsiteId*/, DigsitePOIPolygon> DigsitePOIPolygonContainer;
 DigsitePOIPolygon const* GetDigsitePOIPolygon(uint32 digsiteId);
@@ -266,16 +264,12 @@ public:
     static LFGDungeonEntry const* GetLFGDungeon(uint32 mapId, Difficulty difficulty);
     std::vector<uint32> const* GetPhasesForGroup(uint32 group);
     std::vector<SkillLineAbilityEntry const*> const* GetSkillLineAbilitiesBySkill(uint32 skillId) const;
-    //SkillRaceClassInfoEntry const* GetSkillRaceClassInfo(uint32 skill, uint8 race, uint8 class_);
-    SkillRaceClassInfoEntry const* GetSkillRaceClassInfo(uint32 skill, uint32 race, uint32 classId);
+    SkillRaceClassInfoEntry const* GetSkillRaceClassInfo(uint32 skill, uint8 race, uint8 class_);
     ResponseCodes ValidateName(std::wstring const& name, LocaleConstant locale);
     EmotesTextSoundEntry const* FindTextSoundEmoteFor(uint32 emote, uint32 race, uint32 gender); 
 };
 
 #define sDBCManager DBCManager::Instance()
-
-//SkillRaceClassInfoEntry const* GetSkillRaceClassInfo(uint32 skill, uint32 race, uint32 classId);
-std::vector<SkillLineAbilityEntry const*> const* GetAbilitiesBySkill(uint32 skill);
 
 namespace dbc
 {

@@ -25723,7 +25723,7 @@ void Player::LearnSkillRewardedSpells(uint32 id, uint32 value)
 {
     uint32 raceMask  = GetRaceMask();
     uint32 classMask = GetClassMask();
-    auto abilities = GetAbilitiesBySkill(id);
+    auto abilities = sDBCManager.GetSkillLineAbilitiesBySkill(id);
     if (!abilities)
         return;
     for (auto&& ability : *abilities)

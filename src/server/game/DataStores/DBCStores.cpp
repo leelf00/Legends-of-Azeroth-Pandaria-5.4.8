@@ -280,7 +280,7 @@ DBCStorage <PhaseEntry> sPhaseStore(PhaseEntryfmt);
 
 PhaseGroupContainer sPhasesByGroup;
 
-static std::multimap<uint32, SkillRaceClassInfoEntry const*> sSkillRaceClassInfoBySkill;
+SkillRaceClassInfoMap SkillRaceClassInfoBySkill;
 static std::map<uint32, std::vector<SkillLineAbilityEntry const*>> sSpellsBySkill;
 static std::multimap<uint32, uint32> sItemSpecOverrideByItemId;
 
@@ -318,6 +318,11 @@ static bool LoadDBC_assert_print(uint32 fsize, uint32 rsize, const std::string& 
 
     // ASSERT must fail after function call
     return false;
+}
+
+namespace
+{
+    std::unordered_map<uint32, std::vector<SkillLineAbilityEntry const*>> _skillLineAbilitiesBySkillupSkill;
 }
 
 template<class T>
@@ -641,9 +646,9 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
             sSpellsByCategoryStore[category->Category].insert(i);
     }
 
-    for (uint32 i = 0; i < sSkillRaceClassInfoStore.GetNumRows(); ++i)
-        if (auto entry = sSkillRaceClassInfoStore.LookupEntry(i))
-            sSkillRaceClassInfoBySkill.insert({ entry->SkillId, entry });
+    for (SkillRaceClassInfoEntry const* entry : sSkillRaceClassInfoStore)
+        if (sSkillLineStore.LookupEntry(entry->SkillId)) //SkillID
+            SkillRaceClassInfoBySkill.emplace(entry->SkillId, entry);
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sSpellScalingStore,           dbcPath,"SpellScaling.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sSpellTotemsStore,            dbcPath,"SpellTotems.dbc");//15595
@@ -733,8 +738,11 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
         if (!spellInfo)
             continue;
 
-        sSpellsBySkill[skillAbility->skillId].emplace_back(skillAbility);
+        //sSpellsBySkill[skillAbility->skillId].emplace_back(skillAbility);
     }
+
+    for (SkillLineAbilityEntry const* skillLineAbility : sSkillLineAbilityStore)
+        _skillLineAbilitiesBySkillupSkill[skillLineAbility->skillId].push_back(skillLineAbility); //SkillLine
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sTalentStore,                 dbcPath, "Talent.dbc");//15595
 
@@ -1045,7 +1053,7 @@ ContentLevels DBCManager::GetContentLevelsForMapAndZone(uint32 mapid, uint32 zon
     }
 }
 
-bool IsTotemCategoryCompatiableWith(uint32 itemTotemCategoryId, uint32 requiredTotemCategoryId)
+bool DBCManager::IsTotemCategoryCompatibleWith(uint32 itemTotemCategoryId, uint32 requiredTotemCategoryId)
 {
     if (requiredTotemCategoryId == 0)
         return true;
@@ -1059,10 +1067,10 @@ bool IsTotemCategoryCompatiableWith(uint32 itemTotemCategoryId, uint32 requiredT
     if (!reqEntry)
         return false;
 
-    if (itemEntry->categoryType != reqEntry->categoryType)
+    if (itemEntry->TotemCategoryType != reqEntry->TotemCategoryType)
         return false;
 
-    return (itemEntry->categoryMask & reqEntry->categoryMask) == reqEntry->categoryMask;
+    return (itemEntry->TotemCategoryMask & reqEntry->TotemCategoryMask) == reqEntry->TotemCategoryMask;
 }
 
 bool DBCManager::Zone2MapCoordinates(float& x, float& y, uint32 zone) const
@@ -1402,30 +1410,25 @@ uint32 DBCManager::GetDefaultMapLight(uint32 mapId)
     return 0;
 }
 
-SkillRaceClassInfoEntry const* DBCManager::GetSkillRaceClassInfo(uint32 skill, uint32 race, uint32 classId)
+std::vector<SkillLineAbilityEntry const*> const* DBCManager::GetSkillLineAbilitiesBySkill(uint32 skillId) const
 {
-    uint32 raceMask = race ? 1 << (race - 1) : RACEMASK_ALL_PLAYABLE;
-    uint32 classMask = classId ? 1 << (classId - 1) : CLASSMASK_ALL_PLAYABLE;
-    auto bound = sSkillRaceClassInfoBySkill.equal_range(skill);
-    for (auto it = bound.first; it != bound.second; ++it)
-    {
-        if (it->second->RaceMask && !(it->second->RaceMask & raceMask))
-            continue;
-
-        if (it->second->ClassMask && !(it->second->ClassMask & classMask))
-            continue;
-
-        return it->second;
-    }
-    return nullptr;
+    return Trinity::Containers::MapGetValuePtr(_skillLineAbilitiesBySkillupSkill, skillId);
 }
 
-std::vector<SkillLineAbilityEntry const*> const* GetAbilitiesBySkill(uint32 skill)
+SkillRaceClassInfoEntry const* DBCManager::GetSkillRaceClassInfo(uint32 skill, uint8 race, uint8 class_)
 {
-    auto it = sSpellsBySkill.find(skill);
-    if (it == sSpellsBySkill.end())
-        return nullptr;
-    return &it->second;
+    SkillRaceClassInfoBounds bounds = SkillRaceClassInfoBySkill.equal_range(skill);
+    for (SkillRaceClassInfoMap::iterator itr = bounds.first; itr != bounds.second; ++itr)
+    {
+        if (itr->second->RaceMask && !(itr->second->RaceMask & (1 << (race - 1))))
+            continue;
+        if (itr->second->ClassMask && !(itr->second->ClassMask & (1 << (class_ - 1))))
+            continue;
+
+        return itr->second;
+    }
+
+    return nullptr;
 }
 
 uint32 GetQuestUniqueBitFlag(uint32 questId)
