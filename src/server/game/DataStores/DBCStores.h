@@ -179,8 +179,6 @@ TC_GAME_API extern DBCStorage <SpellDurationEntry>           sSpellDurationStore
 TC_GAME_API extern DBCStorage <SpellFocusObjectEntry>        sSpellFocusObjectStore;
 TC_GAME_API extern DBCStorage <SpellItemEnchantmentEntry>    sSpellItemEnchantmentStore;
 TC_GAME_API extern DBCStorage <SpellItemEnchantmentConditionEntry> sSpellItemEnchantmentConditionStore;
-TC_GAME_API extern SpellCategoryStore                        sSpellsByCategoryStore;
-TC_GAME_API extern ClassBySkillIdStore                       sClassBySkillIdStore;
 TC_GAME_API extern SpellEffectScallingByEffectId             sSpellEffectScallingByEffectId;
 TC_GAME_API extern DBCStorage <SpecializationSpellsEntry>    sSpecializationSpellsStore;
 TC_GAME_API extern DBCStorage <SpellRadiusEntry>             sSpellRadiusStore;
