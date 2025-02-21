@@ -1909,7 +1909,7 @@ struct NamesReservedEntry
 {
     // uint32    ID;                                        // 0
     char const* Name;                                       // 1
-    int32       Language;                                   // 2
+    //int32       Language;                                 // 2 not in 5.4.8
 };
 
 #define MAX_OVERRIDE_SPELL 10

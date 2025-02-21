@@ -773,16 +773,16 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
 
     for (NamesReservedEntry const* namesReserved : sNamesReservedStore)
     {
-        ASSERT(namesReserved->Language < TOTAL_LOCALES || namesReserved->Language == -1);
+        // ASSERT(namesReserved->Language < TOTAL_LOCALES || namesReserved->Language == -1);
         std::wstring wname;
         bool conversionResult = Utf8toWStr(namesReserved->Name, wname);
         ASSERT(conversionResult);
 
-        if (namesReserved->Language != -1)
-            NamesReservedValidators[namesReserved->Language].emplace_back(wname, Trinity::regex::icase | Trinity::regex::optimize);
-        else
-            for (uint32 i = 0; i < TOTAL_LOCALES; ++i)
-                NamesReservedValidators[i].emplace_back(wname, Trinity::regex::icase | Trinity::regex::optimize);
+        // if (namesReserved->Language != -1)
+        //     NamesReservedValidators[namesReserved->Language].emplace_back(wname, Trinity::regex::icase | Trinity::regex::optimize);
+        // else
+        for (uint32 i = 0; i < TOTAL_LOCALES; ++i)
+            NamesReservedValidators[i].emplace_back(wname, Trinity::regex::icase | Trinity::regex::optimize);
     }
 
     for (PhaseGroupEntry const* group : sPhaseGroupStore)
