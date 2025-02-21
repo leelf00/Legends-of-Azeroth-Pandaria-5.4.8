@@ -2860,7 +2860,7 @@ void WorldSession::HandleShowTradeSkill(WorldPacket& recvData)
     bool match = false;
     auto bounds = sSpellMgr->GetSkillLineAbilityMapBounds(spellId);
     for (auto it = bounds.first; it != bounds.second; ++it)
-        if (it->second->skillId == skillId)
+        if (it->second->SkillLine == skillId)
             match = true;
 
     if (!match)

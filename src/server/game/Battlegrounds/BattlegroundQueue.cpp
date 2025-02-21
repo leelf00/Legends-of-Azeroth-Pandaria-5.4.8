@@ -309,8 +309,8 @@ GroupQueueInfo* BattlegroundQueue::AddGroup(Player* leader, Group* grp, Battlegr
                 uint32 MinPlayers = bg->GetMinPlayersPerTeam();
                 uint32 qHorde = 0;
                 uint32 qAlliance = 0;
-                uint32 q_min_level = bracketEntry->minLevel;
-                uint32 q_max_level = bracketEntry->maxLevel;
+                uint32 q_min_level = bracketEntry->MinLevel;
+                uint32 q_max_level = bracketEntry->MaxLevel;
                 GroupsQueueType::const_iterator itr;
                 for (itr = m_QueuedGroups[bracketId][BG_QUEUE_NORMAL_ALLIANCE].begin(); itr != m_QueuedGroups[bracketId][BG_QUEUE_NORMAL_ALLIANCE].end(); ++itr)
                     if (!(*itr)->IsInvitedToBGInstanceGUID)
@@ -1822,7 +1822,7 @@ BattlegroundBracketId SoloQueue::GetSoloQueueBracketId()
     if (!bracketEntry)
         return BG_BRACKET_ID_FIRST;
 
-    return BattlegroundBracketId(bracketEntry->bracketId);
+    return BattlegroundBracketId(bracketEntry->RangeIndex);
 }
 
 /*********************************************************/

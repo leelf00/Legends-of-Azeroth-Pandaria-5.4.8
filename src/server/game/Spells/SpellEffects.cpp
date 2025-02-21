@@ -1769,7 +1769,7 @@ void Spell::DoCreateItem(uint32 /*i*/, uint32 itemtype)
             bool cooking = false;
             auto bounds = sSpellMgr->GetSkillLineAbilityMapBounds(m_spellInfo->Id);
             for (auto itr = bounds.first; itr != bounds.second; ++itr)
-                if (itr->second->skillId == SKILL_COOKING || (itr->second->skillId >= SKILL_WAY_OF_THE_GRILL && itr->second->skillId <= SKILL_WAY_OF_THE_BREW))
+                if (itr->second->SkillLine == SKILL_COOKING || (itr->second->SkillLine >= SKILL_WAY_OF_THE_GRILL && itr->second->SkillLine <= SKILL_WAY_OF_THE_BREW))
                     cooking = true;
 
             if (cooking)

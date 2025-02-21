@@ -48,7 +48,7 @@ bool IsPartOfSkillLine(uint32 skillId, uint32 spellId)
 {
     SkillLineAbilityMapBounds skillBounds = sSpellMgr->GetSkillLineAbilityMapBounds(spellId);
     for (SkillLineAbilityMap::const_iterator itr = skillBounds.first; itr != skillBounds.second; ++itr)
-        if (itr->second->skillId == skillId)
+        if (itr->second->SkillLine == skillId)
             return true;
 
     return false;
@@ -2121,7 +2121,7 @@ void SpellMgr::LoadSkillLineAbilityMap()
         if (!SkillInfo)
             continue;
 
-        mSkillLineAbilityMap.insert(SkillLineAbilityMap::value_type(SkillInfo->spellId, SkillInfo));
+        mSkillLineAbilityMap.insert(SkillLineAbilityMap::value_type(SkillInfo->Spell, SkillInfo));
         ++count;
     }
 
@@ -2137,7 +2137,7 @@ void SpellMgr::LoadSkillLineAbilityMap()
         {
             for (uint32 c = CLASS_WARRIOR; c < MAX_CLASSES; ++c)
             {
-                if (it->second->classmask & (1 << (c - 1)))
+                if (it->second->ClassMask & (1 << (c - 1)))
                 {
                     mGlyphSpells[c].push_back(entry->EffectSpellId);
                     found = true;
@@ -2369,17 +2369,17 @@ void SpellMgr::LoadPetSpellMap()
                 if (!skillId)
                     continue;
 
-                if (skillLine->skillId != skillId)
+                if (skillLine->SkillLine != skillId)
                     continue;
 
                 if (skillLine->learnOnGetSkill != ABILITY_LEARNED_ON_GET_RACE_OR_CLASS_SKILL)
                     continue;
 
-                SpellInfo const* spell = GetSpellInfo(skillLine->spellId);
+                SpellInfo const* spell = GetSpellInfo(skillLine->Spell);
                 if (!spell) // not exist or triggered or talent
                     continue;
 
-                if (skillLine->skillId == SKILL_PET_GHOUL && spell->AttributesEx4 & SPELL_ATTR4_UNK15) // It is spell triggered from main ability and it hasn't to display in action bar.
+                if (skillLine->SkillLine == SKILL_PET_GHOUL && spell->AttributesEx4 & SPELL_ATTR4_UNK15) // It is spell triggered from main ability and it hasn't to display in action bar.
                     continue;
 
                 PetLevelupSpellSet& spellSet = mPetSpellMap[creatureFamily->ID];

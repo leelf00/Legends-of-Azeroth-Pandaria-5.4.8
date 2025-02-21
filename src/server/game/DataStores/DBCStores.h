@@ -87,12 +87,13 @@ TC_GAME_API extern DBCStorage <DurabilityCostsEntry>         sDurabilityCostsSto
 TC_GAME_API extern DBCStorage <DurabilityQualityEntry>       sDurabilityQualityStore;
 TC_GAME_API extern DBCStorage <EmotesEntry>                  sEmotesStore;
 TC_GAME_API extern DBCStorage <EmotesTextEntry>              sEmotesTextStore;
+TC_GAME_API extern DBCStorage <EmotesTextSoundEntry>         sEmotesTextSoundStore;
 TC_GAME_API extern DBCStorage <FactionEntry>                 sFactionStore;
 TC_GAME_API extern DBCStorage <FactionTemplateEntry>         sFactionTemplateStore;
 TC_GAME_API extern DBCStorage <GameObjectDisplayInfoEntry>   sGameObjectDisplayInfoStore;
 TC_GAME_API extern DBCStorage <GemPropertiesEntry>           sGemPropertiesStore;
 TC_GAME_API extern DBCStorage <GlyphPropertiesEntry>         sGlyphPropertiesStore;
-TC_GAME_API extern DBCStorage <GlyphSlotEntry>               sGlyphSlotStore;TC_GAME_API 
+TC_GAME_API extern DBCStorage <GlyphSlotEntry>               sGlyphSlotStore; 
 
 TC_GAME_API extern DBCStorage <GtBarberShopCostBaseEntry>    sGtBarberShopCostBaseStore;
 TC_GAME_API extern DBCStorage <GtBattlePetTypeDamageModEntry>sGtBattlePetTypeDamageModStore;

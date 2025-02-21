@@ -1223,7 +1223,7 @@ bool SpellInfo::IsLootCrafting() const
     bool jewecrafting = false;
     auto bounds = sSpellMgr->GetSkillLineAbilityMapBounds(Id);
     for (auto it = bounds.first; it != bounds.second; ++it)
-        if (it->second->skillId == SKILL_JEWELCRAFTING)
+        if (it->second->SkillLine == SKILL_JEWELCRAFTING)
             jewecrafting = true;
 
     // different random cards from Inscription (121==Virtuoso Inking Set category) r without explicit item
@@ -1296,7 +1296,7 @@ bool SpellInfo::IsAbilityLearnedWithProfession() const
         if (!pAbility || pAbility->learnOnGetSkill != ABILITY_LEARNED_ON_GET_PROFESSION_SKILL)
             continue;
 
-        if (pAbility->req_skill_value > 0)
+        if (pAbility->MinSkillLineRank > 0)
             return true;
     }
 
@@ -1314,7 +1314,7 @@ bool SpellInfo::IsAbilityOfSkillType(uint32 skillType) const
         return true;
 
     for (SkillLineAbilityMap::const_iterator _spell_idx = bounds.first; _spell_idx != bounds.second; ++_spell_idx)
-        if (_spell_idx->second->skillId == uint32(skillType))
+        if (_spell_idx->second->SkillLine == uint32(skillType))
             return true;
 
     return false;

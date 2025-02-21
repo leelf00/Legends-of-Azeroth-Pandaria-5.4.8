@@ -3196,10 +3196,10 @@ void ObjectMgr::LoadItemTemplates()
 
         for (int j = 0; j < MAX_OUTFIT_ITEMS; ++j)
         {
-            if (entry->ItemId[j] <= 0)
+            if (entry->ItemID[j] <= 0)
                 continue;
 
-            uint32 item_id = entry->ItemId[j];
+            uint32 item_id = entry->ItemID[j];
 
             if (!GetItemTemplate(item_id))
                 notFoundOutfit.insert(item_id);
@@ -3531,10 +3531,10 @@ void ObjectMgr::PlayerCreateInfoAddItemHelper(uint32 race_, uint32 class_, uint3
                 bool found = false;
                 for (uint8 x = 0; x < MAX_OUTFIT_ITEMS; ++x)
                 {
-                    if (entry->ItemId[x] > 0 && uint32(entry->ItemId[x]) == itemId)
+                    if (entry->ItemID[x] > 0 && uint32(entry->ItemID[x]) == itemId)
                     {
                         found = true;
-                        const_cast<CharStartOutfitEntry*>(entry)->ItemId[x] = 0;
+                        const_cast<CharStartOutfitEntry*>(entry)->ItemID[x] = 0;
                         break;
                     }
                 }
@@ -7707,7 +7707,7 @@ void ObjectMgr::LoadReputationSpilloverTemplate()
             continue;
         }
 
-        if (factionEntry->team == 0)
+        if (factionEntry->ParentFactionID == 0)
         {
             TC_LOG_ERROR("sql.sql", "Faction (faction.dbc) %u in `reputation_spillover_template` does not belong to any team, skipping", factionId);
             continue;
@@ -10960,7 +10960,7 @@ CreatureDifficultyInfo const* ObjectMgr::SelectDifficultyInfo(Map const* map, ui
     Difficulty difficulty = map->GetDifficulty();
     if (map->IsBattleground())
         if (auto newBracket = sDBCManager.GetBattlegroundBracketByLevel(map->GetId(), ((BattlegroundMap*)map)->GetBG()->GetMinLevel()))
-            difficulty = Difficulty(newBracket->bracketId + MAX_DIFFICULTY);
+            difficulty = Difficulty(newBracket->RangeIndex + MAX_DIFFICULTY);
 
     auto difficultyInfo = GetCreatureDifficultyInfo(difficulty, entry);
     if (difficultyInfo)

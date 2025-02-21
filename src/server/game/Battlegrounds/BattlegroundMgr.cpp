@@ -1158,12 +1158,12 @@ void BattlegroundMgr::BuildBattlegroundListPacket(WorldPacket* data, ObjectGuid 
     data->Initialize(SMSG_BATTLEFIELD_LIST);
     *data << uint32(winnerConquest)
           << uint32(loserHonor)
-          << uint8(bracketEntry->minLevel)
+          << uint8(bracketEntry->MinLevel)
           << uint32(winnerConquest)
           << uint32(winnerHonor)
           << uint32(bgTypeId)
           << uint32(winnerHonor)
-          << uint8(bracketEntry->maxLevel)
+          << uint8(bracketEntry->MaxLevel)
           << uint32(loserHonor);
 
     data->WriteBit(guid[0]);

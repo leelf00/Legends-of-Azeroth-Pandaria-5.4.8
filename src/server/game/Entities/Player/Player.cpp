@@ -681,10 +681,10 @@ bool Player::Create(uint32 guidlow, CharacterCreateInfo* createInfo)
     {
         for (int j = 0; j < MAX_OUTFIT_ITEMS; ++j)
         {
-            if (oEntry->ItemId[j] <= 0)
+            if (oEntry->ItemID[j] <= 0)
                 continue;
 
-            uint32 itemId = oEntry->ItemId[j];
+            uint32 itemId = oEntry->ItemID[j];
 
             // just skip, reported in ObjectMgr::LoadItemTemplates
             ItemTemplate const* iProto = sObjectMgr->GetItemTemplate(itemId);
@@ -3569,8 +3569,8 @@ bool Player::AddSpell(uint32 spellId, bool active, bool learning, bool dependent
     SkillLineAbilityMapBounds skillBounds = sSpellMgr->GetSkillLineAbilityMapBounds(spellId);
 
     for (auto itr = skillBounds.first; itr != skillBounds.second; ++itr)
-        if (!itr->second->learnOnGetSkill && IsPrimaryProfessionSkill(itr->second->skillId))
-            if (!HasSkill(itr->second->skillId))
+        if (!itr->second->learnOnGetSkill && IsPrimaryProfessionSkill(itr->second->SkillLine))
+            if (!HasSkill(itr->second->SkillLine))
                 if (!spellInfo->HasEffect(SPELL_EFFECT_SKILL))
                     return false;
 
@@ -3841,7 +3841,7 @@ bool Player::AddSpell(uint32 spellId, bool active, bool learning, bool dependent
         // not ranked skills
         for (auto itr = skillBounds.first; itr != skillBounds.second; ++itr)
         {
-            SkillLineEntry const* skill = sSkillLineStore.LookupEntry(itr->second->skillId);
+            SkillLineEntry const* skill = sSkillLineStore.LookupEntry(itr->second->SkillLine);
             if (!skill)
                 continue;
 
@@ -3877,8 +3877,8 @@ bool Player::AddSpell(uint32 spellId, bool active, bool learning, bool dependent
         // not ranked skills
         for (auto itr = skillBounds.first; itr != skillBounds.second; ++itr)
         {
-            UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILL_LINE, itr->second->skillId);
-            UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILLLINE_SPELLS, itr->second->skillId);
+            UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILL_LINE, itr->second->SkillLine);
+            UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LEARN_SKILLLINE_SPELLS, itr->second->SkillLine);
         }
 
         UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_LEARN_SPELL, spellId);
@@ -4108,7 +4108,7 @@ void Player::RemoveSpell(uint32 spell_id, bool disabled, bool learn_low_rank)
 
         for (SkillLineAbilityMap::const_iterator _spell_idx = bounds.first; _spell_idx != bounds.second; ++_spell_idx)
         {
-            SkillLineEntry const* pSkill = sSkillLineStore.LookupEntry(_spell_idx->second->skillId);
+            SkillLineEntry const* pSkill = sSkillLineStore.LookupEntry(_spell_idx->second->SkillLine);
             if (!pSkill)
                 continue;
 
@@ -4119,7 +4119,7 @@ void Player::RemoveSpell(uint32 spell_id, bool disabled, bool learn_low_rank)
             {
                 // not reset skills for professions and racial abilities
                 if ((pSkill->categoryId == SKILL_CATEGORY_SECONDARY || pSkill->categoryId == SKILL_CATEGORY_PROFESSION) &&
-                    (IsProfessionSkill(pSkill->id) || _spell_idx->second->racemask != 0))
+                    (IsProfessionSkill(pSkill->id) || _spell_idx->second->RaceMask != 0))
                     continue;
 
                 SetSkill(pSkill->id, GetSkillStep(pSkill->id), 0, 0);
@@ -5995,15 +5995,15 @@ bool Player::UpdateCraftSkill(uint32 spellid)
 
     for (SkillLineAbilityMap::const_iterator _spell_idx = bounds.first; _spell_idx != bounds.second; ++_spell_idx)
     {
-        if (_spell_idx->second->skillId)
+        if (_spell_idx->second->SkillLine)
         {
-            uint32 SkillValue = GetPureSkillValue(_spell_idx->second->skillId);
+            uint32 SkillValue = GetPureSkillValue(_spell_idx->second->SkillLine);
 
             // Alchemy Discoveries here
             SpellInfo const* spellEntry = sSpellMgr->GetSpellInfo(spellid);
             if (spellEntry && spellEntry->Mechanic == MECHANIC_DISCOVERY)
             {
-                if (uint32 discoveredSpell = GetSkillDiscoverySpell(_spell_idx->second->skillId, spellid, this))
+                if (uint32 discoveredSpell = GetSkillDiscoverySpell(_spell_idx->second->SkillLine, spellid, this))
                     LearnSpell(discoveredSpell, false);
             }
 
@@ -6012,7 +6012,7 @@ bool Player::UpdateCraftSkill(uint32 spellid)
             if (points && SkillValue < _spell_idx->second->min_value)
                 craft_skill_gain *= points;
 
-            return UpdateSkillPro(_spell_idx->second->skillId, SkillGainChance(SkillValue,
+            return UpdateSkillPro(_spell_idx->second->SkillLine, SkillGainChance(SkillValue,
                 _spell_idx->second->max_value,
                 (_spell_idx->second->max_value + _spell_idx->second->min_value)/2,
                 _spell_idx->second->min_value),
@@ -6314,8 +6314,8 @@ void Player::SetSkill(uint16 id, uint16 step, uint16 newVal, uint16 maxVal)
             // remove all spells that related to this skill
             for (uint32 j = 0; j < sSkillLineAbilityStore.GetNumRows(); ++j)
                 if (SkillLineAbilityEntry const* pAbility = sSkillLineAbilityStore.LookupEntry(j))
-                    if (pAbility->skillId == id)
-                        RemoveSpell(sSpellMgr->GetFirstSpellInChain(pAbility->spellId));
+                    if (pAbility->SkillLine == id)
+                        RemoveSpell(sSpellMgr->GetFirstSpellInChain(pAbility->Spell));
 
             if (id == SKILL_JEWELCRAFTING)
                 RemoveSpell(55534);
@@ -25728,28 +25728,28 @@ void Player::LearnSkillRewardedSpells(uint32 id, uint32 value)
         return;
     for (auto&& ability : *abilities)
     {
-        SpellInfo const* spell = sSpellMgr->GetSpellInfo(ability->spellId);
+        SpellInfo const* spell = sSpellMgr->GetSpellInfo(ability->Spell);
         if (!spell)
             continue;
 
         // Check race if set
-        if (ability->racemask && !(ability->racemask & raceMask))
+        if (ability->RaceMask && !(ability->RaceMask & raceMask))
             continue;
         // Check class if set
-        if (ability->classmask && !(ability->classmask & classMask))
+        if (ability->ClassMask && !(ability->ClassMask & classMask))
             continue;
 
         if (GetLevel() < spell->SpellLevel)
             continue;
 
         // need unlearn spell
-        if (value < ability->req_skill_value && ability->learnOnGetSkill == ABILITY_LEARNED_ON_GET_PROFESSION_SKILL)
-            RemoveSpell(ability->spellId);
+        if (value < ability->MinSkillLineRank && ability->learnOnGetSkill == ABILITY_LEARNED_ON_GET_PROFESSION_SKILL)
+            RemoveSpell(ability->Spell);
         // need learn
         else if (!IsInWorld())
-            AddSpell(ability->spellId, true, true, true, false);
+            AddSpell(ability->Spell, true, true, true, false);
         else
-            LearnSpell(ability->spellId, true);
+            LearnSpell(ability->Spell, true);
     }
 
     if (id == SKILL_JEWELCRAFTING)
@@ -26216,11 +26216,11 @@ bool Player::IsSpellFitByClassAndRace(uint32 spell_id) const
     for (SkillLineAbilityMap::const_iterator _spell_idx = bounds.first; _spell_idx != bounds.second; ++_spell_idx)
     {
         // skip wrong race skills
-        if (_spell_idx->second->racemask && (_spell_idx->second->racemask & racemask) == 0)
+        if (_spell_idx->second->RaceMask && (_spell_idx->second->RaceMask & racemask) == 0)
             continue;
 
         // skip wrong class skills
-        if (_spell_idx->second->classmask && (_spell_idx->second->classmask & classmask) == 0)
+        if (_spell_idx->second->ClassMask && (_spell_idx->second->ClassMask & classmask) == 0)
             continue;
 
         return true;
@@ -30961,9 +30961,9 @@ std::vector<uint8> Player::MakeTradeSkillRecipesData(uint32 skillId) const
     {
         if (SkillLineAbilityEntry const* ability = sSkillLineAbilityStore.LookupEntry(j))
         {
-            if (ability->skillId == skillId)
+            if (ability->SkillLine == skillId)
             {
-                if (ability->spellId && HasSpell(ability->spellId))
+                if (ability->Spell && HasSpell(ability->Spell))
                 {
                     uint32 byte = ability->bitOrder / 8;
                     if (byte < 300)
@@ -31489,19 +31489,19 @@ void Player::CleanNotForMyClass(bool talents, bool common)
         if (!skillLine)
             continue;
 
-        if (!HasSkill(skillLine->skillId))
+        if (!HasSkill(skillLine->SkillLine))
             continue;
 
-        if (skillLine->classmask && skillLine->classmask & GetClassMask())
+        if (skillLine->ClassMask && skillLine->ClassMask & GetClassMask())
             continue;
 
-        if (skillLine->racemask && skillLine->racemask & GetRaceMask())
+        if (skillLine->RaceMask && skillLine->RaceMask & GetRaceMask())
             continue;
 
-        if (sDBCManager.GetSkillRaceClassInfo(skillLine->skillId, GetRace(), myClass))
+        if (sDBCManager.GetSkillRaceClassInfo(skillLine->SkillLine, GetRace(), myClass))
             continue;
 
-        SetSkill(skillLine->skillId, 0, 0, 0);
+        SetSkill(skillLine->SkillLine, 0, 0, 0);
     }
 
     PlayerSpellMap tempSpellMap = PlayerSpellMap(m_spells); // safe local copy
@@ -31672,7 +31672,7 @@ void Player::ChangeClass(uint32 oldClass, uint32 newClass)
         SkillLineAbilityMapBounds skillBounds = sSpellMgr->GetSkillLineAbilityMapBounds(spell);
         for (auto itr = skillBounds.first; itr != skillBounds.second; ++itr)
         {
-            if (itr->second->racemask && !(itr->second->racemask & GetRaceMask()))
+            if (itr->second->RaceMask && !(itr->second->RaceMask & GetRaceMask()))
             {
                 check = false;
                 break;

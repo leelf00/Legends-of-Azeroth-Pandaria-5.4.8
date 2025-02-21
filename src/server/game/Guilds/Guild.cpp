@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -970,7 +970,7 @@ std::vector<uint8> Guild::Member::LoadProfessionRecipesData(uint32 skillId, uint
     {
         if (SkillLineAbilityEntry const* ability = sSkillLineAbilityStore.LookupEntry(j))
         {
-            if (ability->skillId == skillId && (ability->learnOnGetSkill == ABILITY_LEARNED_ON_GET_PROFESSION_SKILL && value >= ability->req_skill_value || spells.find(ability->spellId) != spells.end()))
+            if (ability->SkillLine == skillId && (ability->learnOnGetSkill == ABILITY_LEARNED_ON_GET_PROFESSION_SKILL && value >= ability->MinSkillLineRank || spells.find(ability->Spell) != spells.end()))
             {
                 uint32 byte = ability->bitOrder / 8;
                 if (byte < 300)
@@ -4432,7 +4432,7 @@ void Guild::HandleQueryGuildMembersForRecipe(WorldSession* session, uint32 spell
     {
         if (SkillLineAbilityEntry const* ability = sSkillLineAbilityStore.LookupEntry(j))
         {
-            if (ability->skillId == skillId && ability->spellId == spellId)
+            if (ability->SkillLine == skillId && ability->Spell == spellId)
             {
                 byte = ability->bitOrder / 8;
                 if (byte < 300)

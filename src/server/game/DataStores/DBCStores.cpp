@@ -17,15 +17,16 @@
 
 #include "DBCStores.h"
 #include "DBCFileLoader.h"
+#include "DBCfmt.h"
+#include "ItemPrototype.h"
 #include "Log.h"
+#include "ObjectDefines.h"
+#include "Regex.h"
 #include "SharedDefines.h"
 #include "SpellMgr.h"
 #include "SpellInfo.h"
-#include "TransportMgr.h"
-#include "DBCfmt.h"
-#include "ItemPrototype.h"
 #include "Timer.h"
-#include "ObjectDefines.h"
+#include "TransportMgr.h"
 #include "World.h"
 
 #include <map>
@@ -84,6 +85,9 @@ DBCStorage <DurabilityCostsEntry> sDurabilityCostsStore(DurabilityCostsfmt);
 
 DBCStorage <EmotesEntry> sEmotesStore(EmotesEntryfmt);
 DBCStorage <EmotesTextEntry> sEmotesTextStore(EmotesTextEntryfmt);
+typedef std::tuple<uint32, uint32, uint32> EmotesTextSoundKey;
+static std::map<EmotesTextSoundKey, EmotesTextSoundEntry const*> sEmotesTextSoundMap;
+DBCStorage <EmotesTextSoundEntry> sEmotesTextSoundStore(EmotesTextSoundEntryfmt);
 
 typedef std::map<uint32, SimpleFactionsList> FactionTeamMap;
 static FactionTeamMap sFactionTeamMap;
@@ -160,6 +164,10 @@ DBCStorage <MountCapabilityEntry> sMountCapabilityStore(MountCapabilityfmt);
 DBCStorage <MountTypeEntry> sMountTypeStore(MountTypefmt);
 
 NameGenVectorArraysMap sGenNameVectoArraysMap;
+
+typedef std::array<std::vector<Trinity::wregex>, TOTAL_LOCALES> NameValidationRegexContainer;
+NameValidationRegexContainer NamesProfaneValidators;
+NameValidationRegexContainer NamesReservedValidators;
 
 DBCStorage <OverrideSpellDataEntry> sOverrideSpellDataStore(OverrideSpellDatafmt);
 
@@ -365,8 +373,8 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
     // Local DBCs (used only to load some internal storage)
     DBCStorage<MapDifficultyEntry> sMapDifficultyStore(MapDifficultyEntryfmt);
     DBCStorage<NameGenEntry> sNameGenStore(NameGenfmt);
-    // DBCStorage<NamesProfanityEntry> sNamesProfanityStore(NamesProfanityEntryfmt);
-    // DBCStorage<NamesReservedEntry> sNamesReservedStore(NamesReservedEntryfmt);
+    DBCStorage<NamesProfanityEntry> sNamesProfanityStore(NamesProfanityEntryfmt);
+    DBCStorage<NamesReservedEntry> sNamesReservedStore(NamesReservedEntryfmt);
     DBCStorage<PhaseGroupEntry> sPhaseGroupStore(PhaseGroupfmt);
     // DBCStorage<TalentTreePrimarySpellsEntry> sTalentTreePrimarySpellsStore(TalentTreePrimarySpellsfmt);    
 
@@ -386,35 +394,18 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sBattlemasterListStore,       dbcPath, "BattleMasterList.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sBarberShopStyleStore,        dbcPath, "BarberShopStyle.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sCharStartOutfitStore,        dbcPath, "CharStartOutfit.dbc");//15595
-    for (uint32 i = 0; i < sCharStartOutfitStore.GetNumRows(); ++i)
-        if (CharStartOutfitEntry const* outfit = sCharStartOutfitStore.LookupEntry(i))
-            sCharStartOutfitMap[outfit->Race | (outfit->Class << 8) | (outfit->Gender << 16)] = outfit;
+
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sCharSectionsStore,           dbcPath, "CharSections.dbc");//15595
-    for (CharSectionsEntry const* entry : sCharSectionsStore)
-        if (entry->RaceID && ((1 << (entry->RaceID - 1)) & RACEMASK_ALL_PLAYABLE) != 0) //ignore Nonplayable races
-            sCharSectionMap.insert({ entry->BaseSection | (entry->SexID << 8) | (entry->RaceID << 16), entry });
+
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sCharTitlesStore,             dbcPath, "CharTitles.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sChatChannelsStore,           dbcPath, "ChatChannels.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sChrClassesStore,             dbcPath, "ChrClasses.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sChrRacesStore,               dbcPath, "ChrRaces.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sChrPowerTypesStore,          dbcPath, "ChrClassesXPowerTypes.dbc");//15595
-    for (uint32 i = 0; i < MAX_CLASSES; ++i)
-        for (uint32 j = 0; j < MAX_POWERS; ++j)
-            PowersByClass[i][j] = MAX_POWERS;
+    LOAD_DBC(availableDbcLocales, bad_dbc_files, sEmotesTextSoundStore,        dbcPath, "EmotesTextSound.dbc");//15595
 
-    for (uint32 i = 0; i < sChrPowerTypesStore.GetNumRows(); ++i)
-    {
-        if (ChrPowerTypesEntry const* power = sChrPowerTypesStore.LookupEntry(i))
-        {
-            uint32 index = 0;
-            for (uint32 j = 0; j < MAX_POWERS; ++j)
-                if (PowersByClass[power->classId][j] != MAX_POWERS)
-                    ++index;
 
-            PowersByClass[power->classId][power->power] = index;
-        }
-    }
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sCinematicCameraStore,        dbcPath, "CinematicCamera.dbc");
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sCinematicSequencesStore,     dbcPath, "CinematicSequences.dbc");//15595
@@ -434,30 +425,11 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sEmotesStore,                 dbcPath, "Emotes.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sEmotesTextStore,             dbcPath, "EmotesText.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sFactionStore,                dbcPath, "Faction.dbc");//15595
-    for (uint32 i=0; i<sFactionStore.GetNumRows(); ++i)
-    {
-        FactionEntry const* faction = sFactionStore.LookupEntry(i);
-        if (faction && faction->team)
-        {
-            SimpleFactionsList &flist = sFactionTeamMap[faction->team];
-            flist.push_back(i);
-        }
-    }
+
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sFactionTemplateStore,        dbcPath, "FactionTemplate.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sGameObjectDisplayInfoStore,  dbcPath, "GameObjectDisplayInfo.dbc");//15595
-    for (uint32 i = 0; i < sGameObjectDisplayInfoStore.GetNumRows(); ++i)
-    {
-        if (GameObjectDisplayInfoEntry const* info = sGameObjectDisplayInfoStore.LookupEntry(i))
-        {
-            if (info->maxX < info->minX)
-                std::swap(*(float*)(&info->maxX), *(float*)(&info->minX));
-            if (info->maxY < info->minY)
-                std::swap(*(float*)(&info->maxY), *(float*)(&info->minY));
-            if (info->maxZ < info->minZ)
-                std::swap(*(float*)(&info->maxZ), *(float*)(&info->minZ));
-        }
-    }
+
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sGemPropertiesStore,          dbcPath, "GemProperties.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sGlyphPropertiesStore,        dbcPath, "GlyphProperties.dbc");//15595
@@ -523,48 +495,14 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sMailTemplateStore,           dbcPath, "MailTemplate.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sMapStore,                    dbcPath, "Map.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sMapDifficultyStore,          dbcPath, "MapDifficulty.dbc");//15595
-    // fill data
-    sMapDifficultyMap[MAKE_PAIR32(0, 0)] = MapDifficulty(0, 0, false);//map 0 is missingg from MapDifficulty.dbc use this till its ported to sql
 
-    // missing difficulties for scenarios
-    sMapDifficultyMap[MAKE_PAIR32(999,  SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Theramore's Fall (A)
-    sMapDifficultyMap[MAKE_PAIR32(1000, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Theramore's Fall (H)
-    sMapDifficultyMap[MAKE_PAIR32(1005, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // A Brewing Storm
-    sMapDifficultyMap[MAKE_PAIR32(1005, SCENARIO_DIFFICULTY_HEROIC)] = MapDifficulty(0, 3, false); // A Brewing Storm
-    sMapDifficultyMap[MAKE_PAIR32(1024, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Greenstone Village
-    sMapDifficultyMap[MAKE_PAIR32(1030, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Crypt of Forgotten Kings
-    sMapDifficultyMap[MAKE_PAIR32(1030, SCENARIO_DIFFICULTY_HEROIC)] = MapDifficulty(0, 3, false); // Crypt of Forgotten Kings
-    sMapDifficultyMap[MAKE_PAIR32(1031, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Arena of Annihilation
-    sMapDifficultyMap[MAKE_PAIR32(1048, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Unga Ingoo
-    sMapDifficultyMap[MAKE_PAIR32(1050, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Assault on Zan'vess
-    sMapDifficultyMap[MAKE_PAIR32(1051, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Brewmoon Festival
-    sMapDifficultyMap[MAKE_PAIR32(1095, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Dagger in the Dark
-    sMapDifficultyMap[MAKE_PAIR32(1099, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Battle on the High Seas
-    sMapDifficultyMap[MAKE_PAIR32(1099, SCENARIO_DIFFICULTY_HEROIC)] = MapDifficulty(0, 3, false); // Battle on the High Seas
-    sMapDifficultyMap[MAKE_PAIR32(1102, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Domination Point (H)
-    sMapDifficultyMap[MAKE_PAIR32(1103, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Lion's Landing (A)
-    sMapDifficultyMap[MAKE_PAIR32(1104, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // A Little Patience
-    sMapDifficultyMap[MAKE_PAIR32(1112, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 1, false); // BlackTempleScenario
-    sMapDifficultyMap[MAKE_PAIR32(1126, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 1, false); // Fall of Shan Bu
-    sMapDifficultyMap[MAKE_PAIR32(1130, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Blood in the Snow
-    sMapDifficultyMap[MAKE_PAIR32(1130, SCENARIO_DIFFICULTY_HEROIC)] = MapDifficulty(0, 3, false); // Blood in the Snow
-    sMapDifficultyMap[MAKE_PAIR32(1131, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // The Secrets of Ragefire
-    sMapDifficultyMap[MAKE_PAIR32(1131, SCENARIO_DIFFICULTY_HEROIC)] = MapDifficulty(0, 3, false); // The Secrets of Ragefire
-    sMapDifficultyMap[MAKE_PAIR32(1135, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 1, false); // Troves of the Thunder King
-    sMapDifficultyMap[MAKE_PAIR32(1144, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Dark Heart of Pandaria
-    sMapDifficultyMap[MAKE_PAIR32(1144, SCENARIO_DIFFICULTY_HEROIC)] = MapDifficulty(0, 3, false); // Dark Heart of Pandaria
-    sMapDifficultyMap[MAKE_PAIR32(1148, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 1, false); // Proving Grounds
-    sMapDifficultyMap[MAKE_PAIR32(1157, SCENARIO_DIFFICULTY_HEROIC)] = MapDifficulty(0, 1, false); // Finding the Secret Ingredient \ Noodle Time
-
-    for (MapDifficultyEntry const* entry : sMapDifficultyStore)
-        sMapDifficultyMap[MAKE_PAIR32(entry->MapId, entry->Difficulty)] = MapDifficulty(entry->resetTime, entry->maxPlayers, !std::string(entry->areaTriggerText).empty());
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sMountCapabilityStore,        dbcPath, "MountCapability.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sMountTypeStore,              dbcPath, "MountType.dbc");//15595
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sNameGenStore,                dbcPath, "NameGen.dbc");//15595
-    for (NameGenEntry const* entry : sNameGenStore)
-        sGenNameVectoArraysMap[entry->race].stringVectorArray[entry->gender].push_back(std::string(entry->name));
+    LOAD_DBC(availableDbcLocales, bad_dbc_files, sNamesProfanityStore,         dbcPath, "NamesProfanity.dbc");
+    LOAD_DBC(availableDbcLocales, bad_dbc_files, sNamesReservedStore,          dbcPath, "NamesReserved.dbc");
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sModifierTreeStore,           dbcPath, "ModifierTree.dbc");//18414
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sMovieStore,                  dbcPath, "Movie.dbc");//15595
@@ -572,16 +510,9 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sPhaseStore,                  dbcPath, "Phase.dbc"); // 18414
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sPhaseGroupStore,             dbcPath, "PhaseXPhaseGroup.dbc"); // 18414
-    for (PhaseGroupEntry const* group : sPhaseGroupStore)
-        if (PhaseEntry const* phase = sPhaseStore.LookupEntry(group->PhaseID))
-            sPhasesByGroup[group->PhaseGroupID].push_back(phase->ID);
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sPlayerConditionStore,        dbcPath, "PlayerCondition.dbc"); // 18414
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sPvPDifficultyStore,          dbcPath, "PvpDifficulty.dbc");//15595
-    for (uint32 i = 0; i < sPvPDifficultyStore.GetNumRows(); ++i)
-        if (PvPDifficultyEntry const* entry = sPvPDifficultyStore.LookupEntry(i))
-            if (entry->bracketId > MAX_BATTLEGROUND_BRACKETS)
-                ASSERT(false && "Need update MAX_BATTLEGROUND_BRACKETS by DBC data");
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sQuestV2Store,                dbcPath, "QuestV2.dbc");//18414
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sQuestXPStore,                dbcPath, "QuestXP.dbc");//15595
@@ -653,17 +584,6 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sSummonPropertiesStore,       dbcPath, "SummonProperties.dbc");//15595
 
 
-    std::map<std::string, uint32> classIdByName;
-    for (uint32 j = 0; j < sChrClassesStore.GetNumRows(); j++)
-    {
-        ChrClassesEntry const* classEntry = sChrClassesStore.LookupEntry(j);
-        if (!classEntry)
-            continue;
-
-        classIdByName.insert(std::make_pair(std::string(classEntry->name), j));
-    }
-
-
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sTalentStore,                 dbcPath, "Talent.dbc");//15595
 
@@ -730,7 +650,220 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
         if (TaxiPathNodeEntry const* entry = sTaxiPathNodeStore.LookupEntry(i))
             sTaxiPathNodesByPath[entry->PathId].set(entry->NodeIndex, entry);
 
-    // Initialize global taxinodes mask
+ 
+
+    //LOAD_DBC(availableDbcLocales, bad_dbc_files, sTeamContributionPointsStore, dbcPath, "TeamContributionPoints.dbc");
+    LOAD_DBC(availableDbcLocales, bad_dbc_files, sTotemCategoryStore,          dbcPath, "TotemCategory.dbc");//15595
+    LOAD_DBC(availableDbcLocales, bad_dbc_files, sTransportAnimationStore,     dbcPath, "TransportAnimation.dbc");
+    LOAD_DBC(availableDbcLocales, bad_dbc_files, sTransportRotationStore,      dbcPath, "TransportRotation.dbc");
+    LOAD_DBC(availableDbcLocales, bad_dbc_files, sUnitPowerBarStore,           dbcPath, "UnitPowerBar.dbc");//15595
+    LOAD_DBC(availableDbcLocales, bad_dbc_files, sVehicleStore,                dbcPath, "Vehicle.dbc");//15595
+    LOAD_DBC(availableDbcLocales, bad_dbc_files, sVehicleSeatStore,            dbcPath, "VehicleSeat.dbc");//15595
+    LOAD_DBC(availableDbcLocales, bad_dbc_files, sWMOAreaTableStore,           dbcPath, "WMOAreaTable.dbc");//15595
+    LOAD_DBC(availableDbcLocales, bad_dbc_files, sWorldMapAreaStore,           dbcPath, "WorldMapArea.dbc");//15595
+    LOAD_DBC(availableDbcLocales, bad_dbc_files, sWorldMapOverlayStore,        dbcPath, "WorldMapOverlay.dbc");//15595
+    LOAD_DBC(availableDbcLocales, bad_dbc_files, sWorldSafeLocsStore,          dbcPath, "WorldSafeLocs.dbc");//15595
+
+#undef LOAD_DBC
+    LoadDBC(availableDbcLocales, bad_dbc_files, sSpellStore,                   dbcPath, "Spell.dbc", defaultLocale, CustomSpellEntryfmt, CustomSpellEntryIndex);//
+    LoadDBC(availableDbcLocales, bad_dbc_files, sSpellMiscStore,               dbcPath, "SpellMisc.dbc", defaultLocale, CustomSpellMiscfmt, CustomSpellMiscIndex);//17538
+    LoadDBC(availableDbcLocales, bad_dbc_files, sSpellEffectStore,             dbcPath, "SpellEffect.dbc", defaultLocale, CustomSpellEffectEntryfmt, CustomSpellEffectEntryIndex);//15595
+
+    for (CharStartOutfitEntry const* outfit : sCharStartOutfitStore)
+        sCharStartOutfitMap[outfit->RaceID | (outfit->ClassID << 8) | (outfit->SexID << 16)] = outfit;
+
+    for (CharSectionsEntry const* entry : sCharSectionsStore)
+        if (entry->RaceID && ((1 << (entry->RaceID - 1)) & RACEMASK_ALL_PLAYABLE) != 0) //ignore Nonplayable races
+            sCharSectionMap.insert({ entry->BaseSection | (entry->SexID << 8) | (entry->RaceID << 16), entry });
+
+    for (uint32 i = 0; i < MAX_CLASSES; ++i)
+        for (uint32 j = 0; j < MAX_POWERS; ++j)
+            PowersByClass[i][j] = MAX_POWERS;
+
+    for (uint32 i = 0; i < sChrPowerTypesStore.GetNumRows(); ++i)
+    {
+        if (ChrPowerTypesEntry const* power = sChrPowerTypesStore.LookupEntry(i))
+        {
+            uint32 index = 0;
+            for (uint32 j = 0; j < MAX_POWERS; ++j)
+                if (PowersByClass[power->classId][j] != MAX_POWERS)
+                    ++index;
+
+            PowersByClass[power->classId][power->power] = index;
+        }
+    }
+
+    for (EmotesTextSoundEntry const* entry : sEmotesTextSoundStore)
+        sEmotesTextSoundMap[EmotesTextSoundKey(entry->EmotesTextID, entry->RaceID, entry->SexID)] = entry;
+
+    for (FactionEntry const* faction : sFactionStore)
+    {
+        if (faction->ParentFactionID)
+        {
+            SimpleFactionsList& flist = sFactionTeamMap[faction->ParentFactionID];
+            flist.push_back(faction->ID);
+        }
+    }
+
+    for (uint32 i = 0; i < sGameObjectDisplayInfoStore.GetNumRows(); ++i)
+    {
+        if (GameObjectDisplayInfoEntry const* info = sGameObjectDisplayInfoStore.LookupEntry(i))
+        {
+            if (info->maxX < info->minX)
+                std::swap(*(float*)(&info->maxX), *(float*)(&info->minX));
+            if (info->maxY < info->minY)
+                std::swap(*(float*)(&info->maxY), *(float*)(&info->minY));
+            if (info->maxZ < info->minZ)
+                std::swap(*(float*)(&info->maxZ), *(float*)(&info->minZ));
+        }
+    }
+
+    // fill data
+    sMapDifficultyMap[MAKE_PAIR32(0, 0)] = MapDifficulty(0, 0, false);//map 0 is missingg from MapDifficulty.dbc use this till its ported to sql
+
+    for (MapDifficultyEntry const* entry : sMapDifficultyStore)
+        sMapDifficultyMap[MAKE_PAIR32(entry->MapId, entry->Difficulty)] = MapDifficulty(entry->resetTime, entry->maxPlayers, !std::string(entry->areaTriggerText).empty());
+    
+    // missing difficulties for scenarios
+    sMapDifficultyMap[MAKE_PAIR32(999,  SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Theramore's Fall (A)
+    sMapDifficultyMap[MAKE_PAIR32(1000, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Theramore's Fall (H)
+    sMapDifficultyMap[MAKE_PAIR32(1005, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // A Brewing Storm
+    sMapDifficultyMap[MAKE_PAIR32(1005, SCENARIO_DIFFICULTY_HEROIC)] = MapDifficulty(0, 3, false); // A Brewing Storm
+    sMapDifficultyMap[MAKE_PAIR32(1024, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Greenstone Village
+    sMapDifficultyMap[MAKE_PAIR32(1030, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Crypt of Forgotten Kings
+    sMapDifficultyMap[MAKE_PAIR32(1030, SCENARIO_DIFFICULTY_HEROIC)] = MapDifficulty(0, 3, false); // Crypt of Forgotten Kings
+    sMapDifficultyMap[MAKE_PAIR32(1031, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Arena of Annihilation
+    sMapDifficultyMap[MAKE_PAIR32(1048, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Unga Ingoo
+    sMapDifficultyMap[MAKE_PAIR32(1050, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Assault on Zan'vess
+    sMapDifficultyMap[MAKE_PAIR32(1051, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Brewmoon Festival
+    sMapDifficultyMap[MAKE_PAIR32(1095, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Dagger in the Dark
+    sMapDifficultyMap[MAKE_PAIR32(1099, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Battle on the High Seas
+    sMapDifficultyMap[MAKE_PAIR32(1099, SCENARIO_DIFFICULTY_HEROIC)] = MapDifficulty(0, 3, false); // Battle on the High Seas
+    sMapDifficultyMap[MAKE_PAIR32(1102, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Domination Point (H)
+    sMapDifficultyMap[MAKE_PAIR32(1103, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Lion's Landing (A)
+    sMapDifficultyMap[MAKE_PAIR32(1104, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // A Little Patience
+    sMapDifficultyMap[MAKE_PAIR32(1112, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 1, false); // BlackTempleScenario
+    sMapDifficultyMap[MAKE_PAIR32(1126, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 1, false); // Fall of Shan Bu
+    sMapDifficultyMap[MAKE_PAIR32(1130, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Blood in the Snow
+    sMapDifficultyMap[MAKE_PAIR32(1130, SCENARIO_DIFFICULTY_HEROIC)] = MapDifficulty(0, 3, false); // Blood in the Snow
+    sMapDifficultyMap[MAKE_PAIR32(1131, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // The Secrets of Ragefire
+    sMapDifficultyMap[MAKE_PAIR32(1131, SCENARIO_DIFFICULTY_HEROIC)] = MapDifficulty(0, 3, false); // The Secrets of Ragefire
+    sMapDifficultyMap[MAKE_PAIR32(1135, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 1, false); // Troves of the Thunder King
+    sMapDifficultyMap[MAKE_PAIR32(1144, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Dark Heart of Pandaria
+    sMapDifficultyMap[MAKE_PAIR32(1144, SCENARIO_DIFFICULTY_HEROIC)] = MapDifficulty(0, 3, false); // Dark Heart of Pandaria
+    sMapDifficultyMap[MAKE_PAIR32(1148, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 1, false); // Proving Grounds
+    sMapDifficultyMap[MAKE_PAIR32(1157, SCENARIO_DIFFICULTY_HEROIC)] = MapDifficulty(0, 1, false); // Finding the Secret Ingredient \ Noodle Time
+
+    for (NameGenEntry const* entry : sNameGenStore)
+        sGenNameVectoArraysMap[entry->RaceID].stringVectorArray[entry->Sex].push_back(std::string(entry->Name));
+
+    for (NamesProfanityEntry const* namesProfanity : sNamesProfanityStore)
+    {
+        ASSERT(namesProfanity->Language < TOTAL_LOCALES || namesProfanity->Language == -1);
+        std::wstring wname;
+        bool conversionResult = Utf8toWStr(namesProfanity->Name, wname);
+        ASSERT(conversionResult);
+
+        if (namesProfanity->Language != -1)
+            NamesProfaneValidators[namesProfanity->Language].emplace_back(wname, Trinity::regex::icase | Trinity::regex::optimize);
+        else
+            for (uint32 i = 0; i < TOTAL_LOCALES; ++i)
+                NamesProfaneValidators[i].emplace_back(wname, Trinity::regex::icase | Trinity::regex::optimize);
+    }
+
+    for (NamesReservedEntry const* namesReserved : sNamesReservedStore)
+    {
+        ASSERT(namesReserved->Language < TOTAL_LOCALES || namesReserved->Language == -1);
+        std::wstring wname;
+        bool conversionResult = Utf8toWStr(namesReserved->Name, wname);
+        ASSERT(conversionResult);
+
+        if (namesReserved->Language != -1)
+            NamesReservedValidators[namesReserved->Language].emplace_back(wname, Trinity::regex::icase | Trinity::regex::optimize);
+        else
+            for (uint32 i = 0; i < TOTAL_LOCALES; ++i)
+                NamesReservedValidators[i].emplace_back(wname, Trinity::regex::icase | Trinity::regex::optimize);
+    }
+
+    for (PhaseGroupEntry const* group : sPhaseGroupStore)
+        if (PhaseEntry const* phase = sPhaseStore.LookupEntry(group->PhaseID))
+            sPhasesByGroup[group->PhaseGroupID].push_back(phase->ID);
+
+    for (PvPDifficultyEntry const* entry : sPvPDifficultyStore)
+        if (entry->RangeIndex > MAX_BATTLEGROUND_BRACKETS)
+            ASSERT(false && "Need update MAX_BATTLEGROUND_BRACKETS by DBC data");
+
+    for (SkillLineAbilityEntry const* skillLineAbility : sSkillLineAbilityStore)
+        _skillLineAbilitiesBySkillupSkill[skillLineAbility->SkillLine].push_back(skillLineAbility);
+
+    for (SkillRaceClassInfoEntry const* entry : sSkillRaceClassInfoStore)
+        if (sSkillLineStore.LookupEntry(entry->SkillId))
+            SkillRaceClassInfoBySkill.emplace(entry->SkillId, entry);
+
+
+    for (uint32 j = 0; j < sSpellEffectScalingStore.GetNumRows(); j++)
+    {
+        SpellEffectScalingEntry const* spellEffectScaling = sSpellEffectScalingStore.LookupEntry(j);
+        if (!spellEffectScaling)
+            continue;
+
+        sSpellEffectScallingByEffectId.insert(std::make_pair(spellEffectScaling->SpellEffectId, j));
+    }
+
+    for (uint32 i = 1; i < sSpellEffectStore.GetNumRows(); ++i)
+    {
+        if (SpellEffectEntry const *spellEffect = sSpellEffectStore.LookupEntry(i))
+        {
+            sSpellEffectMap[spellEffect->EffectSpellId].effects[spellEffect->EffectDifficulty][spellEffect->EffectIndex] = spellEffect;
+        }
+    }
+
+    for (uint32 i = 0; i < sSpellPowerStore.GetNumRows(); i++)
+        if (SpellPowerEntry const* spellPower = sSpellPowerStore.LookupEntry(i))
+            sSpellPowerMap.emplace(spellPower->SpellId, spellPower);
+
+
+    // Must be done when sSkillLineAbilityStore, sSpellStore, sSpellLevelsStore and sCreatureFamilyStore are all loaded
+    // for (SkillLineAbilityEntry const* skillLine : sSkillLineAbilityStore)
+    // {
+    //     SpellEntry const* spellInfo = sSpellStore.LookupEntry(skillLine->spellId);//Spell
+    //     if (!spellInfo)
+    //         continue;
+
+    //     SpellLevelsEntry const* levels = sSpellLevelsStore.LookupEntry(spellInfo->SpellLevelsId);//LevelsID
+    //     if (spellInfo->LevelsID && (!levels || levels->spellLevel))//
+    //         continue;
+
+    //     if (spellInfo && spellInfo->Attributes & SPELL_ATTR0_PASSIVE)
+    //     {
+    //         for (CreatureFamilyEntry const* cFamily : sCreatureFamilyStore)
+    //         {
+    //             if (skillLine->SkillLine != cFamily->SkillLine[0] && skillLine->SkillLine != cFamily->SkillLine[1])
+    //                 continue;
+
+    //             if (skillLine->AcquireMethod != SKILL_LINE_ABILITY_LEARNED_ON_SKILL_LEARN)
+    //                 continue;
+
+    //             sPetFamilySpellsStore[cFamily->ID].insert(spellInfo->ID);
+    //         }
+    //     }
+    // }
+
+    for (uint32 i = 0; i < sSkillLineAbilityStore.GetNumRows(); ++i)
+    {
+        SkillLineAbilityEntry const* skillAbility = sSkillLineAbilityStore.LookupEntry(i);
+        if (!skillAbility)
+            continue;
+
+        if (skillAbility->learnOnGetSkill != ABILITY_LEARNED_ON_GET_RACE_OR_CLASS_SKILL && skillAbility->learnOnGetSkill != ABILITY_LEARNED_ON_GET_PROFESSION_SKILL)
+            continue;
+
+        SpellEntry const* spellInfo = sSpellStore.LookupEntry(skillAbility->Spell);
+        if (!spellInfo)
+            continue;
+    }
+
+   // Initialize global taxinodes mask
     // include existed nodes that have at least single not spell base (scripted) path
     {
         std::set<uint32> spellPaths;
@@ -788,107 +921,6 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
             if (i == 315 || i == 333)
                 ((TaxiNodesEntry*)node)->MountCreatureID[1] = 32981;
         }
-    }
-
-    //LOAD_DBC(availableDbcLocales, bad_dbc_files, sTeamContributionPointsStore, dbcPath, "TeamContributionPoints.dbc");
-    LOAD_DBC(availableDbcLocales, bad_dbc_files, sTotemCategoryStore,          dbcPath, "TotemCategory.dbc");//15595
-    LOAD_DBC(availableDbcLocales, bad_dbc_files, sTransportAnimationStore,     dbcPath, "TransportAnimation.dbc");
-    LOAD_DBC(availableDbcLocales, bad_dbc_files, sTransportRotationStore,      dbcPath, "TransportRotation.dbc");
-    LOAD_DBC(availableDbcLocales, bad_dbc_files, sUnitPowerBarStore,           dbcPath, "UnitPowerBar.dbc");//15595
-    LOAD_DBC(availableDbcLocales, bad_dbc_files, sVehicleStore,                dbcPath, "Vehicle.dbc");//15595
-    LOAD_DBC(availableDbcLocales, bad_dbc_files, sVehicleSeatStore,            dbcPath, "VehicleSeat.dbc");//15595
-    LOAD_DBC(availableDbcLocales, bad_dbc_files, sWMOAreaTableStore,           dbcPath, "WMOAreaTable.dbc");//15595
-    LOAD_DBC(availableDbcLocales, bad_dbc_files, sWorldMapAreaStore,           dbcPath, "WorldMapArea.dbc");//15595
-    LOAD_DBC(availableDbcLocales, bad_dbc_files, sWorldMapOverlayStore,        dbcPath, "WorldMapOverlay.dbc");//15595
-    LOAD_DBC(availableDbcLocales, bad_dbc_files, sWorldSafeLocsStore,          dbcPath, "WorldSafeLocs.dbc");//15595
-
-#undef LOAD_DBC
-    LoadDBC(availableDbcLocales, bad_dbc_files, sSpellStore,                   dbcPath, "Spell.dbc", defaultLocale, CustomSpellEntryfmt, CustomSpellEntryIndex);//
-    LoadDBC(availableDbcLocales, bad_dbc_files, sSpellMiscStore,               dbcPath, "SpellMisc.dbc", defaultLocale, CustomSpellMiscfmt, CustomSpellMiscIndex);//17538
-    LoadDBC(availableDbcLocales, bad_dbc_files, sSpellEffectStore,             dbcPath, "SpellEffect.dbc", defaultLocale, CustomSpellEffectEntryfmt, CustomSpellEffectEntryIndex);//15595
-
-
-    for (uint32 j = 0; j < sSkillLineStore.GetNumRows(); j++)
-    {
-        SkillLineEntry const* skillEntry = sSkillLineStore.LookupEntry(j);
-        if (!skillEntry)
-            continue;
-
-        if (skillEntry->categoryId != SKILL_CATEGORY_CLASS)
-            continue;
-
-        std::map<std::string, uint32> ::const_iterator iter = classIdByName.find(std::string(skillEntry->name));
-        if (iter == classIdByName.end())
-            continue;
-
-    }
-    
-    for (uint32 j = 0; j < sSpellEffectScalingStore.GetNumRows(); j++)
-    {
-        SpellEffectScalingEntry const* spellEffectScaling = sSpellEffectScalingStore.LookupEntry(j);
-        if (!spellEffectScaling)
-            continue;
-
-        sSpellEffectScallingByEffectId.insert(std::make_pair(spellEffectScaling->SpellEffectId, j));
-    }
-
-    for (uint32 i = 1; i < sSpellEffectStore.GetNumRows(); ++i)
-    {
-        if (SpellEffectEntry const *spellEffect = sSpellEffectStore.LookupEntry(i))
-        {
-            sSpellEffectMap[spellEffect->EffectSpellId].effects[spellEffect->EffectDifficulty][spellEffect->EffectIndex] = spellEffect;
-        }
-    }
-
-    for (uint32 i = 0; i < sSpellPowerStore.GetNumRows(); i++)
-        if (SpellPowerEntry const* spellPower = sSpellPowerStore.LookupEntry(i))
-            sSpellPowerMap.emplace(spellPower->SpellId, spellPower);
-
-    for (SkillLineAbilityEntry const* skillLineAbility : sSkillLineAbilityStore)
-        _skillLineAbilitiesBySkillupSkill[skillLineAbility->skillId].push_back(skillLineAbility); //SkillLine
-
-    for (SkillRaceClassInfoEntry const* entry : sSkillRaceClassInfoStore)
-        if (sSkillLineStore.LookupEntry(entry->SkillId)) //SkillID
-            SkillRaceClassInfoBySkill.emplace(entry->SkillId, entry);
-
-    // Must be done when sSkillLineAbilityStore, sSpellStore, sSpellLevelsStore and sCreatureFamilyStore are all loaded
-    // for (SkillLineAbilityEntry const* skillLine : sSkillLineAbilityStore)
-    // {
-    //     SpellEntry const* spellInfo = sSpellStore.LookupEntry(skillLine->spellId);//Spell
-    //     if (!spellInfo)
-    //         continue;
-
-    //     SpellLevelsEntry const* levels = sSpellLevelsStore.LookupEntry(spellInfo->SpellLevelsId);//LevelsID
-    //     if (spellInfo->LevelsID && (!levels || levels->spellLevel))//
-    //         continue;
-
-    //     if (spellInfo && spellInfo->Attributes & SPELL_ATTR0_PASSIVE)
-    //     {
-    //         for (CreatureFamilyEntry const* cFamily : sCreatureFamilyStore)
-    //         {
-    //             if (skillLine->SkillLine != cFamily->SkillLine[0] && skillLine->SkillLine != cFamily->SkillLine[1])
-    //                 continue;
-
-    //             if (skillLine->AcquireMethod != SKILL_LINE_ABILITY_LEARNED_ON_SKILL_LEARN)
-    //                 continue;
-
-    //             sPetFamilySpellsStore[cFamily->ID].insert(spellInfo->ID);
-    //         }
-    //     }
-    // }
-
-    for (uint32 i = 0; i < sSkillLineAbilityStore.GetNumRows(); ++i)
-    {
-        SkillLineAbilityEntry const* skillAbility = sSkillLineAbilityStore.LookupEntry(i);
-        if (!skillAbility)
-            continue;
-
-        if (skillAbility->learnOnGetSkill != ABILITY_LEARNED_ON_GET_RACE_OR_CLASS_SKILL && skillAbility->learnOnGetSkill != ABILITY_LEARNED_ON_GET_PROFESSION_SKILL)
-            continue;
-
-        SpellEntry const* spellInfo = sSpellStore.LookupEntry(skillAbility->spellId);
-        if (!spellInfo)
-            continue;
     }
 
     for (WMOAreaTableEntry const* entry : sWMOAreaTableStore)
@@ -1158,21 +1190,21 @@ MapDifficulty const* DBCManager::GetDownscaledMapDifficultyData(uint32 mapId, Di
 
 PvPDifficultyEntry const* DBCManager::GetBattlegroundBracketByLevel(uint32 mapid, uint32 level)
 {
-    PvPDifficultyEntry const* maxEntry = NULL;              // used for level > max listed level case
+    PvPDifficultyEntry const* maxEntry = nullptr;              // used for level > max listed level case
     for (uint32 i = 0; i < sPvPDifficultyStore.GetNumRows(); ++i)
     {
         if (PvPDifficultyEntry const* entry = sPvPDifficultyStore.LookupEntry(i))
         {
             // skip unrelated and too-high brackets
-            if (entry->mapId != mapid || entry->minLevel > level)
+            if (entry->MapID != mapid || entry->MinLevel > level)
                 continue;
 
             // exactly fit
-            if (entry->maxLevel >= level)
+            if (entry->MaxLevel >= level)
                 return entry;
 
             // remember for possible out-of-range case (search higher from existed)
-            if (!maxEntry || maxEntry->maxLevel < entry->maxLevel)
+            if (!maxEntry || maxEntry->MaxLevel < entry->MaxLevel)
                 maxEntry = entry;
         }
     }
@@ -1184,9 +1216,8 @@ PvPDifficultyEntry const* DBCManager::GetBattlegroundBracketById(uint32 mapid, B
 {
     for (uint32 i = 0; i < sPvPDifficultyStore.GetNumRows(); ++i)
         if (PvPDifficultyEntry const* entry = sPvPDifficultyStore.LookupEntry(i))
-            if (entry->mapId == mapid && entry->GetBracketId() == id)
+            if (entry->MapID == mapid && entry->GetBracketId() == id)
                 return entry;
-
     return nullptr;
 }
 
@@ -1477,6 +1508,12 @@ std::vector<uint32> const* DBCManager::GetPhasesForGroup(uint32 group)
         return &itr->second;
 
     return nullptr;
+}
+
+EmotesTextSoundEntry const* DBCManager::FindTextSoundEmoteFor(uint32 emote, uint32 race, uint32 gender)
+{
+    auto itr = sEmotesTextSoundMap.find(EmotesTextSoundKey(emote, race, gender));
+    return itr != sEmotesTextSoundMap.end() ? itr->second : nullptr;
 }
 
 bool DBCManager::IsInArea(uint32 objectAreaId, uint32 areaId)

@@ -702,16 +702,16 @@ struct BattlemasterListEntry
 
 struct CharStartOutfitEntry
 {
-    //uint32 Id;                                            // 0
-    uint8 Race;                                             // 1
-    uint8 Class;                                            // 2
-    uint8 Gender;                                           // 3
-    //uint8 Unused;                                         // 4
-    int32 ItemId[MAX_OUTFIT_ITEMS];                         // 5-28
-    //int32 ItemDisplayId[MAX_OUTFIT_ITEMS];                // 29-52 not required at server side
-    //int32 ItemInventorySlot[MAX_OUTFIT_ITEMS];            // 53-76 not required at server side
-    uint32 PetDisplayId;                                    // 77 Pet Model ID for starting pet
-    uint32 PetFamilyEntry;                                  // 78 Pet Family Entry for starting pet
+    //uint32  ID;                                           // 0
+    uint8  RaceID;                                          // 1
+    uint8  ClassID;                                         // 2
+    uint8  SexID;                                           // 3
+    //uint8  OutfitID;                                      // 4
+    int32  ItemID[MAX_OUTFIT_ITEMS];                        // 5-28
+    //int32  DisplayItemID[MAX_OUTFIT_ITEMS];               // 29-52 not required at server side
+    //int32  InventoryType[MAX_OUTFIT_ITEMS];               // 53-76 not required at server side
+    uint32  PetDisplayID;                                   // 77 Pet Model ID for starting pet
+    uint32  PetFamilyID;                                    // 78 Pet Family Entry for starting pet
 };
 
 enum CharSectionFlags
@@ -1241,7 +1241,7 @@ struct FactionEntry
     uint32      BaseRepClassMask[4];                        // 6-9      m_reputationClassMask
     int32       BaseRepValue[4];                            // 10-13    m_reputationBase
     uint32      ReputationFlags[4];                         // 14-17    m_reputationFlags
-    uint32      team;                                       // 18       m_parentFactionID
+    uint32      ParentFactionID;                            // 18       m_parentFactionID
     float       spilloverRateIn;                            // 19       Faction gains incoming rep * spilloverRateIn
     float       spilloverRateOut;                           // 20       Faction outputs rep * spilloverRateOut as spillover reputation
     uint32      spilloverMaxRankIn;                         // 21       The highest rank the faction will profit from incoming spillover
@@ -1892,10 +1892,24 @@ struct MovieEntry
 
 struct NameGenEntry
 {
-    //uint32 id;
-    char const*  name;
-    uint32 race;
-    uint32 gender;
+    //uint32  ID;                                           // 1
+    char*   Name;                                           // 2
+    uint32  RaceID;                                         // 3
+    uint32  Sex;                                            // 4
+};
+
+struct NamesProfanityEntry
+{
+    // uint32    ID;                                        // 0
+    char const* Name;                                       // 1
+    int32       Language;                                   // 2
+};
+
+struct NamesReservedEntry
+{
+    // uint32    ID;                                        // 0
+    char const* Name;                                       // 1
+    int32       Language;                                   // 2
 };
 
 #define MAX_OVERRIDE_SPELL 10
@@ -1928,15 +1942,15 @@ namespace PrevQuestLogicFlags
 
 struct PvPDifficultyEntry
 {
-    //uint32      id;                                       // 0        m_ID
-    uint32      mapId;                                      // 1
-    uint32      bracketId;                                  // 2
-    uint32      minLevel;                                   // 3
-    uint32      maxLevel;                                   // 4
-    uint32      difficulty;                                 // 5
+    //uint32  ID;                                           // 0
+    uint32  MapID;                                          // 1
+    uint32  RangeIndex;                                     // 2
+    uint32  MinLevel;                                       // 3
+    uint32  MaxLevel;                                       // 4
+    uint32  Difficulty;                                     // 5
 
     // helpers
-    BattlegroundBracketId GetBracketId() const { return BattlegroundBracketId(bracketId); }
+    BattlegroundBracketId GetBracketId() const { return BattlegroundBracketId(RangeIndex); }
 };
 
 struct QuestSortEntry
@@ -2112,12 +2126,12 @@ struct SkillLineEntry
 
 struct SkillLineAbilityEntry
 {
-    uint32    id;                                           // 0        m_ID
-    uint32    skillId;                                      // 1        m_skillLine
-    uint32    spellId;                                      // 2        m_spell
-    uint32    racemask;                                     // 3        m_raceMask
-    uint32    classmask;                                    // 4        m_classMask
-    uint32    req_skill_value;                              // 5        m_minSkillLineRank
+    uint32 ID;                                              // 0
+    uint32 SkillLine;                                       // 1
+    uint32 Spell;                                           // 2
+    uint32 RaceMask;                                        // 3
+    uint32 ClassMask;                                       // 4
+    uint32 MinSkillLineRank;                                // 5        
     uint32    forward_spellid;                              // 6        m_supercededBySpell
     uint32    learnOnGetSkill;                              // 7        m_acquireMethod
     uint32    max_value;                                    // 8        m_trivialSkillLineRankHigh
