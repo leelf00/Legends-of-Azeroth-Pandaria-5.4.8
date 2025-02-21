@@ -3093,10 +3093,10 @@ void Spell::EffectLearnSkill(SpellEffIndex effIndex)
         TC_LOG_ERROR("spells", "Spell::EffectLearnSkill skill (%u) not found in SkillRaceClassInfo.dbc", skillid);
         return;
     }
-    auto skillTier = sSkillTiersStore.LookupEntry(entry->SkillTierId);
+    auto skillTier = sSkillTiersStore.LookupEntry(entry->SkillTierID);
     if (!skillTier)
     {
-        TC_LOG_ERROR("spells", "Spell::EffectLearnSkill skill tier (%u) not found for skill %u", entry->SkillTierId, skillid);
+        TC_LOG_ERROR("spells", "Spell::EffectLearnSkill skill tier (%u) not found for skill %u", entry->SkillTierID, skillid);
         return;
     }
 

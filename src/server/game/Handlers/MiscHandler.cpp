@@ -2850,7 +2850,7 @@ void WorldSession::HandleShowTradeSkill(WorldPacket& recvData)
         return;
 
     SkillLineEntry const* skill = sSkillLineStore.LookupEntry(skillId);
-    if (!skill || !skill->canLink)
+    if (!skill || !skill->CanLink)
         return;
 
     uint32 val = player->GetSkillValue(skillId);

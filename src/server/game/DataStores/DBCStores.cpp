@@ -376,7 +376,7 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
     DBCStorage<NamesProfanityEntry> sNamesProfanityStore(NamesProfanityEntryfmt);
     DBCStorage<NamesReservedEntry> sNamesReservedStore(NamesReservedEntryfmt);
     DBCStorage<PhaseGroupEntry> sPhaseGroupStore(PhaseGroupfmt);
-    // DBCStorage<TalentTreePrimarySpellsEntry> sTalentTreePrimarySpellsStore(TalentTreePrimarySpellsfmt);    
+    // DBCStorage<TalentTreePrimarySpellsEntry> sTalentTreePrimarySpellsStore(TalentTreePrimarySpellsfmt);
 
     #define LOAD_DBC(availableDbcLocales, bad_dbc_files, store, dbcPath, file) LoadDBC(availableDbcLocales, bad_dbc_files, store, dbcPath, file, defaultLocale)
 
@@ -650,7 +650,7 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
         if (TaxiPathNodeEntry const* entry = sTaxiPathNodeStore.LookupEntry(i))
             sTaxiPathNodesByPath[entry->PathId].set(entry->NodeIndex, entry);
 
- 
+
 
     //LOAD_DBC(availableDbcLocales, bad_dbc_files, sTeamContributionPointsStore, dbcPath, "TeamContributionPoints.dbc");
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sTotemCategoryStore,          dbcPath, "TotemCategory.dbc");//15595
@@ -723,7 +723,7 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
 
     for (MapDifficultyEntry const* entry : sMapDifficultyStore)
         sMapDifficultyMap[MAKE_PAIR32(entry->MapId, entry->Difficulty)] = MapDifficulty(entry->resetTime, entry->maxPlayers, !std::string(entry->areaTriggerText).empty());
-    
+
     // missing difficulties for scenarios
     sMapDifficultyMap[MAKE_PAIR32(999,  SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Theramore's Fall (A)
     sMapDifficultyMap[MAKE_PAIR32(1000, SCENARIO_DIFFICULTY_NORMAL)] = MapDifficulty(0, 3, false); // Theramore's Fall (H)
@@ -797,31 +797,8 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
         _skillLineAbilitiesBySkillupSkill[skillLineAbility->SkillLine].push_back(skillLineAbility);
 
     for (SkillRaceClassInfoEntry const* entry : sSkillRaceClassInfoStore)
-        if (sSkillLineStore.LookupEntry(entry->SkillId))
-            SkillRaceClassInfoBySkill.emplace(entry->SkillId, entry);
-
-
-    for (uint32 j = 0; j < sSpellEffectScalingStore.GetNumRows(); j++)
-    {
-        SpellEffectScalingEntry const* spellEffectScaling = sSpellEffectScalingStore.LookupEntry(j);
-        if (!spellEffectScaling)
-            continue;
-
-        sSpellEffectScallingByEffectId.insert(std::make_pair(spellEffectScaling->SpellEffectId, j));
-    }
-
-    for (uint32 i = 1; i < sSpellEffectStore.GetNumRows(); ++i)
-    {
-        if (SpellEffectEntry const *spellEffect = sSpellEffectStore.LookupEntry(i))
-        {
-            sSpellEffectMap[spellEffect->EffectSpellId].effects[spellEffect->EffectDifficulty][spellEffect->EffectIndex] = spellEffect;
-        }
-    }
-
-    for (uint32 i = 0; i < sSpellPowerStore.GetNumRows(); i++)
-        if (SpellPowerEntry const* spellPower = sSpellPowerStore.LookupEntry(i))
-            sSpellPowerMap.emplace(spellPower->SpellId, spellPower);
-
+        if (sSkillLineStore.LookupEntry(entry->SkillID))
+            SkillRaceClassInfoBySkill.emplace(entry->SkillID, entry);
 
     // Must be done when sSkillLineAbilityStore, sSpellStore, sSpellLevelsStore and sCreatureFamilyStore are all loaded
     // for (SkillLineAbilityEntry const* skillLine : sSkillLineAbilityStore)
@@ -862,6 +839,30 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
         if (!spellInfo)
             continue;
     }
+
+
+    for (uint32 j = 0; j < sSpellEffectScalingStore.GetNumRows(); j++)
+    {
+        SpellEffectScalingEntry const* spellEffectScaling = sSpellEffectScalingStore.LookupEntry(j);
+        if (!spellEffectScaling)
+            continue;
+
+        sSpellEffectScallingByEffectId.insert(std::make_pair(spellEffectScaling->SpellEffectId, j));
+    }
+
+    for (uint32 i = 1; i < sSpellEffectStore.GetNumRows(); ++i)
+    {
+        if (SpellEffectEntry const *spellEffect = sSpellEffectStore.LookupEntry(i))
+        {
+            sSpellEffectMap[spellEffect->EffectSpellId].effects[spellEffect->EffectDifficulty][spellEffect->EffectIndex] = spellEffect;
+        }
+    }
+
+    for (uint32 i = 0; i < sSpellPowerStore.GetNumRows(); i++)
+        if (SpellPowerEntry const* spellPower = sSpellPowerStore.LookupEntry(i))
+            sSpellPowerMap.emplace(spellPower->SpellId, spellPower);
+
+
 
    // Initialize global taxinodes mask
     // include existed nodes that have at least single not spell base (scripted) path
@@ -1014,7 +1015,7 @@ WMOAreaTableEntry const* DBCManager::GetWMOAreaTableEntryByTripple(int32 rootid,
     auto i = sWMOAreaInfoByTripple.find(WMOAreaTableKey(int16(rootid), int8(adtid), groupid));
     if (i != sWMOAreaInfoByTripple.end())
         return i->second;
-    
+
     return nullptr;
 }
 

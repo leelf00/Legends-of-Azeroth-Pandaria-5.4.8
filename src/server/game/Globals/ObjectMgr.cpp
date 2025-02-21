@@ -3800,7 +3800,7 @@ void ObjectMgr::LoadPlayerInfo()
                         {
                             if (PlayerInfo* info = _playerInfo[raceIndex][classIndex])
                             {
-                                info->skills.push_back(entry->Id);
+                                info->skills.push_back(entry->ID);
                                 ++count;
                             }
                         }
@@ -8776,7 +8776,7 @@ QuestPOIData const* ObjectMgr::GetQuestPOIData(uint32 questId)
 
 SkillRangeType GetSkillRangeType(SkillLineEntry const* pSkill, bool racial)
 {
-    switch (pSkill->categoryId)
+    switch (pSkill->CategoryID)
     {
         case SKILL_CATEGORY_LANGUAGES:
             return SKILL_RANGE_LANGUAGE;
@@ -8784,14 +8784,14 @@ SkillRangeType GetSkillRangeType(SkillLineEntry const* pSkill, bool racial)
             return SKILL_RANGE_LEVEL;
         case SKILL_CATEGORY_ARMOR:
         case SKILL_CATEGORY_CLASS:
-            if (pSkill->id != SKILL_LOCKPICKING)
+            if (pSkill->ID != SKILL_LOCKPICKING)
                 return SKILL_RANGE_MONO;
             else
                 return SKILL_RANGE_LEVEL;
         case SKILL_CATEGORY_SECONDARY:
         case SKILL_CATEGORY_PROFESSION:
             // not set skills for professions and racial abilities
-            if (IsProfessionSkill(pSkill->id))
+            if (IsProfessionSkill(pSkill->ID))
                 return SKILL_RANGE_RANK;
             else if (racial)
                 return SKILL_RANGE_NONE;

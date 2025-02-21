@@ -842,7 +842,7 @@ bool Guild::Member::LoadFromDB(Field* fields)
             {
                 recipes.resize(300, 0);
                 SkillLineEntry const* skill = sSkillLineStore.LookupEntry(skillId);
-                if (skill && skill->canLink)
+                if (skill && skill->CanLink)
                 {
                     recipes = LoadProfessionRecipesData(skillId, value);
                     needsProfessionSave = true;
@@ -951,7 +951,7 @@ std::vector<uint8> Guild::Member::LoadProfessionRecipesData(uint32 skillId, uint
     data.resize(300, 0);
 
     SkillLineEntry const* skill = sSkillLineStore.LookupEntry(skillId);
-    if (!skill || !skill->canLink)
+    if (!skill || !skill->CanLink)
         return data;
 
     std::set<uint32> spells;
@@ -4424,7 +4424,7 @@ void Guild::HandleQueryGuildRecipes(WorldSession* session)
 void Guild::HandleQueryGuildMembersForRecipe(WorldSession* session, uint32 spellId, uint32 skillId, uint32 skillValue)
 {
     SkillLineEntry const* skill = sSkillLineStore.LookupEntry(skillId);
-    if (!skill || !skill->canLink)
+    if (!skill || !skill->CanLink)
         return;
 
     uint32 byte = 0, bit = 0;

@@ -2092,14 +2092,14 @@ struct ScenarioStepEntry
 
 struct SkillRaceClassInfoEntry
 {
-    uint32    Id;
-    uint32    SkillId;
+    uint32    ID;
+    uint32    SkillID;
     uint32    RaceMask;
     uint32    ClassMask;
     uint32    Flags;
     uint32    Availability;
     uint32    ReqLevel;
-    uint32    SkillTierId;
+    uint32    SkillTierID;
 };
 
 #define MAX_SKILL_STEP 16
@@ -2112,14 +2112,14 @@ struct SkillTiersEntry
 
 struct SkillLineEntry
 {
-    uint32    id;                                           // 0        m_ID
-    int32     categoryId;                                   // 1        m_categoryID
-    //uint32    skillCostID;                                // 2        m_skillCostsID
-    char const*    name;                                         // 3        m_displayName_lang
-    char const*    description;                                  // 4        m_description_lang
-    uint32    spellIcon;                                    // 5        m_spellIconID
-    //char const*    alternateVerb;                              // 6        m_alternateVerb_lang
-    uint32    canLink;                                      // 7        m_canLink (prof. with recipes)
+    uint32  ID;                                             // 0
+    int32   CategoryID;                                     // 1
+    //uint32    skillCostID;                                // 2
+    char*   DisplayName;                                    // 3
+    char*   Description;                                    // 4
+    uint32  SpellIconID;                                    // 5
+    //char*    AlternateVerb;                               // 6 
+    uint32  CanLink;                                        // 7 (prof. with recipe)
     //uint32 unk1                                           // 8 - Pandaria
     //uint32 unkFlags                                       // 9 - Pandaria
 };

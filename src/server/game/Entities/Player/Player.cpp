@@ -3845,14 +3845,14 @@ bool Player::AddSpell(uint32 spellId, bool active, bool learning, bool dependent
             if (!skill)
                 continue;
 
-            if (HasSkill(skill->id))
+            if (HasSkill(skill->ID))
                 continue;
 
             if (itr->second->learnOnGetSkill == ABILITY_LEARNED_ON_GET_RACE_OR_CLASS_SKILL ||
                 // lockpicking/runeforging special case, not have ABILITY_LEARNED_ON_GET_RACE_OR_CLASS_SKILL
-                ((skill->id == SKILL_LOCKPICKING || skill->id == SKILL_RUNEFORGING) && (itr->second->max_value == 0 || itr->second->max_value == 1)))
+                ((skill->ID == SKILL_LOCKPICKING || skill->ID == SKILL_RUNEFORGING) && (itr->second->max_value == 0 || itr->second->max_value == 1)))
             {
-                if (auto entry = sDBCManager.GetSkillRaceClassInfo(skill->id, GetRace(), GetClass()))
+                if (auto entry = sDBCManager.GetSkillRaceClassInfo(skill->ID, GetRace(), GetClass()))
                     LearnDefaultSkill(entry);
             }
         }
@@ -4113,16 +4113,16 @@ void Player::RemoveSpell(uint32 spell_id, bool disabled, bool learn_low_rank)
                 continue;
 
             if ((_spell_idx->second->learnOnGetSkill == ABILITY_LEARNED_ON_GET_RACE_OR_CLASS_SKILL &&
-                pSkill->categoryId != SKILL_CATEGORY_CLASS) ||// not unlearn class skills (spellbook/talent pages)
+                pSkill->CategoryID != SKILL_CATEGORY_CLASS) ||// not unlearn class skills (spellbook/talent pages)
                 // lockpicking/runeforging special case, not have ABILITY_LEARNED_ON_GET_RACE_OR_CLASS_SKILL
-                ((pSkill->id == SKILL_LOCKPICKING || pSkill->id == SKILL_RUNEFORGING) && (_spell_idx->second->max_value == 0 || _spell_idx->second->max_value == 1)))
+                ((pSkill->ID == SKILL_LOCKPICKING || pSkill->ID == SKILL_RUNEFORGING) && (_spell_idx->second->max_value == 0 || _spell_idx->second->max_value == 1)))
             {
                 // not reset skills for professions and racial abilities
-                if ((pSkill->categoryId == SKILL_CATEGORY_SECONDARY || pSkill->categoryId == SKILL_CATEGORY_PROFESSION) &&
-                    (IsProfessionSkill(pSkill->id) || _spell_idx->second->RaceMask != 0))
+                if ((pSkill->CategoryID == SKILL_CATEGORY_SECONDARY || pSkill->CategoryID == SKILL_CATEGORY_PROFESSION) &&
+                    (IsProfessionSkill(pSkill->ID) || _spell_idx->second->RaceMask != 0))
                     continue;
 
-                SetSkill(pSkill->id, GetSkillStep(pSkill->id), 0, 0);
+                SetSkill(pSkill->ID, GetSkillStep(pSkill->ID), 0, 0);
             }
         }
     }
@@ -6198,10 +6198,10 @@ void Player::UpdateSkillsForLevel()
         uint16 field = itr->second.pos / 2;
         uint8 offset = itr->second.pos & 1; // itr->second.pos % 2
 
-        auto skillLine = sSkillLineStore.LookupEntry(entry->SkillId);
+        auto skillLine = sSkillLineStore.LookupEntry(entry->SkillID);
         if (GetSkillRangeType(skillLine, false) == SKILL_RANGE_LEVEL)
         {
-            if (!IsWeaponSkill(entry->SkillId))
+            if (!IsWeaponSkill(entry->SkillID))
             {
                 uint16 max = GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_MAX_RANK_OFFSET + field, offset);
 
@@ -6217,7 +6217,7 @@ void Player::UpdateSkillsForLevel()
         }
 
         // Update level dependent skillline spells
-        LearnSkillRewardedSpells(entry->SkillId, GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_RANK_OFFSET + field, offset));
+        LearnSkillRewardedSpells(entry->SkillID, GetUInt16Value(PLAYER_FIELD_SKILL + SKILL_RANK_OFFSET + field, offset));
     }
 }
 
@@ -6233,10 +6233,10 @@ void Player::UpdateSkillsToMaxSkillsForLevel()
         if (!entry)
             continue;
 
-        if (IsProfessionOrRidingSkill(entry->SkillId))
+        if (IsProfessionOrRidingSkill(entry->SkillID))
             continue;
 
-        if (IsWeaponSkill(entry->SkillId))
+        if (IsWeaponSkill(entry->SkillID))
             continue;
 
         uint16 field = itr->second.pos / 2;
@@ -6345,7 +6345,7 @@ void Player::SetSkill(uint16 id, uint16 step, uint16 newVal, uint16 maxVal)
                 }
 
                 SetUInt16Value(PLAYER_FIELD_SKILL + field, offset, id);
-                if (skillEntry->categoryId == SKILL_CATEGORY_PROFESSION)
+                if (skillEntry->CategoryID == SKILL_CATEGORY_PROFESSION)
                 {
                     if (!GetUInt32Value(PLAYER_FIELD_PROFESSION_SKILL_LINE))
                         SetUInt32Value(PLAYER_FIELD_PROFESSION_SKILL_LINE, id);
@@ -25548,7 +25548,7 @@ void Player::LearnDefaultSkills()
         if (!entry || entry->ReqLevel > GetLevel())
             continue;
 
-        if (HasSkill(entry->SkillId))
+        if (HasSkill(entry->SkillID))
             continue;
 
         LearnDefaultSkill(entry);
@@ -25557,7 +25557,7 @@ void Player::LearnDefaultSkills()
 
 void Player::LearnDefaultSkill(SkillRaceClassInfoEntry const* entry)
 {
-    uint32 skillId = entry->SkillId;
+    uint32 skillId = entry->SkillID;
     auto skillLine = sSkillLineStore.LookupEntry(skillId);
     if (!skillLine)
         return;
@@ -25598,7 +25598,7 @@ void Player::LearnDefaultSkill(SkillRaceClassInfoEntry const* entry)
             else if (GetClass() == CLASS_DEATH_KNIGHT)
                 skillValue = std::min(std::max(uint16(1), uint16((GetLevel() - 1) * 5)), maxValue);
 
-            SetSkill(skillId, GetSkillStep(skillLine->id), skillValue, maxValue);
+            SetSkill(skillId, GetSkillStep(skillLine->ID), skillValue, maxValue);
             break;
         }
         default:
@@ -27824,10 +27824,10 @@ void Player::_LoadSkills(PreparedQueryResult result)
             SetUInt16Value(PLAYER_FIELD_SKILL + field, offset, skill);
             uint16 step = 0;
 
-            if (pSkill->categoryId == SKILL_CATEGORY_SECONDARY)
+            if (pSkill->CategoryID == SKILL_CATEGORY_SECONDARY)
                 step = max / 75;
 
-            if (pSkill->categoryId == SKILL_CATEGORY_PROFESSION)
+            if (pSkill->CategoryID == SKILL_CATEGORY_PROFESSION)
             {
                 step = max / 75;
 
@@ -30954,7 +30954,7 @@ std::vector<uint8> Player::MakeTradeSkillRecipesData(uint32 skillId) const
     data.resize(300, 0);
 
     SkillLineEntry const* skill = sSkillLineStore.LookupEntry(skillId);
-    if (!skill || !skill->canLink)
+    if (!skill || !skill->CanLink)
         return data;
 
     for (uint32 j = 0; j < sSkillLineAbilityStore.GetNumRows(); ++j)
