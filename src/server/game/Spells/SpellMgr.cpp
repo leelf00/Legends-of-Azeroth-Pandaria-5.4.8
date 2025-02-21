@@ -2372,7 +2372,7 @@ void SpellMgr::LoadPetSpellMap()
                 if (skillLine->SkillLine != skillId)
                     continue;
 
-                if (skillLine->learnOnGetSkill != ABILITY_LEARNED_ON_GET_RACE_OR_CLASS_SKILL)
+                if (skillLine->AcquireMethod != ABILITY_LEARNED_ON_GET_RACE_OR_CLASS_SKILL)
                     continue;
 
                 SpellInfo const* spell = GetSpellInfo(skillLine->Spell);
@@ -2649,10 +2649,10 @@ void SpellMgr::LoadSpellInfoStore()
 
         for (auto&& map : mSpellInfoMap)
         {
-            if (SpellInfo* spellInfo = map[talentInfo->SpellId])
-                spellInfo->TalentId = talentInfo->SpellId;
+            if (SpellInfo* spellInfo = map[talentInfo->SpellID])
+                spellInfo->TalentId = talentInfo->SpellID;
             if (SpellInfo* spellInfo = map[talentInfo->ReplacesSpell])
-                spellInfo->OverrideSpellList.push_back(talentInfo->SpellId);
+                spellInfo->OverrideSpellList.push_back(talentInfo->SpellID);
         }
     }
 

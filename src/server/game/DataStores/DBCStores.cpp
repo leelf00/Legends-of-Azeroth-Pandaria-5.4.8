@@ -376,7 +376,6 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
     DBCStorage<NamesProfanityEntry> sNamesProfanityStore(NamesProfanityEntryfmt);
     DBCStorage<NamesReservedEntry> sNamesReservedStore(NamesReservedEntryfmt);
     DBCStorage<PhaseGroupEntry> sPhaseGroupStore(PhaseGroupfmt);
-    // DBCStorage<TalentTreePrimarySpellsEntry> sTalentTreePrimarySpellsStore(TalentTreePrimarySpellsfmt);
 
     #define LOAD_DBC(availableDbcLocales, bad_dbc_files, store, dbcPath, file) LoadDBC(availableDbcLocales, bad_dbc_files, store, dbcPath, file, defaultLocale)
 
@@ -587,17 +586,7 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sTalentStore,                 dbcPath, "Talent.dbc");//15595
 
-    // create talent spells set
-    for (unsigned int i = 0; i < sTalentStore.GetNumRows(); ++i)
-    {
-        TalentEntry const* talentInfo = sTalentStore.LookupEntry(i);
-        if (!talentInfo)
-            continue;
 
-        for (int j = 0; j < MAX_TALENT_RANK; j++)
-            if (talentInfo->SpellId)
-                sTalentSpellPosMap[talentInfo->SpellId] = TalentSpellPos(i, j);
-    }
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sChrSpecializationStore,              dbcPath, "ChrSpecialization.dbc");
 
@@ -625,30 +614,13 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sTaxiNodesStore,              dbcPath, "TaxiNodes.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sTaxiPathStore,               dbcPath, "TaxiPath.dbc");//15595
-    for (uint32 i = 1; i < sTaxiPathStore.GetNumRows(); ++i)
-        if (TaxiPathEntry const* entry = sTaxiPathStore.LookupEntry(i))
-            sTaxiPathSetBySource[entry->from][entry->to] = TaxiPathBySourceAndDestination(entry->ID, entry->price);
-    uint32 pathCount = sTaxiPathStore.GetNumRows();
+
 
     //## TaxiPathNode.dbc ## Loaded only for initialization different structures
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sTaxiPathNodeStore,           dbcPath, "TaxiPathNode.dbc");//15595
-    // Calculate path nodes count
-    std::vector<uint32> pathLength;
-    pathLength.resize(pathCount);                           // 0 and some other indexes not used
-    for (uint32 i = 1; i < sTaxiPathNodeStore.GetNumRows(); ++i)
-        if (TaxiPathNodeEntry const* entry = sTaxiPathNodeStore.LookupEntry(i))
-        {
-            if (pathLength[entry->PathId] < entry->NodeIndex + 1)
-                pathLength[entry->PathId] = entry->NodeIndex + 1;
-        }
-    // Set path length
-    sTaxiPathNodesByPath.resize(pathCount);                 // 0 and some other indexes not used
-    for (uint32 i = 1; i < sTaxiPathNodesByPath.size(); ++i)
-        sTaxiPathNodesByPath[i].resize(pathLength[i]);
-    // fill data
-    for (uint32 i = 1; i < sTaxiPathNodeStore.GetNumRows(); ++i)
-        if (TaxiPathNodeEntry const* entry = sTaxiPathNodeStore.LookupEntry(i))
-            sTaxiPathNodesByPath[entry->PathId].set(entry->NodeIndex, entry);
+
+
+
 
 
 
@@ -801,44 +773,65 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
             SkillRaceClassInfoBySkill.emplace(entry->SkillID, entry);
 
     // Must be done when sSkillLineAbilityStore, sSpellStore, sSpellLevelsStore and sCreatureFamilyStore are all loaded
-    // for (SkillLineAbilityEntry const* skillLine : sSkillLineAbilityStore)
-    // {
-    //     SpellEntry const* spellInfo = sSpellStore.LookupEntry(skillLine->spellId);//Spell
-    //     if (!spellInfo)
-    //         continue;
-
-    //     SpellLevelsEntry const* levels = sSpellLevelsStore.LookupEntry(spellInfo->SpellLevelsId);//LevelsID
-    //     if (spellInfo->LevelsID && (!levels || levels->spellLevel))//
-    //         continue;
-
-    //     if (spellInfo && spellInfo->Attributes & SPELL_ATTR0_PASSIVE)
-    //     {
-    //         for (CreatureFamilyEntry const* cFamily : sCreatureFamilyStore)
-    //         {
-    //             if (skillLine->SkillLine != cFamily->SkillLine[0] && skillLine->SkillLine != cFamily->SkillLine[1])
-    //                 continue;
-
-    //             if (skillLine->AcquireMethod != SKILL_LINE_ABILITY_LEARNED_ON_SKILL_LEARN)
-    //                 continue;
-
-    //             sPetFamilySpellsStore[cFamily->ID].insert(spellInfo->ID);
-    //         }
-    //     }
-    // }
-
-    for (uint32 i = 0; i < sSkillLineAbilityStore.GetNumRows(); ++i)
+    for (SkillLineAbilityEntry const* skillLine : sSkillLineAbilityStore)
     {
-        SkillLineAbilityEntry const* skillAbility = sSkillLineAbilityStore.LookupEntry(i);
-        if (!skillAbility)
-            continue;
-
-        if (skillAbility->learnOnGetSkill != ABILITY_LEARNED_ON_GET_RACE_OR_CLASS_SKILL && skillAbility->learnOnGetSkill != ABILITY_LEARNED_ON_GET_PROFESSION_SKILL)
-            continue;
-
-        SpellEntry const* spellInfo = sSpellStore.LookupEntry(skillAbility->Spell);
+        SpellEntry const* spellInfo = sSpellStore.LookupEntry(skillLine->Spell);
         if (!spellInfo)
             continue;
+
+        SpellLevelsEntry const* levels = sSpellLevelsStore.LookupEntry(spellInfo->LevelsID);
+        if (spellInfo->LevelsID && (!levels || levels->SpellLevel))
+            continue;
+
+        // if (spellInfo && spellInfo->Attributes & SPELL_ATTR0_PASSIVE)
+        // {
+        //     for (CreatureFamilyEntry const* cFamily : sCreatureFamilyStore)
+        //     {
+        //         if (skillLine->SkillLine != cFamily->SkillLine[0] && skillLine->SkillLine != cFamily->SkillLine[1])
+        //             continue;
+
+        //         if (skillLine->AcquireMethod != SKILL_LINE_ABILITY_LEARNED_ON_SKILL_LEARN)
+        //             continue;
+
+        //         sPetFamilySpellsStore[cFamily->ID].insert(spellInfo->ID);
+        //     }
+        // }
     }
+
+
+    // Create Spelldifficulty searcher
+
+    // create talent spells set
+    for (TalentEntry const* talentInfo : sTalentStore)
+    {
+        for (uint8 j = 0; j < MAX_TALENT_RANK; ++j)
+            if (talentInfo->SpellID)
+                sTalentSpellPosMap[talentInfo->SpellID] = TalentSpellPos(talentInfo->ID, j);
+    }    
+
+    for (uint32 i = 1; i < sTaxiPathStore.GetNumRows(); ++i)
+        if (TaxiPathEntry const* entry = sTaxiPathStore.LookupEntry(i))
+            sTaxiPathSetBySource[entry->from][entry->to] = TaxiPathBySourceAndDestination(entry->ID, entry->price);
+    uint32 pathCount = sTaxiPathStore.GetNumRows();
+    
+    // Calculate path nodes count
+    std::vector<uint32> pathLength;
+    pathLength.resize(pathCount);                           // 0 and some other indexes not used
+    for (uint32 i = 1; i < sTaxiPathNodeStore.GetNumRows(); ++i)
+        if (TaxiPathNodeEntry const* entry = sTaxiPathNodeStore.LookupEntry(i))
+        {
+            if (pathLength[entry->PathId] < entry->NodeIndex + 1)
+                pathLength[entry->PathId] = entry->NodeIndex + 1;
+        }
+    // Set path length
+    sTaxiPathNodesByPath.resize(pathCount);                 // 0 and some other indexes not used
+    for (uint32 i = 1; i < sTaxiPathNodesByPath.size(); ++i)
+        sTaxiPathNodesByPath[i].resize(pathLength[i]);
+    // fill data
+    for (uint32 i = 1; i < sTaxiPathNodeStore.GetNumRows(); ++i)
+        if (TaxiPathNodeEntry const* entry = sTaxiPathNodeStore.LookupEntry(i))
+            sTaxiPathNodesByPath[entry->PathId].set(entry->NodeIndex, entry);
+
 
 
     for (uint32 j = 0; j < sSpellEffectScalingStore.GetNumRows(); j++)

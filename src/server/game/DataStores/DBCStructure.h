@@ -2118,7 +2118,7 @@ struct SkillLineEntry
     char*   DisplayName;                                    // 3
     char*   Description;                                    // 4
     uint32  SpellIconID;                                    // 5
-    //char*    AlternateVerb;                               // 6 
+    //char*    AlternateVerb;                               // 6
     uint32  CanLink;                                        // 7 (prof. with recipe)
     //uint32 unk1                                           // 8 - Pandaria
     //uint32 unkFlags                                       // 9 - Pandaria
@@ -2131,9 +2131,11 @@ struct SkillLineAbilityEntry
     uint32 Spell;                                           // 2
     uint32 RaceMask;                                        // 3
     uint32 ClassMask;                                       // 4
-    uint32 MinSkillLineRank;                                // 5        
-    uint32    forward_spellid;                              // 6        m_supercededBySpell
-    uint32    learnOnGetSkill;                              // 7        m_acquireMethod
+    uint32 MinSkillLineRank;                                // 5
+    //uint32 ExcludeRace;                                   // 5 maybe not in 5.4.8
+    //uint32 ExcludeClass;                                  // 6 maybe not in 5.4.8
+    uint32 SupercededBySpell;                               // 8
+    uint32 AcquireMethod;                                   // 9
     uint32    max_value;                                    // 8        m_trivialSkillLineRankHigh
     uint32    min_value;                                    // 9        m_trivialSkillLineRankLow
     uint32    character_points;                             // 10       m_characterPoints - Pandaria - No longer an array
@@ -2277,7 +2279,7 @@ struct SpellEntry
     uint32 SpellCooldownsId;                                // 15       SpellCooldowns.dbc
     uint32 SpellEquippedItemsId;                            // 16       SpellEquippedItems.dbc
     uint32 SpellInterruptsId;                               // 17       SpellInterrupts.dbc
-    uint32 SpellLevelsId;                                   // 18       SpellLevels.dbc
+    uint32 LevelsID;                                        // 18       SpellLevels.dbc
     uint32 SpellReagentsId;                                 // 19       SpellReagents.dbc
     uint32 SpellShapeshiftId;                               // 20       SpellShapeshift.dbc
     uint32 SpellTargetRestrictionsId;                       // 21       SpellTargetRestrictions.dbc
@@ -2449,9 +2451,9 @@ struct SpellLevelsEntry
     //uint32    Id;                                         // 0        m_ID
     //uint32 spellId;                                       // 1  - Pandaria
     //uint32 unk0;                                          // 2  - Panadraia always  after spellId
-    uint32    baseLevel;                                    // 3       m_baseLevel
-    uint32    maxLevel;                                     // 4       m_maxLevel
-    uint32    spellLevel;                                   // 5       m_spellLevel
+    uint32  BaseLevel;                                      // 3
+    uint32  MaxLevel;                                       // 4
+    uint32  SpellLevel;                                     // 5
 };
 
 // SpellPower.dbc
@@ -2613,11 +2615,11 @@ struct SummonPropertiesEntry
 
 struct TalentEntry
 {
-    uint32    TalentID;                                     // 0
-    //uint32    unk0;                                       // 1
-    uint32    Row;                                          // 2
-    uint32    Col;                                          // 3
-    uint32    SpellId;                                      // 4
+    uint32  ID;                                             // 0
+    //uint32  TabID;                                        // 1 index in TalentTab.dbc (TalentTabEntry)
+    uint32  TierID;                                         // 2
+    uint32  ColumnIndex;                                    // 3
+    uint32  SpellID;                                        // 4
     //uint32    unk1;                                       // 5
     //uint32    unk2;                                       // 6
     //uint32    unk3;                                       // 7

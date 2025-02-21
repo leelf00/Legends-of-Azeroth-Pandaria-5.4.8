@@ -215,7 +215,7 @@ public:
                 continue;
 
             // search highest talent rank
-            uint32 spellId = talentInfo->SpellId;
+            uint32 spellId = talentInfo->SpellID;
 
             if (!spellId)                                        // ??? none spells in talent
                 continue;
@@ -418,7 +418,7 @@ public:
                 continue;
 
             // not high rank
-            if (skillLine->forward_spellid)
+            if (skillLine->SupercededBySpell)
                 continue;
 
             // skip racial skills

@@ -3569,7 +3569,7 @@ bool Player::AddSpell(uint32 spellId, bool active, bool learning, bool dependent
     SkillLineAbilityMapBounds skillBounds = sSpellMgr->GetSkillLineAbilityMapBounds(spellId);
 
     for (auto itr = skillBounds.first; itr != skillBounds.second; ++itr)
-        if (!itr->second->learnOnGetSkill && IsPrimaryProfessionSkill(itr->second->SkillLine))
+        if (!itr->second->AcquireMethod && IsPrimaryProfessionSkill(itr->second->SkillLine))
             if (!HasSkill(itr->second->SkillLine))
                 if (!spellInfo->HasEffect(SPELL_EFFECT_SKILL))
                     return false;
@@ -3848,7 +3848,7 @@ bool Player::AddSpell(uint32 spellId, bool active, bool learning, bool dependent
             if (HasSkill(skill->ID))
                 continue;
 
-            if (itr->second->learnOnGetSkill == ABILITY_LEARNED_ON_GET_RACE_OR_CLASS_SKILL ||
+            if (itr->second->AcquireMethod == ABILITY_LEARNED_ON_GET_RACE_OR_CLASS_SKILL ||
                 // lockpicking/runeforging special case, not have ABILITY_LEARNED_ON_GET_RACE_OR_CLASS_SKILL
                 ((skill->ID == SKILL_LOCKPICKING || skill->ID == SKILL_RUNEFORGING) && (itr->second->max_value == 0 || itr->second->max_value == 1)))
             {
@@ -4112,7 +4112,7 @@ void Player::RemoveSpell(uint32 spell_id, bool disabled, bool learn_low_rank)
             if (!pSkill)
                 continue;
 
-            if ((_spell_idx->second->learnOnGetSkill == ABILITY_LEARNED_ON_GET_RACE_OR_CLASS_SKILL &&
+            if ((_spell_idx->second->AcquireMethod == ABILITY_LEARNED_ON_GET_RACE_OR_CLASS_SKILL &&
                 pSkill->CategoryID != SKILL_CATEGORY_CLASS) ||// not unlearn class skills (spellbook/talent pages)
                 // lockpicking/runeforging special case, not have ABILITY_LEARNED_ON_GET_RACE_OR_CLASS_SKILL
                 ((pSkill->ID == SKILL_LOCKPICKING || pSkill->ID == SKILL_RUNEFORGING) && (_spell_idx->second->max_value == 0 || _spell_idx->second->max_value == 1)))
@@ -4334,11 +4334,11 @@ bool Player::ResetTalents(bool noCost, bool resetTalents, bool resetSpecializati
             if (talentInfo->PlayerClass != GetClass())
                 continue;
 
-            SpellInfo const* spellEntry = sSpellMgr->GetSpellInfo(talentInfo->SpellId);
+            SpellInfo const* spellEntry = sSpellMgr->GetSpellInfo(talentInfo->SpellID);
             if (!spellEntry)
                 continue;
 
-            RemoveSpell(talentInfo->SpellId, true);
+            RemoveSpell(talentInfo->SpellID, true);
 
             // search for spells that the talent teaches and unlearn them
             for (auto&& spellEffect : spellEntry->Effects)
@@ -4384,7 +4384,7 @@ bool Player::RemoveTalent(uint32 talentId)
     if (!talent)
         return false;
 
-    uint32 spellId = talent->SpellId;
+    uint32 spellId = talent->SpellID;
 
     SpellInfo const* unlearnSpellProto = sSpellMgr->GetSpellInfo(spellId);
 
@@ -25743,7 +25743,7 @@ void Player::LearnSkillRewardedSpells(uint32 id, uint32 value)
             continue;
 
         // need unlearn spell
-        if (value < ability->MinSkillLineRank && ability->learnOnGetSkill == ABILITY_LEARNED_ON_GET_PROFESSION_SKILL)
+        if (value < ability->MinSkillLineRank && ability->AcquireMethod == ABILITY_LEARNED_ON_GET_PROFESSION_SKILL)
             RemoveSpell(ability->Spell);
         // need learn
         else if (!IsInWorld())
@@ -28125,7 +28125,7 @@ bool Player::LearnTalent(uint16 talentId)
         return false;
 
     // check if we have enough talent points
-    if (talentInfo->Row > maxTalentRow)
+    if (talentInfo->TierID > maxTalentRow)
         return false;
 
     // Check if player doesnt have any spell in selected collumn
@@ -28133,13 +28133,13 @@ bool Player::LearnTalent(uint16 talentId)
     {
         if (TalentEntry const* talent = sTalentStore.LookupEntry(i))
         {
-            if (talentInfo->Row == talent->Row && HasSpell(talent->SpellId))
+            if (talentInfo->TierID == talent->TierID && HasSpell(talent->SpellID))
                 return false;
         }
     }
 
     // spell not set in talent.dbc
-    uint32 spellid = talentInfo->SpellId;
+    uint32 spellid = talentInfo->SpellID;
     if (spellid == 0)
     {
         TC_LOG_ERROR("entities.player", "Talent.dbc have for talent: %u spell id = 0", talentId);
@@ -28259,10 +28259,10 @@ void Player::BuildPlayerTalentsInfoData(WorldPacket* data)
             if (talentInfo->PlayerClass != GetClass())
                 continue;
 
-            if (!HasTalent(talentInfo->SpellId, i))
+            if (!HasTalent(talentInfo->SpellID, i))
                 continue;
 
-            *data << uint16(talentInfo->TalentID);  // Talent.dbc
+            *data << uint16(talentInfo->ID);  // Talent.dbc
 
             talentCount++;
         }
@@ -29040,10 +29040,10 @@ void Player::SendInspectResult(Player const* player)
         if (talentInfo->PlayerClass != player->GetClass())
             continue;
 
-        if (!player->HasTalent(talentInfo->SpellId, player->GetActiveSpec()))
+        if (!player->HasTalent(talentInfo->SpellID, player->GetActiveSpec()))
             continue;
 
-        data << uint16(talentInfo->TalentID);  // Talent.dbc
+        data << uint16(talentInfo->ID);  // Talent.dbc
         ++talentCount;
     }
     data.PutBits(talentCountBitPos, talentCount, 23);
@@ -31443,11 +31443,11 @@ void Player::ResetBothSpec(bool disable, bool allTalents)
             if (talentInfo->PlayerClass != GetClass())
                 continue;
 
-            SpellInfo const* spellEntry = sSpellMgr->GetSpellInfo(talentInfo->SpellId);
+            SpellInfo const* spellEntry = sSpellMgr->GetSpellInfo(talentInfo->SpellID);
             if (!spellEntry)
                 continue;
 
-            RemoveSpell(talentInfo->SpellId, disable);
+            RemoveSpell(talentInfo->SpellID, disable);
 
             // search for spells that the talent teaches and unlearn them
             for (auto&& spellEffect : spellEntry->Effects)
@@ -31519,8 +31519,8 @@ void Player::CleanNotForMyClass(bool talents, bool common)
     for (uint32 i = 0; i < sTalentStore.GetNumRows(); i++)
     {
         auto talent = sTalentStore.LookupEntry(i);
-        if (talent && HasSpell(talent->SpellId) && talent->PlayerClass != GetClass())
-            RemoveSpell(talent->SpellId);
+        if (talent && HasSpell(talent->SpellID) && talent->PlayerClass != GetClass())
+            RemoveSpell(talent->SpellID);
     }
 
     int32 i = common ? 0 : CLASS_WARRIOR;
