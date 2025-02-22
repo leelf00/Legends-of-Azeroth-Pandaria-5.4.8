@@ -193,6 +193,7 @@ DBCStorage <ScenarioEntry> sScenarioStore(Scenariofmt);
 DBCStorage <ScenarioStepEntry> sScenarioStepStore(ScenarioStepfmt);
 
 DBCStorage <SkillRaceClassInfoEntry> sSkillRaceClassInfoStore(SkillRaceClassInfofmt);
+SkillRaceClassInfoMap SkillRaceClassInfoBySkill;
 DBCStorage <SkillTiersEntry> sSkillTiersStore(SkillTiersfmt);
 DBCStorage <SkillLineEntry> sSkillLineStore(SkillLinefmt);
 DBCStorage <SkillLineAbilityEntry> sSkillLineAbilityStore(SkillLineAbilityfmt);
@@ -272,7 +273,6 @@ DBCStorage <PhaseEntry> sPhaseStore(PhaseEntryfmt);
 
 PhaseGroupContainer sPhasesByGroup;
 
-SkillRaceClassInfoMap SkillRaceClassInfoBySkill;
 static std::map<uint32, std::vector<SkillLineAbilityEntry const*>> sSpellsBySkill;
 static std::multimap<uint32, uint32> sItemSpecOverrideByItemId;
 
@@ -289,8 +289,6 @@ struct SpellEffect
 
 typedef std::unordered_map<uint32, SpellEffect> SpellEffectMap;
 SpellEffectMap sSpellEffectMap;
-
-typedef std::list<std::string> StoreProblemList;
 
 static std::multimap<uint32, SpellPowerEntry const*> sSpellPowerMap;
 
@@ -393,18 +391,12 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sBattlemasterListStore,       dbcPath, "BattleMasterList.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sBarberShopStyleStore,        dbcPath, "BarberShopStyle.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sCharStartOutfitStore,        dbcPath, "CharStartOutfit.dbc");//15595
-
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sCharSectionsStore,           dbcPath, "CharSections.dbc");//15595
-
-
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sCharTitlesStore,             dbcPath, "CharTitles.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sChatChannelsStore,           dbcPath, "ChatChannels.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sChrClassesStore,             dbcPath, "ChrClasses.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sChrRacesStore,               dbcPath, "ChrRaces.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sChrPowerTypesStore,          dbcPath, "ChrClassesXPowerTypes.dbc");//15595
-    LOAD_DBC(availableDbcLocales, bad_dbc_files, sEmotesTextSoundStore,        dbcPath, "EmotesTextSound.dbc");//15595
-
-
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sCinematicCameraStore,        dbcPath, "CinematicCamera.dbc");
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sCinematicSequencesStore,     dbcPath, "CinematicSequences.dbc");//15595
@@ -423,12 +415,10 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sDurabilityQualityStore,      dbcPath, "DurabilityQuality.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sEmotesStore,                 dbcPath, "Emotes.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sEmotesTextStore,             dbcPath, "EmotesText.dbc");//15595
+    LOAD_DBC(availableDbcLocales, bad_dbc_files, sEmotesTextSoundStore,        dbcPath, "EmotesTextSound.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sFactionStore,                dbcPath, "Faction.dbc");//15595
-
-
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sFactionTemplateStore,        dbcPath, "FactionTemplate.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sGameObjectDisplayInfoStore,  dbcPath, "GameObjectDisplayInfo.dbc");//15595
-
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sGemPropertiesStore,          dbcPath, "GemProperties.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sGlyphPropertiesStore,        dbcPath, "GlyphProperties.dbc");//15595
@@ -468,7 +458,6 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sItemSetStore,                dbcPath, "ItemSet.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sItemSpecStore,               dbcPath, "ItemSpec.dbc");
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sItemSpecOverrideStore,       dbcPath, "ItemSpecOverride.dbc");
-
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sItemArmorQualityStore,       dbcPath, "ItemArmorQuality.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sItemArmorShieldStore,        dbcPath, "ItemArmorShield.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sItemArmorTotalStore,         dbcPath, "ItemArmorTotal.dbc");//15595
@@ -494,7 +483,6 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sMailTemplateStore,           dbcPath, "MailTemplate.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sMapStore,                    dbcPath, "Map.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sMapDifficultyStore,          dbcPath, "MapDifficulty.dbc");//15595
-
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sMountCapabilityStore,        dbcPath, "MountCapability.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sMountTypeStore,              dbcPath, "MountType.dbc");//15595
@@ -537,7 +525,7 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
         }
     }
 
-    LOAD_DBC(availableDbcLocales, bad_dbc_files, sScalingStatDistributionStore, dbcPath, "ScalingStatDistribution.dbc");//15595
+    LOAD_DBC(availableDbcLocales, bad_dbc_files, sScalingStatDistributionStore,dbcPath, "ScalingStatDistribution.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sScalingStatValuesStore,      dbcPath, "ScalingStatValues.dbc");//15595
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sScenarioStore,               dbcPath, "Scenario.dbc"); // 18414
@@ -548,11 +536,8 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sSkillLineStore,              dbcPath, "SkillLine.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sSkillLineAbilityStore,       dbcPath, "SkillLineAbility.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sSoundEntriesStore,           dbcPath, "SoundEntries.dbc");//15595
-    LOAD_DBC(availableDbcLocales, bad_dbc_files, sSpellCategoriesStore,        dbcPath,"SpellCategories.dbc");//15595
+    LOAD_DBC(availableDbcLocales, bad_dbc_files, sSpellCategoriesStore,        dbcPath, "SpellCategories.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sSpellCategoryStore,          dbcPath, "SpellCategory.dbc");
-
-
-
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sSpellScalingStore,           dbcPath,"SpellScaling.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sSpellTotemsStore,            dbcPath,"SpellTotems.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sSpellTargetRestrictionsStore, dbcPath,"SpellTargetRestrictions.dbc");//15595
@@ -567,8 +552,6 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sSpellAuraOptionsStore,       dbcPath,"SpellAuraOptions.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sSpellAuraRestrictionsStore,  dbcPath,"SpellAuraRestrictions.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sSpellCastingRequirementsStore, dbcPath,"SpellCastingRequirements.dbc");//15595
-
-
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sSpellCastTimesStore,         dbcPath, "SpellCastTimes.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sSpellDurationStore,          dbcPath, "SpellDuration.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sSpellFocusObjectStore,       dbcPath, "SpellFocusObject.dbc");//15595
@@ -582,47 +565,15 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sSpellShapeshiftFormStore,    dbcPath, "SpellShapeshiftForm.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sSummonPropertiesStore,       dbcPath, "SummonProperties.dbc");//15595
 
-
-
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sTalentStore,                 dbcPath, "Talent.dbc");//15595
+    LOAD_DBC(availableDbcLocales, bad_dbc_files, sChrSpecializationStore,      dbcPath, "ChrSpecialization.dbc");
 
-
-
-    LOAD_DBC(availableDbcLocales, bad_dbc_files, sChrSpecializationStore,              dbcPath, "ChrSpecialization.dbc");
-
-    // prepare fast data access to bit pos of talent ranks for use at inspecting
-    {
-        // now have all max ranks (and then bit amount used for store talent ranks in inspect)
-        for (uint32 j = 0; j < sChrSpecializationStore.GetNumRows(); j++)
-        {
-            ChrSpecializationEntry const* specializationInfo = sChrSpecializationStore.LookupEntry(j);
-            if (!specializationInfo)
-                continue;
-
-            // prevent memory corruption; otherwise cls will become 12 below
-            if (!specializationInfo->classId || specializationInfo->classId >= MAX_CLASSES)
-                continue;
-
-            sSpecializationClassStore[specializationInfo->classId][specializationInfo->TabPage] = j;
-        }
-    }
-
-    LOAD_DBC(availableDbcLocales, bad_dbc_files, sSpecializationSpellsStore, dbcPath, "SpecializationSpells.dbc");
-    for (uint32 j = 0; j < sSpecializationSpellsStore.GetNumRows(); j++)
-        if (SpecializationSpellsEntry const* specializationSpells = sSpecializationSpellsStore.LookupEntry(j))
-            sSpecializationSpellsMap[specializationSpells->SpecializationId].push_back(specializationSpells->SpellId);
+    LOAD_DBC(availableDbcLocales, bad_dbc_files, sSpecializationSpellsStore,   dbcPath, "SpecializationSpells.dbc");
 
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sTaxiNodesStore,              dbcPath, "TaxiNodes.dbc");//15595
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sTaxiPathStore,               dbcPath, "TaxiPath.dbc");//15595
-
-
     //## TaxiPathNode.dbc ## Loaded only for initialization different structures
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sTaxiPathNodeStore,           dbcPath, "TaxiPathNode.dbc");//15595
-
-
-
-
-
 
     //LOAD_DBC(availableDbcLocales, bad_dbc_files, sTeamContributionPointsStore, dbcPath, "TeamContributionPoints.dbc");
     LOAD_DBC(availableDbcLocales, bad_dbc_files, sTotemCategoryStore,          dbcPath, "TotemCategory.dbc");//15595
@@ -797,7 +748,9 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
         //     }
         // }
     }
-
+    for (uint32 j = 0; j < sSpecializationSpellsStore.GetNumRows(); j++)
+        if (SpecializationSpellsEntry const* specializationSpells = sSpecializationSpellsStore.LookupEntry(j))
+            sSpecializationSpellsMap[specializationSpells->SpecializationId].push_back(specializationSpells->SpellId);
 
     // Create Spelldifficulty searcher
 
@@ -807,13 +760,30 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
         for (uint8 j = 0; j < MAX_TALENT_RANK; ++j)
             if (talentInfo->SpellID)
                 sTalentSpellPosMap[talentInfo->SpellID] = TalentSpellPos(talentInfo->ID, j);
-    }    
+    }
+
+    // prepare fast data access to bit pos of talent ranks for use at inspecting
+    {
+        // now have all max ranks (and then bit amount used for store talent ranks in inspect)
+        for (uint32 j = 0; j < sChrSpecializationStore.GetNumRows(); j++)
+        {
+            ChrSpecializationEntry const* specializationInfo = sChrSpecializationStore.LookupEntry(j);
+            if (!specializationInfo)
+                continue;
+
+            // prevent memory corruption; otherwise cls will become 12 below
+            if (!specializationInfo->classId || specializationInfo->classId >= MAX_CLASSES)
+                continue;
+
+            sSpecializationClassStore[specializationInfo->classId][specializationInfo->TabPage] = j;
+        }
+    }
 
     for (uint32 i = 1; i < sTaxiPathStore.GetNumRows(); ++i)
         if (TaxiPathEntry const* entry = sTaxiPathStore.LookupEntry(i))
             sTaxiPathSetBySource[entry->from][entry->to] = TaxiPathBySourceAndDestination(entry->ID, entry->price);
     uint32 pathCount = sTaxiPathStore.GetNumRows();
-    
+
     // Calculate path nodes count
     std::vector<uint32> pathLength;
     pathLength.resize(pathCount);                           // 0 and some other indexes not used
@@ -1214,6 +1184,20 @@ PvPDifficultyEntry const* DBCManager::GetBattlegroundBracketById(uint32 mapid, B
                 return entry;
     return nullptr;
 }
+
+// std::vector<uint32> const* DBCManager::GetTalentTreePrimarySpells(uint32 talentTree)
+// {
+//     TalentTreePrimarySpellsMap::const_iterator itr = sTalentTreePrimarySpellsMap.find(talentTree);
+//     if (itr == sTalentTreePrimarySpellsMap.end())
+//         return nullptr;
+
+//     return &itr->second;
+// }
+
+// uint32 const* DBCManager::GetTalentTabPages(uint8 cls)
+// {
+//     return sTalentTabPages[cls];
+// }
 
 dbc::TalentTabs dbc::GetClassSpecializations(uint8 classId)
 {
