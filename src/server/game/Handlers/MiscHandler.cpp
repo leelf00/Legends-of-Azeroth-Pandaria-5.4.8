@@ -2850,7 +2850,7 @@ void WorldSession::HandleShowTradeSkill(WorldPacket& recvData)
         return;
 
     SkillLineEntry const* skill = sSkillLineStore.LookupEntry(skillId);
-    if (!skill || !skill->canLink)
+    if (!skill || !skill->CanLink)
         return;
 
     uint32 val = player->GetSkillValue(skillId);
@@ -2860,7 +2860,7 @@ void WorldSession::HandleShowTradeSkill(WorldPacket& recvData)
     bool match = false;
     auto bounds = sSpellMgr->GetSkillLineAbilityMapBounds(spellId);
     for (auto it = bounds.first; it != bounds.second; ++it)
-        if (it->second->skillId == skillId)
+        if (it->second->SkillLine == skillId)
             match = true;
 
     if (!match)

@@ -228,8 +228,6 @@ uint32 DB2Manager::LoadStores(std::string const& dataPath, uint32 defaultLocale)
         }
     }
 
-TC_LOG_INFO("server.loading", "07 size %d , field count %d crash below", sQuestPackageItemStore.GetNumRows(), sQuestPackageItemStore.GetFieldCount());
-
     for (size_t i = 0; i < sQuestPackageItemStore.GetNumRows(); ++i)
     {
         if (auto entry = sQuestPackageItemStore.LookupEntry(i))
@@ -243,7 +241,7 @@ TC_LOG_INFO("server.loading", "07 size %d , field count %d crash below", sQuestP
         else
             _questPackages[questPackageItem->PackageID].second.push_back(questPackageItem);
     }
-TC_LOG_INFO("server.loading", "08");
+
     // error checks
     if (bad_db2_files.size() >= DB2FilesCount)
     {
@@ -276,6 +274,8 @@ TC_LOG_INFO("server.loading", "08");
     }
 
     TC_LOG_INFO("server.loading", ">> Initialized %d DB2 data stores in %u ms", DB2FilesCount, GetMSTimeDiffToNow(oldMSTime));
+
+    return availableDb2Locales;
 }
 
 DB2StorageBase const* DB2Manager::GetStorage(uint32 type) const

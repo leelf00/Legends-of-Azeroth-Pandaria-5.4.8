@@ -304,17 +304,17 @@ bool SpellChatLink::ValidateName(char* buffer, const char* context)
             TC_LOG_TRACE("chat.system", "ChatHandler::isValidChatMessage('%s'): skill line ability not found for spell %u", context, _spell->Id);
             return false;
         }
-        SkillLineEntry const* skillLine = sSkillLineStore.LookupEntry(skillInfo->skillId);
+        SkillLineEntry const* skillLine = sSkillLineStore.LookupEntry(skillInfo->SkillLine);
         if (!skillLine)
         {
-            TC_LOG_TRACE("chat.system", "ChatHandler::isValidChatMessage('%s'): skill line not found for skill %u", context, skillInfo->skillId);
+            TC_LOG_TRACE("chat.system", "ChatHandler::isValidChatMessage('%s'): skill line not found for skill %u", context, skillInfo->SkillLine);
             return false;
         }
 
         for (uint8 i = 0; i < TOTAL_LOCALES; ++i)
         {
-            uint32 skillLineNameLength = strlen(skillLine->name);
-            if (skillLineNameLength > 0 && strncmp(skillLine->name, buffer, skillLineNameLength) == 0 && strlen(buffer) >= skillLineNameLength + 2)
+            uint32 skillLineNameLength = strlen(skillLine->DisplayName);
+            if (skillLineNameLength > 0 && strncmp(skillLine->DisplayName, buffer, skillLineNameLength) == 0 && strlen(buffer) >= skillLineNameLength + 2)
             {
                 // found the prefix, remove it to perform spellname validation below
                 // -2 = strlen(": ")
@@ -440,7 +440,7 @@ bool TradeChatLink::Initialize(std::istringstream& iss)
     bool match = false;
     auto bounds = sSpellMgr->GetSkillLineAbilityMapBounds(spellId);
     for (auto it = bounds.first; it != bounds.second; ++it)
-        if (it->second->skillId == skillId)
+        if (it->second->SkillLine == skillId)
             match = true;
 
     if (!match)
@@ -473,10 +473,10 @@ bool TalentChatLink::Initialize(std::istringstream& iss)
         return false;
     }
     // Validate talent's spell
-    _spell = sSpellMgr->GetSpellInfo(talentInfo->SpellId);
+    _spell = sSpellMgr->GetSpellInfo(talentInfo->SpellID);
     if (!_spell)
     {
-        TC_LOG_TRACE("chat.system", "ChatHandler::isValidChatMessage('%s'): got invalid spell id %u in |trade command", iss.str().c_str(), talentInfo->SpellId);
+        TC_LOG_TRACE("chat.system", "ChatHandler::isValidChatMessage('%s'): got invalid spell id %u in |trade command", iss.str().c_str(), talentInfo->SpellID);
         return false;
     }
     return true;

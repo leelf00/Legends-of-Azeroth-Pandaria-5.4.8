@@ -15,27 +15,21 @@
 * with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef Strand_h__
-#define Strand_h__
+#ifndef TrinityCore_Regex_h__
+#define TrinityCore_Regex_h__
 
-#include "IoContext.h"
-#include <boost/asio/strand.hpp>
+// std::wregex doesn't work with patterns provided in db2 files
+// so we have to use boost
+#include <boost/regex.hpp>
+#define TC_REGEX_NAMESPACE boost
 
 namespace Trinity
 {
-    namespace Asio
-    {
-        /**
-          Hack to make it possible to forward declare strand (which is a inner class)
-        */
-        class Strand : public boost::asio::io_context::strand
-        {
-        public:
-            Strand(Trinity::Asio::IoContext& ioContext) : boost::asio::io_context::strand(ioContext) { }
-        };
+    using regex = TC_REGEX_NAMESPACE :: regex;
+    using wregex = TC_REGEX_NAMESPACE :: wregex;
 
-        using boost::asio::bind_executor;
-    }
+    using :: TC_REGEX_NAMESPACE :: regex_match;
+    using :: TC_REGEX_NAMESPACE :: regex_search;
 }
 
-#endif // Strand_h__
+#endif // TrinityCore_Regex_h__

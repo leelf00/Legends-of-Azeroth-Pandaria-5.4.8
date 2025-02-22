@@ -2710,7 +2710,7 @@ void WorldSession::HandleCharFactionOrRaceChange(WorldPacket& recvData)
                 do
                 {
                     uint32 skillId = (*result)[0].GetUInt16();
-                    auto info = GetSkillRaceClassInfo(skillId, race, playerClass);
+                    auto info = sDBCManager.GetSkillRaceClassInfo(skillId, race, playerClass);
                     if (!info)
                     {
                         CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHARACTER_SKILL);

@@ -127,7 +127,7 @@ void CharacterDatabaseCleaner::CleanCharacterSkills()
 
 bool CharacterDatabaseCleaner::SpellCheck(uint32 spell_id)
 {
-    return sSpellMgr->GetSpellInfo(spell_id) && !sDBCManager.sDBCManager.sDBCManager.GetTalentSpellPos(spell_id);
+    return sSpellMgr->GetSpellInfo(spell_id) && !sDBCManager.GetTalentSpellPos(spell_id);
 }
 
 void CharacterDatabaseCleaner::CleanCharacterSpell()

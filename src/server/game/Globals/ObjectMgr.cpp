@@ -3196,10 +3196,10 @@ void ObjectMgr::LoadItemTemplates()
 
         for (int j = 0; j < MAX_OUTFIT_ITEMS; ++j)
         {
-            if (entry->ItemId[j] <= 0)
+            if (entry->ItemID[j] <= 0)
                 continue;
 
-            uint32 item_id = entry->ItemId[j];
+            uint32 item_id = entry->ItemID[j];
 
             if (!GetItemTemplate(item_id))
                 notFoundOutfit.insert(item_id);
@@ -3531,10 +3531,10 @@ void ObjectMgr::PlayerCreateInfoAddItemHelper(uint32 race_, uint32 class_, uint3
                 bool found = false;
                 for (uint8 x = 0; x < MAX_OUTFIT_ITEMS; ++x)
                 {
-                    if (entry->ItemId[x] > 0 && uint32(entry->ItemId[x]) == itemId)
+                    if (entry->ItemID[x] > 0 && uint32(entry->ItemID[x]) == itemId)
                     {
                         found = true;
-                        const_cast<CharStartOutfitEntry*>(entry)->ItemId[x] = 0;
+                        const_cast<CharStartOutfitEntry*>(entry)->ItemID[x] = 0;
                         break;
                     }
                 }
@@ -3761,7 +3761,7 @@ void ObjectMgr::LoadPlayerInfo()
                         {
                             if (classMask == 0 || ((1 << (classIndex - 1)) & classMask))
                             {
-                                if (!GetSkillRaceClassInfo(skill, raceIndex, classIndex))
+                                if (!sDBCManager.GetSkillRaceClassInfo(skill, raceIndex, classIndex))
                                     continue;
 
                                 if (auto& info = _playerInfo[raceIndex][classIndex])
@@ -3800,7 +3800,7 @@ void ObjectMgr::LoadPlayerInfo()
                         {
                             if (PlayerInfo* info = _playerInfo[raceIndex][classIndex])
                             {
-                                info->skills.push_back(entry->Id);
+                                info->skills.push_back(entry->ID);
                                 ++count;
                             }
                         }
@@ -7707,7 +7707,7 @@ void ObjectMgr::LoadReputationSpilloverTemplate()
             continue;
         }
 
-        if (factionEntry->team == 0)
+        if (factionEntry->ParentFactionID == 0)
         {
             TC_LOG_ERROR("sql.sql", "Faction (faction.dbc) %u in `reputation_spillover_template` does not belong to any team, skipping", factionId);
             continue;
@@ -8776,7 +8776,7 @@ QuestPOIData const* ObjectMgr::GetQuestPOIData(uint32 questId)
 
 SkillRangeType GetSkillRangeType(SkillLineEntry const* pSkill, bool racial)
 {
-    switch (pSkill->categoryId)
+    switch (pSkill->CategoryID)
     {
         case SKILL_CATEGORY_LANGUAGES:
             return SKILL_RANGE_LANGUAGE;
@@ -8784,14 +8784,14 @@ SkillRangeType GetSkillRangeType(SkillLineEntry const* pSkill, bool racial)
             return SKILL_RANGE_LEVEL;
         case SKILL_CATEGORY_ARMOR:
         case SKILL_CATEGORY_CLASS:
-            if (pSkill->id != SKILL_LOCKPICKING)
+            if (pSkill->ID != SKILL_LOCKPICKING)
                 return SKILL_RANGE_MONO;
             else
                 return SKILL_RANGE_LEVEL;
         case SKILL_CATEGORY_SECONDARY:
         case SKILL_CATEGORY_PROFESSION:
             // not set skills for professions and racial abilities
-            if (IsProfessionSkill(pSkill->id))
+            if (IsProfessionSkill(pSkill->ID))
                 return SKILL_RANGE_RANK;
             else if (racial)
                 return SKILL_RANGE_NONE;
@@ -10960,7 +10960,7 @@ CreatureDifficultyInfo const* ObjectMgr::SelectDifficultyInfo(Map const* map, ui
     Difficulty difficulty = map->GetDifficulty();
     if (map->IsBattleground())
         if (auto newBracket = sDBCManager.GetBattlegroundBracketByLevel(map->GetId(), ((BattlegroundMap*)map)->GetBG()->GetMinLevel()))
-            difficulty = Difficulty(newBracket->bracketId + MAX_DIFFICULTY);
+            difficulty = Difficulty(newBracket->RangeIndex + MAX_DIFFICULTY);
 
     auto difficultyInfo = GetCreatureDifficultyInfo(difficulty, entry);
     if (difficultyInfo)

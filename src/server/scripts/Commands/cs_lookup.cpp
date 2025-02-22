@@ -778,9 +778,9 @@ public:
                 bool match = false;
                 for (int32 i = 0; i < TOTAL_LOCALES; ++i)
                 {
-                    if (*skillInfo->name)
+                    if (*skillInfo->DisplayName)
                     {
-                        name = skillInfo->name;
+                        name = skillInfo->DisplayName;
                         if (!Utf8FitTo(name, wNamePart))
                             continue;
 

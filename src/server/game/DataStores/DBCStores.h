@@ -39,21 +39,11 @@ enum ContentLevels
 };
 
 
-bool IsTotemCategoryCompatiableWith(uint32 itemTotemCategoryId, uint32 requiredTotemCategoryId);
-
-uint32 GetClassBySkillId(uint32 skillId);
-uint32 GetSkillIdByClass(uint32 classId);
-
-
 typedef std::vector<std::pair<int32, int32> > DigsitePOIPolygon;
 typedef std::map<uint32 /*digsiteId*/, DigsitePOIPolygon> DigsitePOIPolygonContainer;
 DigsitePOIPolygon const* GetDigsitePOIPolygon(uint32 digsiteId);
 
-uint32 GetDefaultMapLight(uint32 mapId);
-
 uint32 GetQuestUniqueBitFlag(uint32 questId);
-
-bool IsInArea(uint32 objectAreaId, uint32 areaId);
 
 typedef std::list<uint32> SimpleFactionsList;
 typedef std::map<uint32/*pair32(map, diff)*/, MapDifficulty> MapDifficultyMap;
@@ -97,12 +87,13 @@ TC_GAME_API extern DBCStorage <DurabilityCostsEntry>         sDurabilityCostsSto
 TC_GAME_API extern DBCStorage <DurabilityQualityEntry>       sDurabilityQualityStore;
 TC_GAME_API extern DBCStorage <EmotesEntry>                  sEmotesStore;
 TC_GAME_API extern DBCStorage <EmotesTextEntry>              sEmotesTextStore;
+TC_GAME_API extern DBCStorage <EmotesTextSoundEntry>         sEmotesTextSoundStore;
 TC_GAME_API extern DBCStorage <FactionEntry>                 sFactionStore;
 TC_GAME_API extern DBCStorage <FactionTemplateEntry>         sFactionTemplateStore;
 TC_GAME_API extern DBCStorage <GameObjectDisplayInfoEntry>   sGameObjectDisplayInfoStore;
 TC_GAME_API extern DBCStorage <GemPropertiesEntry>           sGemPropertiesStore;
 TC_GAME_API extern DBCStorage <GlyphPropertiesEntry>         sGlyphPropertiesStore;
-TC_GAME_API extern DBCStorage <GlyphSlotEntry>               sGlyphSlotStore;TC_GAME_API 
+TC_GAME_API extern DBCStorage <GlyphSlotEntry>               sGlyphSlotStore; 
 
 TC_GAME_API extern DBCStorage <GtBarberShopCostBaseEntry>    sGtBarberShopCostBaseStore;
 TC_GAME_API extern DBCStorage <GtBattlePetTypeDamageModEntry>sGtBattlePetTypeDamageModStore;
@@ -189,8 +180,6 @@ TC_GAME_API extern DBCStorage <SpellDurationEntry>           sSpellDurationStore
 TC_GAME_API extern DBCStorage <SpellFocusObjectEntry>        sSpellFocusObjectStore;
 TC_GAME_API extern DBCStorage <SpellItemEnchantmentEntry>    sSpellItemEnchantmentStore;
 TC_GAME_API extern DBCStorage <SpellItemEnchantmentConditionEntry> sSpellItemEnchantmentConditionStore;
-TC_GAME_API extern SpellCategoryStore                        sSpellsByCategoryStore;
-TC_GAME_API extern ClassBySkillIdStore                       sClassBySkillIdStore;
 TC_GAME_API extern SpellEffectScallingByEffectId             sSpellEffectScallingByEffectId;
 TC_GAME_API extern DBCStorage <SpecializationSpellsEntry>    sSpecializationSpellsStore;
 TC_GAME_API extern DBCStorage <SpellRadiusEntry>             sSpellRadiusStore;
@@ -280,9 +269,6 @@ public:
 };
 
 #define sDBCManager DBCManager::Instance()
-
-SkillRaceClassInfoEntry const* GetSkillRaceClassInfo(uint32 skill, uint32 race, uint32 classId);
-std::vector<SkillLineAbilityEntry const*> const* GetAbilitiesBySkill(uint32 skill);
 
 namespace dbc
 {

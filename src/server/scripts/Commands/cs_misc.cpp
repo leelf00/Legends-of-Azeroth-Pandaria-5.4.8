@@ -1670,7 +1670,7 @@ public:
 
         if (!target->GetSkillValue(skill))
         {
-            handler->PSendSysMessage(LANG_SET_SKILL_ERROR, tNameLink.c_str(), skill, skillLine->name[handler->GetSessionDbcLocale()]);
+            handler->PSendSysMessage(LANG_SET_SKILL_ERROR, tNameLink.c_str(), skill, skillLine->DisplayName);
             handler->SetSentErrorMessage(true);
             return false;
         }
@@ -1681,7 +1681,7 @@ public:
             return false;
 
         target->SetSkill(skill, target->GetSkillStep(skill), level, max);
-        handler->PSendSysMessage(LANG_SET_SKILL, skill, skillLine->name[handler->GetSessionDbcLocale()], tNameLink.c_str(), level, max);
+        handler->PSendSysMessage(LANG_SET_SKILL, skill, skillLine->DisplayName, tNameLink.c_str(), level, max);
 
         return true;
     }

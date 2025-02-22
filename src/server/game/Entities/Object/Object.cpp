@@ -3500,7 +3500,7 @@ void WorldObject::UpdateAreaAndZonePhase()
     // We first remove all phases from other areas & zones
     for (auto itr = allAreasPhases.begin(); itr != allAreasPhases.end(); ++itr)
         for (PhaseInfoStruct const& phase : itr->second)
-            if (!IsInArea(GetAreaId(), itr->first))
+            if (!sDBCManager.IsInArea(GetAreaId(), itr->first))
                 updateNeeded = SetPhased(phase.id, false, false) || updateNeeded; // not in area, remove phase, true if there was something removed
 
     // Then we add the phases from this area and zone if conditions are met
