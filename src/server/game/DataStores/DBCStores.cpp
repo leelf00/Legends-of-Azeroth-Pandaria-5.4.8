@@ -827,7 +827,7 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
 
 
 
-   // Initialize global taxinodes mask
+    // Initialize global taxinodes mask
     // include existed nodes that have at least single not spell base (scripted) path
     {
         std::set<uint32> spellPaths;
@@ -948,7 +948,7 @@ SpellEffectEntry const* GetSpellEffectEntry(uint32 spellId, uint32 effect, uint3
 {
     SpellEffectMap::const_iterator itr = sSpellEffectMap.find(spellId);
     if (itr == sSpellEffectMap.end())
-        return NULL;
+        return nullptr;
 
     if (itr->second.effects[difficulty][effect])
         return itr->second.effects[difficulty][effect];
@@ -982,13 +982,13 @@ WMOAreaTableEntry const* DBCManager::GetWMOAreaTableEntryByTripple(int32 rootid,
     return nullptr;
 }
 
-char const* DBCManager::GetRaceName(uint8 race, uint8 locale)
+char const* DBCManager::GetRaceName(uint8 race, uint8 /*locale*/)
 {
     ChrRacesEntry const* raceEntry = sChrRacesStore.LookupEntry(race);
     return raceEntry ? raceEntry->name : nullptr;
 }
 
-char const* DBCManager::GetClassName(uint8 class_, uint8 locale)
+char const* DBCManager::GetClassName(uint8 class_, uint8 /*locale*/)
 {
     ChrClassesEntry const* classEntry = sChrClassesStore.LookupEntry(class_);
     return classEntry ? classEntry->name : nullptr;
@@ -1456,29 +1456,6 @@ SkillRaceClassInfoEntry const* DBCManager::GetSkillRaceClassInfo(uint32 skill, u
     return nullptr;
 }
 
-uint32 GetQuestUniqueBitFlag(uint32 questId)
-{
-    QuestV2Entry const* v2 = sQuestV2Store.LookupEntry(questId);
-    if (!v2)
-        return 0;
-
-    return v2->UniqueBitFlag;
-}
-
-void dbc::FillItemSpecOverride(uint32 itemId, std::set<Specializations>& specs)
-{
-    auto bounds = sItemSpecOverrideByItemId.equal_range(itemId);
-    for (auto it = bounds.first; it != bounds.second; ++it)
-        specs.insert(Specializations(it->second));
-}
-
-void dbc::FillSpellPowers(uint32 spellId, std::vector<SpellPowerEntry const*>& powers)
-{
-    auto bounds = sSpellPowerMap.equal_range(spellId);
-    for (auto it = bounds.first; it != bounds.second; ++it)
-        powers.push_back(it->second);
-}
-
 std::vector<uint32> const* DBCManager::GetPhasesForGroup(uint32 group)
 {
     auto itr = sPhasesByGroup.find(group);
@@ -1486,6 +1463,23 @@ std::vector<uint32> const* DBCManager::GetPhasesForGroup(uint32 group)
         return &itr->second;
 
     return nullptr;
+}
+
+ResponseCodes DBCManager::ValidateName(std::wstring const& name, LocaleConstant locale)
+{
+    if (locale >= TOTAL_LOCALES)
+        return RESPONSE_FAILURE;
+
+    for (Trinity::wregex const& regex : NamesProfaneValidators[locale])
+        if (Trinity::regex_search(name, regex))
+            return CHAR_NAME_PROFANE;
+
+    // regexes at TOTAL_LOCALES are loaded from NamesReserved which is not locale specific
+    for (Trinity::wregex const& regex : NamesReservedValidators[locale])
+        if (Trinity::regex_search(name, regex))
+            return CHAR_NAME_RESERVED;
+
+    return CHAR_NAME_SUCCESS;
 }
 
 EmotesTextSoundEntry const* DBCManager::FindTextSoundEmoteFor(uint32 emote, uint32 race, uint32 gender)
@@ -1509,4 +1503,27 @@ bool DBCManager::IsInArea(uint32 objectAreaId, uint32 areaId)
     } while (objectAreaId);
 
     return false;
+}
+
+uint32 GetQuestUniqueBitFlag(uint32 questId)
+{
+    QuestV2Entry const* v2 = sQuestV2Store.LookupEntry(questId);
+    if (!v2)
+        return 0;
+
+    return v2->UniqueBitFlag;
+}
+
+void dbc::FillItemSpecOverride(uint32 itemId, std::set<Specializations>& specs)
+{
+    auto bounds = sItemSpecOverrideByItemId.equal_range(itemId);
+    for (auto it = bounds.first; it != bounds.second; ++it)
+        specs.insert(Specializations(it->second));
+}
+
+void dbc::FillSpellPowers(uint32 spellId, std::vector<SpellPowerEntry const*>& powers)
+{
+    auto bounds = sSpellPowerMap.equal_range(spellId);
+    for (auto it = bounds.first; it != bounds.second; ++it)
+        powers.push_back(it->second);
 }
