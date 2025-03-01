@@ -25608,22 +25608,21 @@ void Player::LearnDefaultSkill(SkillRaceClassInfoEntry const* entry)
 
 void Player::LearnSpecializationSpells()
 {
-    auto spells = dbc::GetSpecializetionSpells(GetTalentSpecialization());
-    if (!spells)
-        return;
-
-    uint8 level = GetLevel();
-    for (auto&& spell : *spells)
+    if (std::vector<SpecializationSpellsEntry const*> const* specSpells = sDBCManager.GetSpecializationSpells(GetTalentSpecialization()))
     {
-        SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(spell);
-        if (!spellInfo)
-            continue;
+        for (size_t j = 0; j < specSpells->size(); ++j)
+        {
+            SpecializationSpellsEntry const* specSpell = specSpells->at(j);
+            SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(specSpell->SpellID);
 
-        if (spellInfo->SpellLevel > level)
-            continue;
+            if (!spellInfo || spellInfo->SpellLevel > GetLevel())
+                continue;
 
-        LearnSpell(spellInfo->Id, true);
+            LearnSpell(spellInfo->Id, true);
+
+        }
     }
+
 }
 
 void Player::learnQuestRewardedSpells(Quest const* quest)
@@ -26221,6 +26220,10 @@ bool Player::IsSpellFitByClassAndRace(uint32 spell_id) const
 
         // skip wrong class skills
         if (_spell_idx->second->ClassMask && (_spell_idx->second->ClassMask & classmask) == 0)
+            continue;
+
+        // skip wrong class and race skill saved in SkillRaceClassInfo.dbc
+        if (!sDBCManager.GetSkillRaceClassInfo(_spell_idx->second->SkillLine, GetRace(), GetClass()))
             continue;
 
         return true;
