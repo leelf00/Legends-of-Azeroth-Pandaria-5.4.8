@@ -1456,12 +1456,14 @@ std::vector<SkillLineAbilityEntry const*> const* DBCManager::GetSkillLineAbiliti
 
 SkillRaceClassInfoEntry const* DBCManager::GetSkillRaceClassInfo(uint32 skill, uint8 race, uint8 class_)
 {
+    uint32 raceMask = race ? 1 << (race - 1) : RACEMASK_ALL_PLAYABLE;
+    uint32 classMask = class_ ? 1 << (class_ - 1) : CLASSMASK_ALL_PLAYABLE;    
     SkillRaceClassInfoBounds bounds = SkillRaceClassInfoBySkill.equal_range(skill);
     for (SkillRaceClassInfoMap::iterator itr = bounds.first; itr != bounds.second; ++itr)
     {
-        if (itr->second->RaceMask && !(itr->second->RaceMask & (1 << (race - 1))))
+        if (itr->second->RaceMask && !(itr->second->RaceMask & raceMask))
             continue;
-        if (itr->second->ClassMask && !(itr->second->ClassMask & (1 << (class_ - 1))))
+        if (itr->second->ClassMask && !(itr->second->ClassMask & classMask))
             continue;
 
         return itr->second;

@@ -1398,7 +1398,7 @@ void SpellMgr::LoadSpellLearnSkills()
                     dbcNode.maxvalue = dbcNode.step * 75;
                 }
 
-                mSpellLearnSkills[spell] = dbcNode;
+                mSpellLearnSkills[entry->ID] = dbcNode;
                 ++dbc_count;
                 break;
             }
