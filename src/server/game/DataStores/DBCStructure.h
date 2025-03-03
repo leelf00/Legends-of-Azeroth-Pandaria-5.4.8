@@ -2165,9 +2165,9 @@ struct SoundEntriesEntry
 
 struct SpecializationSpellsEntry
 {
-    uint32 Id;                  // 0
-    uint32 SpecializationId;    // 1
-    uint32 SpellId;             // 2
+    uint32 ID;                  // 0
+    uint32 SpecID;              // 1
+    uint32 SpellID;             // 2
     uint32 RemovesSpellId;      // 3
 };
 

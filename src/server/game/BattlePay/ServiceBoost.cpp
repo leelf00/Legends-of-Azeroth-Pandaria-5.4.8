@@ -373,16 +373,19 @@ std::string CharacterBooster::_SetSpecialization(CharacterDatabaseTransaction tr
 
     for (auto&& spec : dbc::GetClassSpecializations(classId))
     {
-        if (std::vector<uint32> const* spells = dbc::GetSpecializetionSpells(spec))
+        
+        if (std::vector<SpecializationSpellsEntry const*> const* specSpells = sDBCManager.GetSpecializationSpells(spec))
         {
-            for (auto&& spell : *spells)
+            for (size_t j = 0; j < specSpells->size(); ++j)
             {
+                SpecializationSpellsEntry const* specSpell = specSpells->at(j);
                 stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_SPELL_BY_SPELL);
-                stmt->setUInt32(0, spell);
+                stmt->setUInt32(0, specSpell->SpellID);
                 stmt->setUInt32(1, m_charBoostInfo.charGuid.GetCounter());
                 trans->Append(stmt);
             }
         }
+        
     }
 
     stmt = CharacterDatabase.GetPreparedStatement(CHAR_DEL_CHAR_TALENT);

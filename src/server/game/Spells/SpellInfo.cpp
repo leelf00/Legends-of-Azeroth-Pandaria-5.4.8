@@ -1153,11 +1153,11 @@ SpellInfo::SpellInfo(SpellEntry const* spellEntry, uint32 difficulty, uint32 tar
         if (!specializationInfo)
             continue;
 
-        if (specializationInfo->SpellId == Id)
-            SpecializationIdList.push_back(specializationInfo->SpecializationId);
+        if (specializationInfo->SpellID == Id)
+            SpecializationIdList.push_back(specializationInfo->SpecID);
 
         if (specializationInfo->RemovesSpellId == Id)
-            OverrideSpellList.push_back(specializationInfo->SpellId);
+            OverrideSpellList.push_back(specializationInfo->SpellID);
     }
 
     ChainEntry = NULL;

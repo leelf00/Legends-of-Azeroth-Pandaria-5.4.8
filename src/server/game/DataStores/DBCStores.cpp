@@ -237,9 +237,12 @@ DBCStorage <SpellShapeshiftFormEntry> sSpellShapeshiftFormStore(SpellShapeshiftF
 DBCStorage <SummonPropertiesEntry> sSummonPropertiesStore(SummonPropertiesfmt);
 DBCStorage <TalentEntry> sTalentStore(TalentEntryfmt);
 TalentSpellPosMap sTalentSpellPosMap;
-typedef std::map<uint32, std::vector<uint32> > SpecializationSpellsMap;
+//typedef std::map<uint32, std::vector<uint32> > SpecializationSpellsMap;
+typedef std::unordered_map<uint32, std::vector<SpecializationSpellsEntry const*>> SpecializationSpellsContainer;
 
-static SpecializationSpellsMap sSpecializationSpellsMap;
+
+//static SpecializationSpellsMap _specializationSpellsBySpec;
+static SpecializationSpellsContainer _specializationSpellsBySpec;
 
 // store absolute bit position for first rank for talent inspect
 static dbc::TalentTabs sSpecializationClassStore[MAX_CLASSES]{ 0 };
@@ -752,6 +755,9 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
         if (SpecializationSpellsEntry const* specializationSpells = sSpecializationSpellsStore.LookupEntry(j))
             sSpecializationSpellsMap[specializationSpells->SpecializationId].push_back(specializationSpells->SpellId);
 
+    for (SpecializationSpellsEntry const* specSpells : sSpecializationSpellsStore)
+        _specializationSpellsBySpec[specSpells->SpecID].push_back(specSpells);
+
     // Create Spelldifficulty searcher
 
     // create talent spells set
@@ -1101,13 +1107,23 @@ void DBCManager::Map2ZoneCoordinates(float& x, float& y, uint32 zone)
     std::swap(x, y);                                         // client have map coords swapped
 }
 
-std::vector<uint32> const* dbc::GetSpecializetionSpells(uint32 specializationId)
+// std::vector<uint32> const* dbc::GetSpecializetionSpells(uint32 specializationId)
+// {
+//     auto it = _specializationSpellsBySpec.find(specializationId);
+//     if (it == _specializationSpellsBySpec.end())
+//         return nullptr;
+//     return &it->second;
+// }
+
+std::vector<SpecializationSpellsEntry const*> const* DBCManager::GetSpecializationSpells(uint32 specId) const
 {
-    auto it = sSpecializationSpellsMap.find(specializationId);
-    if (it == sSpecializationSpellsMap.end())
-        return nullptr;
-    return &it->second;
+    auto itr = _specializationSpellsBySpec.find(specId);
+    if (itr != _specializationSpellsBySpec.end())
+        return &itr->second;
+
+    return nullptr;
 }
+
 
 MapDifficulty const* DBCManager::GetMapDifficultyData(uint32 mapId, Difficulty difficulty)
 {
@@ -1442,12 +1458,14 @@ std::vector<SkillLineAbilityEntry const*> const* DBCManager::GetSkillLineAbiliti
 
 SkillRaceClassInfoEntry const* DBCManager::GetSkillRaceClassInfo(uint32 skill, uint8 race, uint8 class_)
 {
+    uint32 raceMask = race ? 1 << (race - 1) : RACEMASK_ALL_PLAYABLE;
+    uint32 classMask = class_ ? 1 << (class_ - 1) : CLASSMASK_ALL_PLAYABLE;    
     SkillRaceClassInfoBounds bounds = SkillRaceClassInfoBySkill.equal_range(skill);
     for (SkillRaceClassInfoMap::iterator itr = bounds.first; itr != bounds.second; ++itr)
     {
-        if (itr->second->RaceMask && !(itr->second->RaceMask & (1 << (race - 1))))
+        if (itr->second->RaceMask && !(itr->second->RaceMask & raceMask))
             continue;
-        if (itr->second->ClassMask && !(itr->second->ClassMask & (1 << (class_ - 1))))
+        if (itr->second->ClassMask && !(itr->second->ClassMask & classMask))
             continue;
 
         return itr->second;

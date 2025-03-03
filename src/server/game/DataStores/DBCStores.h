@@ -266,6 +266,7 @@ public:
     SkillRaceClassInfoEntry const* GetSkillRaceClassInfo(uint32 skill, uint8 race, uint8 class_);
     ResponseCodes ValidateName(std::wstring const& name, LocaleConstant locale);
     EmotesTextSoundEntry const* FindTextSoundEmoteFor(uint32 emote, uint32 race, uint32 gender); 
+    std::vector<SpecializationSpellsEntry const*> const* GetSpecializationSpells(uint32 specId) const;
 };
 
 #define sDBCManager DBCManager::Instance()
@@ -274,8 +275,6 @@ namespace dbc
 {
     void FillItemSpecOverride(uint32 itemId, std::set<Specializations>& specs);
     void FillSpellPowers(uint32 spellId, std::vector<SpellPowerEntry const*>& powers);
-
-    std::vector<uint32> const* GetSpecializetionSpells(uint32 specializationId);
 
     typedef std::array<uint32, MAX_TALENT_TABS> TalentTabs;
     TalentTabs GetClassSpecializations(uint8 classId);
