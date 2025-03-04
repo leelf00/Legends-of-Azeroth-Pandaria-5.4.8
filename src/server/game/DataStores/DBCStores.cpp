@@ -751,9 +751,9 @@ void DBCManager::LoadDBCStores(const std::string& dataPath, uint32 defaultLocale
         //     }
         // }
     }
-    for (uint32 j = 0; j < sSpecializationSpellsStore.GetNumRows(); j++)
-        if (SpecializationSpellsEntry const* specializationSpells = sSpecializationSpellsStore.LookupEntry(j))
-            sSpecializationSpellsMap[specializationSpells->SpecializationId].push_back(specializationSpells->SpellId);
+    // for (uint32 j = 0; j < sSpecializationSpellsStore.GetNumRows(); j++)
+    //     if (SpecializationSpellsEntry const* specializationSpells = sSpecializationSpellsStore.LookupEntry(j))
+    //         _specializationSpellsBySpec[specializationSpells->SpecID].push_back(specializationSpells->SpellID);
 
     for (SpecializationSpellsEntry const* specSpells : sSpecializationSpellsStore)
         _specializationSpellsBySpec[specSpells->SpecID].push_back(specSpells);
