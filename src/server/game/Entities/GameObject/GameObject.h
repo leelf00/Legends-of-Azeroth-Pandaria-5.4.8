@@ -360,7 +360,7 @@ class TC_GAME_API GameObject : public WorldObject, public GridObject<GameObject>
         EventProcessor m_Events;
         
         bool AIM_Initialize();
-
+        void AddDelayedEvent(uint64 timeOffset, std::function<void()>&& function);
     protected:
         void CreateModel();
         void UpdateModel();                                 // updates model in case displayId were changed
@@ -411,6 +411,7 @@ class TC_GAME_API GameObject : public WorldObject, public GridObject<GameObject>
         }
         GameObjectAI* m_AI;
         uint16 _animKitId;
+        FunctionProcessor _functions_delayed;
 };
 
 class ForcedGoDespawnDelayEvent : public BasicEvent

@@ -174,6 +174,8 @@ enum SpellAuraInterruptFlags2
     AURA_INTERRUPT_FLAG2_ENCOUNTER_START            = 0x00000100,
 };
 
+enum SpellAuraInterruptFlags : uint32;
+
 uint32 GetTargetFlagMask(SpellTargetObjectTypes objType);
 
 class SpellImplicitTargetInfo

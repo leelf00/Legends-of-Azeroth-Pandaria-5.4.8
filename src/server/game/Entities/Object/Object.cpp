@@ -55,6 +55,8 @@
 #include "World.h"
 #include "WorldPacket.h"
 
+#include "Physics.h"
+
 #define STEALTH_VISIBILITY_UPDATE_TIMER 500
 
 constexpr float VisibilityDistances[AsUnderlyingType(VisibilityDistanceType::Max)] =
@@ -2060,6 +2062,23 @@ bool IgnoreMultipleFloors(uint32 entry)
         default:
             return false;
     }
+}
+
+/**
+ * @brief Get the minimum height of a object that should be in water
+ * to start floating/swim
+ *
+ * @return float
+ */
+float WorldObject::GetMinHeightInWater() const
+{
+    // have a fun with Archimedes' formula
+    auto height = GetCollisionHeight();
+    auto width = GetCollisionWidth();
+    auto weight = getWeight(height, width, 1040); // avg human specific weight
+    auto heightOutOfWater = getOutOfWater(width, weight, 10202) * 4.0f; // avg human density
+    auto heightInWater = height - heightOutOfWater;
+    return (height > heightInWater ? heightInWater : (height - (height / 3)));
 }
 
 void WorldObject::UpdateAllowedPositionZ(float x, float y, float &z, float* groundZ) const

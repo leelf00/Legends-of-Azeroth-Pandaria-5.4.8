@@ -35,7 +35,7 @@ void WorldSession::HandeSetTalentSpecialization(WorldPacket& recvData)
     if (specializationTabId > MAX_TALENT_TABS)
         return;
 
-    if (_player->GetTalentSpecialization(_player->GetActiveSpec()))
+    if (_player->GetTalentSpecialization(_player->GetActiveSpec()) && !_player->GetSession()->IsBot())
         return;
 
     uint32 specializationId = dbc::GetClassSpecializations(_player->GetClass())[specializationTabId];
@@ -62,7 +62,7 @@ void WorldSession::HandleLearnTalentOpcode(WorldPacket& recvData)
     }
 
     uint32 talentCount = recvData.ReadBits(23);
-    uint16 talentId;
+    uint16 talentId = 0;
     bool anythingLearned = false;
 
     for (int i = 0; i != talentCount; i++)

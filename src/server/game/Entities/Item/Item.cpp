@@ -1176,31 +1176,32 @@ void Item::SendTimeUpdate(Player* owner)
     owner->GetSession()->SendPacket(&data);
 }
 
-Item* Item::CreateItem(uint32 itemEntry, uint32 count, Player const* player)
+Item* Item::CreateItem(uint32 item, uint32 count, Player const* player, bool temp)
 {
     if (count < 1)
-        return NULL;                                        //don't create item at zero count
+        return nullptr;                                        //don't create item at zero count
 
-    ItemTemplate const* proto = sObjectMgr->GetItemTemplate(itemEntry);
-    if (proto)
+    ItemTemplate const* pProto = sObjectMgr->GetItemTemplate(item);
+    if (pProto)
     {
-        if (count > proto->GetMaxStackSize())
-            count = proto->GetMaxStackSize();
+        if (count > pProto->GetMaxStackSize())
+            count = pProto->GetMaxStackSize();
 
         ASSERT(count != 0 && "pProto->Stackable == 0 but checked at loading already");
 
-        Item* item = NewItemOrBag(proto);
-        if (item->Create(sObjectMgr->GetGenerator<HighGuid::Item>().Generate(), itemEntry, player))
+        Item* pItem = NewItemOrBag(pProto);
+        uint32 guid = temp ? 0xFFFFFFFF : sObjectMgr->GetGenerator<HighGuid::Item>().Generate();
+        if (pItem->Create(guid, item, player))
         {
-            item->SetCount(count);
-            return item;
+            pItem->SetCount(count);
+            return pItem;
         }
         else
-            delete item;
+            delete pItem;
     }
     else
-        ASSERT(false);
-    return NULL;
+        ABORT();
+    return nullptr;
 }
 
 Item* Item::CloneItem(uint32 count, Player const* player) const

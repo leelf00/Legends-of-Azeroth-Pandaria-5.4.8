@@ -350,6 +350,11 @@ bool GameObject::Create(ObjectGuid::LowType guidlow, uint32 name_id, Map* map, u
     return true;
 }
 
+void GameObject::AddDelayedEvent(uint64 timeOffset, std::function<void()>&& function)
+{
+    _functions_delayed.AddDelayedEvent(timeOffset, std::move(function));
+}
+
 void GameObject::Update(uint32 diff)
 {
     // WARNING! Order of execution here is important, do not change.
@@ -363,6 +368,8 @@ void GameObject::Update(uint32 diff)
         AI()->UpdateAI(diff);
     else if (!AIM_Initialize())
         TC_LOG_ERROR("misc", "Could not initialize GameObjectAI");
+
+    _functions_delayed.Update(diff);
 
     switch (m_lootState)
     {

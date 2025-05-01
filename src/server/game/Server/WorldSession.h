@@ -232,7 +232,7 @@ class CharacterCreateInfo
     friend class WorldSession;
     friend class Player;
 
-    protected:
+    public:
         CharacterCreateInfo(std::string const& name, uint8 race, uint8 cclass, uint8 gender, uint8 skin, uint8 face, uint8 hairStyle, uint8 hairColor, uint8 facialHair, uint8 outfitId,
         WorldPacket& data) : Name(name), Race(race), Class(cclass), Gender(gender), Skin(skin), Face(face), HairStyle(hairStyle), HairColor(hairColor), FacialHair(facialHair),
         OutfitId(outfitId), Data(data), CharCount(0)
@@ -278,7 +278,7 @@ struct MuteInfo
 class TC_GAME_API WorldSession 
 {
     public:
-        WorldSession(uint32 id, std::shared_ptr<WorldSocket> sock, AccountTypes sec, uint8 expansion, time_t mute_time, LocaleConstant locale, uint32 recruiter, uint32 flags, bool isARecruiter, bool hasBoost);
+        WorldSession(uint32 id, std::shared_ptr<WorldSocket> sock, AccountTypes sec, uint8 expansion, time_t mute_time, LocaleConstant locale, uint32 recruiter, uint32 flags, bool isARecruiter, bool hasBoost, bool isBot = false);
         ~WorldSession();
 
         bool PlayerLoading() const { return m_playerLoading; }
@@ -338,6 +338,8 @@ class TC_GAME_API WorldSession
 
         /// Is the user engaged in a log out process?
         bool isLogingOut() const { return _logoutTime || m_playerLogout; }
+
+        bool IsBot() { return _isBot; }
 
         /// Engage the logout process for the user
         void SetLogoutStartTime(time_t requestTime)
@@ -1168,6 +1170,9 @@ class TC_GAME_API WorldSession
 
         bool ChannelCheck(std::string channel);
 
+        // bot
+        bool HandleSocketClosed();
+
         union ConnectToKey
         {
             struct
@@ -1288,6 +1293,7 @@ class TC_GAME_API WorldSession
         uint32 recruiterId;
         bool isRecruiter;
         bool m_hasBoost;
+        bool _isBot;
         LockedQueue<WorldPacket*> _recvQueue;
         uint32 expireTime;
         time_t timeLastWhoCommand;

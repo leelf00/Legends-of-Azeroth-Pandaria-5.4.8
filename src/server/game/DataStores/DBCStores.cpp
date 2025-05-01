@@ -76,6 +76,7 @@ DBCStorage <ChrClassesEntry> sChrClassesStore(ChrClassesEntryfmt);
 DBCStorage <ChrRacesEntry> sChrRacesStore(ChrRacesEntryfmt);
 DBCStorage <ChrPowerTypesEntry> sChrPowerTypesStore(ChrClassesXPowerTypesfmt);
 DBCStorage <ChrSpecializationEntry> sChrSpecializationStore(ChrSpecializationfmt);
+DBCStorage <CharSectionsEntry> sChrSectionStore(CharSectionsEntryfmt);
 DBCStorage <CinematicCameraEntry> sCinematicCameraStore(CinematicCameraEntryfmt);
 DBCStorage <CinematicSequencesEntry> sCinematicSequencesStore(CinematicSequencesEntryfmt);
 DBCStorage <CreatureDisplayInfoEntry> sCreatureDisplayInfoStore(CreatureDisplayInfofmt);
@@ -411,7 +412,7 @@ void LoadDBCStores(const std::string& dataPath, uint32& availableDbcLocales)
             PowersByClass[power->classId][power->power] = index;
         }
     }
-
+    LoadDBC(availableDbcLocales, bad_dbc_files, sChrSectionStore,             dbcPath, "CharSections.dbc");
     LoadDBC(availableDbcLocales, bad_dbc_files, sCinematicCameraStore,        dbcPath, "CinematicCamera.dbc");
     LoadDBC(availableDbcLocales, bad_dbc_files, sCinematicSequencesStore,     dbcPath, "CinematicSequences.dbc");//15595
     LoadDBC(availableDbcLocales, bad_dbc_files, sCreatureDisplayInfoStore,    dbcPath, "CreatureDisplayInfo.dbc");//15595

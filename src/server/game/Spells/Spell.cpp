@@ -6407,10 +6407,14 @@ SpellCastResult Spell::CheckCast(bool strict)
     // also, such casts shouldn't be sent to client
     if (!((m_spellInfo->Attributes & SPELL_ATTR0_PASSIVE) && (!m_targets.GetUnitTarget() || m_targets.GetUnitTarget() == m_caster)))
     {
+        /* HERE */
         // Check explicit target for m_originalCaster - todo: get rid of such workarounds
         SpellCastResult castResult = m_spellInfo->CheckExplicitTarget(m_originalCaster ? m_originalCaster : m_caster, m_targets.GetObjectTarget(), m_targets.GetItemTarget());
         if (castResult != SPELL_CAST_OK)
+        {
+            TC_LOG_DEBUG("", "");
             return castResult;
+        }
     }
 
     if (Unit* target = m_targets.GetUnitTarget())

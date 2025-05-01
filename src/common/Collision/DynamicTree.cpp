@@ -218,9 +218,11 @@ bool DynamicMapTree::getIntersectionTime(const uint32 phasemask, const G3D::Ray&
 {
     float distance = maxDist;
     DynamicTreeIntersectionCallback callback(phasemask);
-    impl->intersectRay(ray, callback, distance, endPos);
+    impl->intersectRay(ray, callback, distance, endPos, false);
     if (callback.didHit())
+    {
         maxDist = distance;
+    }
     return callback.didHit();
 }
 
@@ -275,7 +277,7 @@ bool DynamicMapTree::isInLineOfSight(float x1, float y1, float z1, float x2, flo
 
     G3D::Ray r(v1, (v2-v1) / maxDist);
     DynamicTreeIntersectionCallback callback(phasemask);
-    impl->intersectRay(r, callback, maxDist, v2);
+    impl->intersectRay(r, callback, maxDist, v2, true);
 
     return !callback.did_hit;
 }
@@ -329,4 +331,63 @@ void DynamicMapTree::getAreaAndLiquidData(float x, float y, float z, uint32 phas
             intersectionCallBack.GetLocationInfo().hitModel->GetWmoID(),
             intersectionCallBack.GetLocationInfo().hitModel->GetMogpFlags());
     }
+}
+
+
+bool DynamicMapTree::GetIntersectionTime(const uint32 phasemask, const G3D::Ray& ray, const G3D::Vector3& endPos, float& maxDist) const
+{
+    float distance = maxDist;
+    DynamicTreeIntersectionCallback callback(phasemask);
+    impl->intersectRay(ray, callback, distance, endPos, false);
+    if (callback.didHit())
+    {
+        maxDist = distance;
+    }
+    return callback.didHit();
+}
+
+bool DynamicMapTree::GetObjectHitPos(const uint32 phasemask, const G3D::Vector3& startPos,
+    const G3D::Vector3& endPos, G3D::Vector3& resultHit,
+    float modifyDist) const
+{
+    bool result = false;
+    float maxDist = (endPos - startPos).magnitude();
+    // valid map coords should *never ever* produce float overflow, but this would produce NaNs too
+    ASSERT(maxDist < std::numeric_limits<float>::max());
+    // prevent NaN values which can cause BIH intersection to enter infinite loop
+    if (maxDist < 1e-10f)
+    {
+        resultHit = endPos;
+        return false;
+    }
+    G3D::Vector3 dir = (endPos - startPos) / maxDist;            // direction with length of 1
+    G3D::Ray ray(startPos, dir);
+    float dist = maxDist;
+    if (GetIntersectionTime(phasemask, ray, endPos, dist))
+    {
+        resultHit = startPos + dir * dist;
+        if (modifyDist < 0)
+        {
+            if ((resultHit - startPos).magnitude() > -modifyDist)
+            {
+                resultHit = resultHit + dir * modifyDist;
+            }
+            else
+            {
+                resultHit = startPos;
+            }
+        }
+        else
+        {
+            resultHit = resultHit + dir * modifyDist;
+        }
+
+        result = true;
+    }
+    else
+    {
+        resultHit = endPos;
+        result = false;
+    }
+    return result;
 }

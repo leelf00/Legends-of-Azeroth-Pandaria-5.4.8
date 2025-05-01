@@ -619,9 +619,9 @@ class spell_common_unlearn_talent : public SpellScript
             switch (talent->SpellId)
             {
                 case 137619: // Marked for Death
-                    if (Unit* target = ObjectAccessor::GetUnit(*player, player->GetComboTarget()))
+                    if (player->GetComboTarget())
                     {
-                        target->RemoveAurasDueToSpell(talent->SpellId);
+                        player->GetComboTarget()->RemoveAurasDueToSpell(talent->SpellId);
                         player->ClearComboPoints();
                     }
                     break;

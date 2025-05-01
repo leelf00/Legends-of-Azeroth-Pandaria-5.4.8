@@ -4992,8 +4992,8 @@ void AuraEffect::HandleAuraRetainComboPoints(AuraApplication const* aurApp, uint
     // combo points was added in SPELL_EFFECT_ADD_COMBO_POINTS handler
     // remove only if aura expire by time (in case combo points amount change aura removed without combo points lost)
     if (!(apply) && GetBase()->GetDuration() == 0 && target->ToPlayer()->GetComboTarget())
-        if (Unit* unit = ObjectAccessor::GetUnit(*target, target->ToPlayer()->GetComboTarget()))
-            target->ToPlayer()->AddComboPoints(unit, -GetAmount());
+        if (target->ToPlayer()->GetComboTarget())
+            target->ToPlayer()->AddComboPoints(target->ToPlayer()->GetComboTarget(), -GetAmount());
 }
 
 /*********************************************************/
@@ -5139,8 +5139,8 @@ void AuraEffect::HandleAuraDummy(AuraApplication const* aurApp, uint8 mode, bool
                     break;
                 case 52916: // Honor Among Thieves
                     if (target->GetTypeId() == TYPEID_PLAYER)
-                        if (Unit* spellTarget = ObjectAccessor::GetUnit(*target, target->ToPlayer()->GetComboTarget()))
-                            target->CastSpell(spellTarget, 51699, true);
+                        if (target->ToPlayer()->GetComboTarget())
+                            target->CastSpell(target->ToPlayer()->GetComboTarget(), 51699, true);
                    break;
                 case 63322: // Saronite Vapors
                 {

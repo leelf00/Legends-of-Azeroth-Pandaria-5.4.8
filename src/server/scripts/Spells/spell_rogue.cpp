@@ -1477,9 +1477,7 @@ class spell_rog_honor_among_thieves : public AuraScript
             if (!rogue->IsInCombat())
                 return;
 
-            Unit* target = nullptr;
-            if (ObjectGuid guid = rogue->ToPlayer()->GetComboTarget())
-                target = ObjectAccessor::GetUnit(*rogue, guid);
+            Unit* target = rogue->ToPlayer()->GetComboTarget();
             if (!target)
                 target = rogue->GetVictim();
             if (!target)
@@ -1572,8 +1570,8 @@ class spell_rog_fan_of_knives : public SpellScript
 
         if (Player* rogue = GetCaster()->ToPlayer())
         {
-            if (Unit* comboTarget = ObjectAccessor::GetUnit(*rogue, rogue->GetComboTarget()))
-                target = comboTarget;
+            if (rogue->GetComboTarget())
+                target = rogue->GetComboTarget();
             else if (Unit* comboTarget = ObjectAccessor::GetUnit(*rogue, rogue->GetTarget()))
             {
                 if (rogue->IsValidAttackTarget(comboTarget))
@@ -2114,7 +2112,7 @@ class spell_rog_redirect : public SpellScript
             return SPELL_FAILED_DONT_REPORT;
         if (!rogue->GetComboPoints())
             return SPELL_FAILED_NO_COMBO_POINTS;
-        if (rogue->GetComboTarget() == GetSpell()->m_targets.GetUnitTargetGUID())
+        if (!rogue->GetComboTarget() || (rogue->GetComboTarget() && rogue->GetComboTarget()->GetGUID() == GetSpell()->m_targets.GetUnitTargetGUID()))
             return SPELL_FAILED_BAD_TARGETS;
 
         return SPELL_CAST_OK;

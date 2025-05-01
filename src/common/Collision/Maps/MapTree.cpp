@@ -480,4 +480,53 @@ namespace VMAP
         models = iTreeValues;
         count = iNTreeValues;
     }
+
+    //=========================================================
+    /**
+    When moving from pos1 to pos2 check if we hit an object. Return true and the position if we hit one
+    Return the hit pos or the original dest pos
+    */
+    bool StaticMapTree::GetObjectHitPos(const G3D::Vector3& pPos1, const G3D::Vector3& pPos2, G3D::Vector3& pResultHitPos, float pModifyDist) const
+    {
+        bool result = false;
+        float maxDist = (pPos2 - pPos1).magnitude();
+        // valid map coords should *never ever* produce float overflow, but this would produce NaNs too
+        ASSERT(maxDist < std::numeric_limits<float>::max());
+        // prevent NaN values which can cause BIH intersection to enter infinite loop
+        if (maxDist < 1e-10f)
+        {
+            pResultHitPos = pPos2;
+            return false;
+        }
+        G3D::Vector3 dir = (pPos2 - pPos1) / maxDist;            // direction with length of 1
+        G3D::Ray ray(pPos1, dir);
+        float dist = maxDist;
+        if (getIntersectionTime(ray, dist, false, ModelIgnoreFlags::Nothing))
+        {
+            pResultHitPos = pPos1 + dir * dist;
+            if (pModifyDist < 0)
+            {
+                if ((pResultHitPos - pPos1).magnitude() > -pModifyDist)
+                {
+                    pResultHitPos = pResultHitPos + dir * pModifyDist;
+                }
+                else
+                {
+                    pResultHitPos = pPos1;
+                }
+            }
+            else
+            {
+                pResultHitPos = pResultHitPos + dir * pModifyDist;
+            }
+            result = true;
+        }
+        else
+        {
+            pResultHitPos = pPos2;
+            result = false;
+        }
+        return result;
+    }
+    //=========================================================
 }

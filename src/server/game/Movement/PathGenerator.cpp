@@ -1300,3 +1300,56 @@ void PathGenerator::AddFarFromPolyFlags(bool startFarFromPoly, bool endFarFromPo
     if (endFarFromPoly)
         _type = PathType(_type | PATHFIND_FARFROMPOLY_END);
 }
+
+[[nodiscard]] inline float getSlopeAngle(float startX, float startY, float startZ, float destX, float destY, float destZ)
+{
+    float floorDist = std::sqrt(pow(startY - destY, 2.0f) + pow(startX - destX, 2.0f));
+    return atan(std::abs(destZ - startZ) / std::abs(floorDist));
+}
+
+[[nodiscard]] inline float getSlopeAngleAbs(float startX, float startY, float startZ, float destX, float destY, float destZ)
+{
+    return std::abs(getSlopeAngle(startX, startY, startZ, destX, destY, destZ));
+}
+
+/**
+ * @brief Return the height of a slope that can be climbed based on source height
+ * This method is meant for short distances or linear paths
+ *
+ * @param x start x coord
+ * @param y start y coord
+ * @param z start z coord
+ * @param destX destination x coord
+ * @param destY destination y coord
+ * @param destZ destination z coord
+ * @param sourceHeight height of the source
+ * @return float the maximum height that a source can climb based on slope angle
+ */
+float PathGenerator::GetRequiredHeightToClimb(float x, float y, float z, float destX, float destY, float destZ, float sourceHeight)
+{
+    float slopeAngle = getSlopeAngleAbs(x, y, z, destX, destY, destZ);
+    float slopeAngleDegree = (slopeAngle * 180.0f / M_PI);
+    float climbableHeight = sourceHeight - (sourceHeight * (slopeAngleDegree / 100));
+    return climbableHeight;
+}
+
+/**
+ * @brief Check if a slope can be climbed based on source height
+ * This method is meant for short distances or linear paths
+ *
+ * @param x start x coord
+ * @param y start y coord
+ * @param z start z coord
+ * @param destX destination x coord
+ * @param destY destination y coord
+ * @param destZ destination z coord
+ * @param sourceHeight height of the source
+ * @return bool check if you can climb the path
+ */
+bool PathGenerator::IsWalkableClimb(float x, float y, float z, float destX, float destY, float destZ, float sourceHeight)
+{
+    float diffHeight = std::abs(destZ - z);
+    float reqHeight = GetRequiredHeightToClimb(x, y, z, destX, destY, destZ, sourceHeight);
+    // check walkable slopes, based on unit height
+    return diffHeight <= reqHeight;
+}

@@ -301,6 +301,7 @@ typedef std::map<uint32/*leaderDBGUID*/, CreatureGroup*> CreatureGroupHolderType
 
 typedef std::unordered_map<uint32 /*zoneId*/, ZoneDynamicInfo> ZoneDynamicInfoMap;
 
+class PathGenerator;
 class TC_GAME_API Map : public GridRefManager<NGridType>
 {
     friend class MapReference;
@@ -644,6 +645,16 @@ class TC_GAME_API Map : public GridRefManager<NGridType>
 
         ActivePoolData& GetPoolData() { return *_poolData; }
         ActivePoolData const& GetPoolData() const { return *_poolData; }
+
+        /* BOT HELPER FUNCTION*/
+        [[nodiscard]] bool HasEnoughWater(WorldObject const* searcher, float x, float y, float z) const;
+        [[nodiscard]] bool HasEnoughWater(WorldObject const* searcher, const LiquidData* liquidData) const;
+
+        bool CanReachPositionAndGetValidCoords(WorldObject const* source, PathGenerator* path, float& destX, float& destY, float& destZ, bool failOnCollision = true, bool failOnSlopes = true) const;
+        bool CanReachPositionAndGetValidCoords(WorldObject const* source, float& destX, float& destY, float& destZ, bool failOnCollision = true, bool failOnSlopes = true) const;
+        bool CanReachPositionAndGetValidCoords(WorldObject const* source, float startX, float startY, float startZ, float& destX, float& destY, float& destZ, bool failOnCollision = true, bool failOnSlopes = true) const;
+        bool CheckCollisionAndGetValidCoords(WorldObject const* source, float startX, float startY, float startZ, float& destX, float& destY, float& destZ, bool failOnCollision = true) const;
+        bool GetObjectHitPos(uint32 phasemask, float x1, float y1, float z1, float x2, float y2, float z2, float& rx, float& ry, float& rz, float modifyDist);
 
     private:
         void LoadMapAndVMap(int gx, int gy);

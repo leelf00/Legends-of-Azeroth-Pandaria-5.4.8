@@ -367,4 +367,35 @@ namespace VMAP
         instanceMapTree = iInstanceMapTrees;
     }
 
+    /**
+    get the hit position and return true if we hit something
+    otherwise the result pos will be the dest pos
+    */
+    bool VMapManager2::GetObjectHitPos(unsigned int mapId, float x1, float y1, float z1, float x2, float y2, float z2, float& rx, float& ry, float& rz, float modifyDist)
+    {
+#if defined(ENABLE_VMAP_CHECKS)
+        if (isLineOfSightCalcEnabled() && !IsVMAPDisabledForPtr(mapId, VMAP_DISABLE_LOS))
+#endif
+        {
+            InstanceTreeMap::const_iterator instanceTree = GetMapTree(mapId);
+            if (instanceTree != iInstanceMapTrees.end())
+            {
+                Vector3 pos1 = convertPositionToInternalRep(x1, y1, z1);
+                Vector3 pos2 = convertPositionToInternalRep(x2, y2, z2);
+                Vector3 resultPos;
+                bool result = instanceTree->second->GetObjectHitPos(pos1, pos2, resultPos, modifyDist);
+                resultPos = convertPositionToInternalRep(resultPos.x, resultPos.y, resultPos.z);
+                rx = resultPos.x;
+                ry = resultPos.y;
+                rz = resultPos.z;
+                return result;
+            }
+        }
+
+        rx = x2;
+        ry = y2;
+        rz = z2;
+
+        return false;
+    }
 } // namespace VMAP

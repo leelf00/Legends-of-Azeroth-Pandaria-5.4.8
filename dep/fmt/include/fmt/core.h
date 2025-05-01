@@ -2117,6 +2117,32 @@ inline void print(const S& format_str, Args&&... args) {
              : detail::vprint_mojibake(stdout, to_string_view(format_str),
                                        vargs);
 }
+
+// Casts a nonnegative integer to unsigned.
+template <typename Int>
+FMT_CONSTEXPR auto to_unsigned(Int value) ->
+typename std::make_unsigned<Int>::type {
+    FMT_ASSERT(std::is_unsigned<Int>::value || value >= 0, "negative value");
+    return static_cast<typename std::make_unsigned<Int>::type>(value);
+}
+
+// Return the result via the out param to workaround gcc bug 77539.
+template <bool IS_CONSTEXPR, typename T, typename Ptr = const T*>
+FMT_CONSTEXPR auto find(Ptr first, Ptr last, T value, Ptr& out) -> bool {
+    for (out = first; out != last; ++out) {
+        if (*out == value) return true;
+    }
+    return false;
+}
+
+template <>
+inline auto find<false, char>(const char* first, const char* last, char value,
+    const char*& out) -> bool {
+    out = static_cast<const char*>(
+        std::memchr(first, value, to_unsigned(last - first)));
+    return out != nullptr;
+}
+
 FMT_END_NAMESPACE
 
 #endif  // FMT_CORE_H_

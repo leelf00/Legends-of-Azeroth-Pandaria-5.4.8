@@ -821,6 +821,31 @@ struct ChrSpecializationEntry
     // DbcStr unkName2                                      // 13
 };
 
+enum CharSectionFlags
+{
+    SECTION_FLAG_PLAYER = 0x01,
+    SECTION_FLAG_DEATH_KNIGHT = 0x04
+};
+enum CharSectionType
+{
+    SECTION_TYPE_SKIN = 0,
+    SECTION_TYPE_FACE = 1,
+    SECTION_TYPE_FACIAL_HAIR = 2,
+    SECTION_TYPE_HAIR = 3,
+    SECTION_TYPE_UNDERWEAR = 4
+};
+struct CharSectionsEntry
+{
+    //uint32 Id;
+    uint32 Race;
+    uint32 Gender;
+    uint32 GenType;
+    //char* TexturePath[3];
+    uint32 Flags;
+    uint32 Type;
+    uint32 Color;
+};
+
 struct CinematicCameraEntry
 {
     uint32 ID;                                              // 0
@@ -2763,6 +2788,7 @@ struct VehicleSeatEntry
             (m_flagsB & (VEHICLE_SEAT_FLAG_B_USABLE_FORCED | VEHICLE_SEAT_FLAG_B_USABLE_FORCED_2 | VEHICLE_SEAT_FLAG_B_USABLE_FORCED_3 | VEHICLE_SEAT_FLAG_B_USABLE_FORCED_4)));
     }
     bool IsEjectable() const { return m_flagsB & VEHICLE_SEAT_FLAG_B_EJECTABLE; }
+    [[nodiscard]] bool CanControl() const { return (m_flags & VEHICLE_SEAT_FLAG_CAN_CONTROL) != 0; }
 };
 
 struct WMOAreaTableEntry

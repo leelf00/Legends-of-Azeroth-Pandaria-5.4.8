@@ -214,7 +214,7 @@ Player::Player(WorldSession* session) : Unit(true), phaseMgr(this), hasForcedMov
 
     m_lootGuid = ObjectGuid::Empty;
 
-    m_comboTarget = ObjectGuid::Empty;
+    m_comboTarget = nullptr;
     m_comboPoints = 0;
 
     m_regenTimer = 0;
@@ -1124,6 +1124,8 @@ void Player::Update(uint32 p_time)
     if (!IsInWorld())
         return;
 
+    sScriptMgr->OnPlayerBeforeUpdate(this, p_time);
+
     uint64 victimGuid = GetVictim() ? GetVictim()->GetGUID() : 0;
     m_assistTimer += p_time;
     for (auto it = m_lastTargets.begin(); it != m_lastTargets.end();)
@@ -1401,6 +1403,8 @@ void Player::Update(uint32 p_time)
             m_timeSyncTimer -= p_time;
     }
 
+    sScriptMgr->OnPlayerUpdate(this, p_time);
+
     if (IsAlive() || m_runes)
     {
         m_regenTimer += p_time;
@@ -1524,6 +1528,7 @@ void Player::Update(uint32 p_time)
 
     m_VignetteMgr.Update();
     sScriptMgr->OnUpdate(this, p_time);
+    sScriptMgr->OnPlayerAfterUpdate(this, p_time);
 
     if (!IsPhased(169))
         SetPhased(169, true, true);
@@ -8190,14 +8195,14 @@ void Player::DuelComplete(DuelCompleteType type)
     }
 
     // cleanup combo points
-    if (GetComboTarget() == duel->opponent->GetGUID())
+    if (GetComboTargetGUID() == duel->opponent->GetGUID())
         ClearComboPoints();
-    else if (GetComboTarget() == duel->opponent->GetPetGUID())
+    else if (GetComboTargetGUID() == duel->opponent->GetPetGUID())
         ClearComboPoints();
 
-    if (duel->opponent->GetComboTarget() == GetGUID())
+    if (duel->opponent->GetComboTargetGUID() == GetGUID())
         duel->opponent->ClearComboPoints();
-    else if (duel->opponent->GetComboTarget() == GetPetGUID())
+    else if (duel->opponent->GetComboTargetGUID() == GetPetGUID())
         duel->opponent->ClearComboPoints();
 
     //cleanups
@@ -25075,15 +25080,14 @@ Player* Player::GetSelectedPlayer() const
 
 void Player::SendComboPoints()
 {
-    Unit* combotarget = ObjectAccessor::GetUnit(*this, m_comboTarget);
-    if (combotarget)
+    if (m_comboTarget)
     {
         WorldPacket data;
-        ObjectGuid guid = combotarget->GetGUID();
+        ObjectGuid guid = m_comboTarget->GetGUID();
         if (m_mover != this)
         {
             ObjectGuid mover = m_mover->GetGUID();
-            data.Initialize(SMSG_PET_UPDATE_COMBO_POINTS, m_mover->GetPackGUID().size() + combotarget->GetPackGUID().size() + 1);
+            data.Initialize(SMSG_PET_UPDATE_COMBO_POINTS, m_mover->GetPackGUID().size() + m_comboTarget->GetPackGUID().size() + 1);
             data.WriteBit(mover[1]);
             data.WriteBit(mover[7]);
             data.WriteBit(guid[6]);
@@ -25121,7 +25125,7 @@ void Player::SendComboPoints()
         }
         else
         {
-            data.Initialize(SMSG_UPDATE_COMBO_POINTS, combotarget->GetPackGUID().size() + 1);
+            data.Initialize(SMSG_UPDATE_COMBO_POINTS, m_comboTarget->GetPackGUID().size() + 1);
             data.WriteBit(guid[0]);
             data.WriteBit(guid[5]);
             data.WriteBit(guid[6]);
@@ -25147,56 +25151,41 @@ void Player::SendComboPoints()
 void Player::AddComboPoints(Unit* target, int8 count, Spell* spell)
 {
     if (!count)
-        return;
-
-    if (spell)
     {
-        int32 charges = m_comboPoints + count - 5;
-        if (charges > 0 && HasAura(114015)) // Anticipation
-            CastCustomSpell(115189, SPELLVALUE_AURA_STACK, charges, this, true);    // TODO: Check this shit, possible error in SPELLVALUE_AURA_STACK mechanic
+        return;
     }
 
-    // without combo points lost (duration checked in aura)
-    RemoveAurasByType(SPELL_AURA_RETAIN_COMBO_POINTS);
-
-    if (target->GetGUID() == m_comboTarget)
-        m_comboPoints += count;
-    else
+    if (target && target != m_comboTarget)
     {
         if (m_comboTarget)
-            if (Unit* target2 = ObjectAccessor::GetUnit(*this, m_comboTarget))
-                target2->RemoveComboPointHolder(GetGUID());
+        {
+            m_comboTarget->RemoveComboPointHolder(GetGUID());
+        }
 
-        m_comboTarget = target->GetGUID();
+        m_comboTarget = target;
         m_comboPoints = count;
-
         target->AddComboPointHolder(GetGUID());
     }
-
-    if (m_comboPoints > 5)
-        m_comboPoints = 5;
-    else if (m_comboPoints < 0)
-        m_comboPoints = 0;
+    else
+    {
+        m_comboPoints = std::max<int8>(std::min<int8>(m_comboPoints + count, 5), 0);
+    }
 
     SendComboPoints();
 }
 
 void Player::ClearComboPoints()
 {
-    if (m_comboTarget.IsEmpty())
+    if (!m_comboTarget || (m_comboTarget && m_comboTarget->GetGUID().IsEmpty()))
         return;
 
     // without combopoints lost (duration checked in aura)
     RemoveAurasByType(SPELL_AURA_RETAIN_COMBO_POINTS);
 
     m_comboPoints = 0;
-
     SendComboPoints();
-
-    if (Unit* target = ObjectAccessor::GetUnit(*this, m_comboTarget))
-        target->RemoveComboPointHolder(GetGUID());
-
-    m_comboTarget.Clear();
+    m_comboTarget->RemoveComboPointHolder(GetGUID());
+    m_comboTarget = nullptr;
 }
 
 bool Player::IsInGroup(ObjectGuid groupGuid) const

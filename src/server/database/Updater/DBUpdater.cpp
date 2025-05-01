@@ -150,6 +150,38 @@ bool DBUpdater<CharacterDatabaseConnection>::IsEnabled(uint32 const updateMask)
     return (updateMask & DatabaseLoader::DATABASE_CHARACTER) ? true : false;
 }
 
+// Playerbots Database
+template<>
+std::string DBUpdater<PlayerbotsDatabaseConnection>::GetConfigEntry()
+{
+    return "Updates.Playerbots";
+}
+
+template<>
+std::string DBUpdater<PlayerbotsDatabaseConnection>::GetTableName()
+{
+    return "Playerbots";
+}
+
+template<>
+std::string DBUpdater<PlayerbotsDatabaseConnection>::GetBaseFile()
+{
+    return GitRevision::GetFullDatabase();
+}
+
+template<>
+bool DBUpdater<PlayerbotsDatabaseConnection>::IsEnabled(uint32 const updateMask)
+{
+    // This way silences warnings under msvc
+    return (updateMask & DatabaseLoader::DATABASE_PLAYERBOTS) ? true : false;
+}
+
+template<>
+BaseLocation DBUpdater<PlayerbotsDatabaseConnection>::GetBaseLocationType()
+{
+    return LOCATION_DOWNLOAD;
+}
+
 // All
 template<class T>
 BaseLocation DBUpdater<T>::GetBaseLocationType()
@@ -410,3 +442,4 @@ void DBUpdater<T>::ApplyFile(DatabaseWorkerPool<T>& pool, std::string const& hos
 template class TC_DATABASE_API DBUpdater<LoginDatabaseConnection>;
 template class TC_DATABASE_API DBUpdater<WorldDatabaseConnection>;
 template class TC_DATABASE_API DBUpdater<CharacterDatabaseConnection>;
+template class TC_DATABASE_API DBUpdater<PlayerbotsDatabaseConnection>;

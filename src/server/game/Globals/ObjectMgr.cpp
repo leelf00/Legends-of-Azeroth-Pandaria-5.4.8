@@ -1990,17 +1990,18 @@ void ObjectMgr::LoadCreatures()
     {
         Field* fields = result->Fetch();
 
-        uint32 guid               = fields[0].GetUInt32();
-        uint32 entry              = fields[1].GetUInt32();
+        ObjectGuid::LowType spawnId = fields[0].GetUInt32();
+        uint32 entry                = fields[1].GetUInt32();
 
         CreatureTemplate const* cInfo = GetCreatureTemplate(entry);
         if (!cInfo)
         {
-            TC_LOG_ERROR("sql.sql", "Table `creature` has creature (GUID: %u) with non existing creature entry %u, skipped.", guid, entry);
+            TC_LOG_ERROR("sql.sql", "Table `creature` has creature (GUID: %u) with non existing creature entry %u, skipped.", spawnId, entry);
             continue;
         }
 
-        CreatureData& data        = _creatureDataStore[guid];
+        CreatureData& data        = _creatureDataStore[spawnId];
+        //data.spawnId              = spawnId;
         data.id                   = entry;
         data.mapId                = fields[2].GetUInt16();
         data.displayid            = fields[3].GetUInt32();
@@ -2036,13 +2037,13 @@ void ObjectMgr::LoadCreatures()
         MapEntry const* mapEntry = sMapStore.LookupEntry(data.mapId);
         if (!mapEntry)
         {
-            TC_LOG_ERROR("sql.sql", "Table `creature` have creature (GUID: %u) that spawned at not existed map (Id: %u), skipped.", guid, data.mapId);
+            TC_LOG_ERROR("sql.sql", "Table `creature` have creature (GUID: %u) that spawned at not existed map (Id: %u), skipped.", spawnId, data.mapId);
             continue;
         }
 
         // Skip spawnMask check for transport maps
         if (!_transportMaps.count(data.mapId) && data.spawnMask & ~spawnMasks[data.mapId])
-            TC_LOG_ERROR("sql.sql", "Table `creature` have creature (GUID: %u) that have wrong spawn mask %u including not supported difficulty modes for map (Id: %u) spawnMasks[data.mapId]: %u.", guid, data.spawnMask, data.mapId, spawnMasks[data.mapId]);
+            TC_LOG_ERROR("sql.sql", "Table `creature` have creature (GUID: %u) that have wrong spawn mask %u including not supported difficulty modes for map (Id: %u) spawnMasks[data.mapId]: %u.", spawnId, data.spawnMask, data.mapId, spawnMasks[data.mapId]);
 
         bool ok = true;
         for (uint32 diff = 0; diff < MAX_TEMPLATE_DIFFICULTY - 1 && ok; ++diff)
@@ -2050,7 +2051,7 @@ void ObjectMgr::LoadCreatures()
             if (_difficultyEntries[diff].find(data.id) != _difficultyEntries[diff].end())
             {
                 TC_LOG_ERROR("sql.sql", "Table `creature` have creature (GUID: %u) that listed as difficulty %u template (entry: %u) in `creature_template`, skipped.",
-                    guid, diff + 1, data.id);
+                    spawnId, diff + 1, data.id);
                 ok = false;
             }
         }
@@ -2070,19 +2071,19 @@ void ObjectMgr::LoadCreatures()
         if (cInfo->flags_extra & CREATURE_FLAG_EXTRA_INSTANCE_BIND)
         {
             if (!mapEntry || !mapEntry->IsDungeon())
-                TC_LOG_ERROR("sql.sql", "Table `creature` have creature (GUID: %u Entry: %u) with `creature_template`.`flags_extra` including CREATURE_FLAG_EXTRA_INSTANCE_BIND but creature are not in instance.", guid, data.id);
+                TC_LOG_ERROR("sql.sql", "Table `creature` have creature (GUID: %u Entry: %u) with `creature_template`.`flags_extra` including CREATURE_FLAG_EXTRA_INSTANCE_BIND but creature are not in instance.", spawnId, data.id);
         }
 
         if (data.wander_distance < 0.0f)
         {
-            TC_LOG_ERROR("sql.sql", "Table `creature` have creature (GUID: %u Entry: %u) with `wander_distance`< 0, set to 0.", guid, data.id);
+            TC_LOG_ERROR("sql.sql", "Table `creature` have creature (GUID: %u Entry: %u) with `wander_distance`< 0, set to 0.", spawnId, data.id);
             data.wander_distance = 0.0f;
         }
         else if (data.movementType == RANDOM_MOTION_TYPE)
         {
             if (data.wander_distance == 0.0f)
             {
-                TC_LOG_ERROR("sql.sql", "Table `creature` have creature (GUID: %u Entry: %u) with `movement_type`=1 (random movement) but with `wander_distance`=0, replace by idle movement type (0).", guid, data.id);
+                TC_LOG_ERROR("sql.sql", "Table `creature` have creature (GUID: %u Entry: %u) with `movement_type`=1 (random movement) but with `wander_distance`=0, replace by idle movement type (0).", spawnId, data.id);
                 data.movementType = IDLE_MOTION_TYPE;
             }
         }
@@ -2090,7 +2091,7 @@ void ObjectMgr::LoadCreatures()
         {
             if (data.wander_distance != 0.0f)
             {
-                TC_LOG_ERROR("sql.sql", "Table `creature` have creature (GUID: %u Entry: %u) with `movement_type`=0 (idle) have `wander_distance`<>0, set to 0.", guid, data.id);
+                TC_LOG_ERROR("sql.sql", "Table `creature` have creature (GUID: %u Entry: %u) with `movement_type`=0 (idle) have `wander_distance`<>0, set to 0.", spawnId, data.id);
                 data.wander_distance = 0.0f;
             }
         }
@@ -2098,32 +2099,32 @@ void ObjectMgr::LoadCreatures()
         if (data.WalkMode < 0.0f)
         {
             TC_LOG_ERROR("sql.sql", "Table `creature` has creature (GUID: %u Entry: %u) with `walk_mode`< 0, set to 0.",
-                guid, data.id);
+                spawnId, data.id);
             data.WalkMode = 0.0f;
         }
 
         if (data.WalkMode > 2.0f)
         {
             TC_LOG_ERROR("sql.sql", "Table `creature` has creature (GUID: %u Entry: %u) with `walk_mode` > 2, set to 2.",
-                guid, data.id);
+                spawnId, data.id);
             data.WalkMode = 2.0f;
         }
 
         if (data.phaseMask == 0)
         {
-            TC_LOG_ERROR("sql.sql", "Table `creature` have creature (GUID: %u Entry: %u) with `phaseMask`=0 (not visible for anyone), set to 1.", guid, data.id);
+            TC_LOG_ERROR("sql.sql", "Table `creature` have creature (GUID: %u Entry: %u) with `phaseMask`=0 (not visible for anyone), set to 1.", spawnId, data.id);
             data.phaseMask = 1;
         }
 
         if (data.phaseGroup && GetPhasesForGroup(data.phaseGroup).empty())
         {
-            TC_LOG_ERROR("sql.sql", "Table `creature` has creature (GUID: %u Entry: %u) with non-existing `phasegroup` (%u) set, `phasegroup` set to 0", guid, data.id, data.phaseGroup);
+            TC_LOG_ERROR("sql.sql", "Table `creature` has creature (GUID: %u Entry: %u) with non-existing `phasegroup` (%u) set, `phasegroup` set to 0", spawnId, data.id, data.phaseGroup);
             data.phaseGroup = 0;
         }
 
         if (data.phaseGroup && data.phaseid)
         {
-            TC_LOG_ERROR("sql.sql", "Table `creature` have creature (GUID: %u Entry: %u) with both `phaseid` and `phasegroup` set, `phasegroup` set to 0", guid, data.id);
+            TC_LOG_ERROR("sql.sql", "Table `creature` have creature (GUID: %u Entry: %u) with both `phaseid` and `phasegroup` set, `phasegroup` set to 0", spawnId, data.id);
             data.phaseGroup = 0;
         }
 
@@ -2136,14 +2137,14 @@ void ObjectMgr::LoadCreatures()
 
             stmt->setUInt32(0, zoneId);
             stmt->setUInt32(1, areaId);
-            stmt->setUInt64(2, guid);
+            stmt->setUInt64(2, spawnId);
 
             WorldDatabase.Execute(stmt);
         }
 
         // Add to grid if not managed by the game event or pool system
         if (gameEvent == 0 && PoolId == 0)
-            AddCreatureToGrid(guid, &data);
+            AddCreatureToGrid(spawnId, &data);
 
         ++count;
 

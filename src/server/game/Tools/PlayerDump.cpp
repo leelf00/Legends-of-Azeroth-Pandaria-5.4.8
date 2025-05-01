@@ -16,6 +16,7 @@
 */
 
 #include "Common.h"
+#include "CharacterCache.h"
 #include "PlayerDump.h"
 #include "DatabaseEnv.h"
 #include "UpdateFields.h"
@@ -783,6 +784,8 @@ DumpReturn PlayerDumpReader::LoadDump(std::string const& file, uint32 account, s
         trans->Append(stmt);
     }
 
+    // in case of name conflict player has to rename at login anyway
+    sCharacterCache->AddCharacterCacheEntry(ObjectGuid(HighGuid::Player, guid), account, name, gender, race, playerClass, level);
     // in case of name conflict player has to rename at login anyway
     sWorld->AddCharacterNameData(ObjectGuid(HighGuid::Player, guid), name, gender, race, playerClass, level);
 
