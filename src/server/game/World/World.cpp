@@ -22,9 +22,9 @@
 #include "Memory.h"
 #include "DatabaseEnv.h"
 #include "QueryResult.h"
+#include "QueryHolder.h"
 #include "Transaction.h"
 #include "Config.h"
-#include "SystemConfig.h"
 #include "Log.h"
 #include "Opcodes.h"
 #include "WorldSession.h"
@@ -55,7 +55,6 @@
 #include "CreatureAIRegistry.h"
 #include "BattlegroundMgr.h"
 #include "OutdoorPvPMgr.h"
-#include "TemporarySummon.h"
 #include "WaypointMovementGenerator.h"
 #include "M2Stores.h"
 #include "MMapFactory.h"
@@ -77,7 +76,6 @@
 #include "ConditionMgr.h"
 #include "DisableMgr.h"
 #include "CharacterDatabaseCleaner.h"
-#include "ScriptMgr.h"
 #include "WeatherMgr.h"
 #include "CreatureTextMgr.h"
 #include "SmartAI.h"
@@ -99,10 +97,10 @@
 #include "Realm.h"
 #include "VMapFactory.h"
 #include "VMapManager2.h"
-#include <boost/asio/ip/address.hpp>
+#include "CharacterCache.h"
+
 #ifdef ELUNA
 #include "LuaEngine.h"
-#include "HookMgr.h"
 #endif
 
 uint8 World::m_ExitCode = SHUTDOWN_EXIT_CODE;
@@ -162,6 +160,12 @@ World::~World()
         // not remove from queue, prevent loading new sessions
         delete m_sessions.begin()->second;
         m_sessions.erase(m_sessions.begin());
+    }
+
+    while (!_offlineSessions.empty())
+    {
+        delete _offlineSessions.begin()->second;
+        _offlineSessions.erase(_offlineSessions.begin());
     }
 
     CliCommandHolder* command = NULL;
@@ -231,6 +235,24 @@ const char* World::GetMotd() const
     return m_motd.c_str();
 }
 
+WorldSession* World::FindOfflineSessionForCharacterGUID(uint64 guid) const
+{
+    if (_offlineSessions.empty())
+        return nullptr;
+    for (SessionMap::const_iterator itr = _offlineSessions.begin(); itr != _offlineSessions.end(); ++itr)
+        if (itr->second->GetGuidLow() == guid)
+            return itr->second;
+    return nullptr;
+}
+WorldSession* World::FindOfflineSession(uint32 id) const
+{
+    SessionMap::const_iterator itr = _offlineSessions.find(id);
+    if (itr != _offlineSessions.end())
+        return itr->second;
+    else
+        return nullptr;
+}
+
 /// Find a session by its id
 WorldSession* World::FindSession(uint32 id) const
 {
@@ -288,11 +310,29 @@ void World::AddSession_(WorldSession* s)
 
         if (old != m_sessions.end())
         {
+            WorldSession* oldSession = old->second;
+
             // prevent decrease sessions count if session queued
             if (RemoveQueuedPlayer(old->second))
                 decrease_session = false;
-            // not remove replaced session form queue if listed
-            delete old->second;
+            
+            // there should be no offline session if current one is logged onto a character
+            if (oldSession->HandleSocketClosed())
+            {
+                SessionMap::iterator iter;
+                if ((iter = _offlineSessions.find(oldSession->GetAccountId())) != _offlineSessions.end())
+                {
+                    WorldSession* tmp = iter->second;
+                    _offlineSessions.erase(iter);
+                    delete tmp;
+                }
+                else
+                    _offlineSessions[oldSession->GetAccountId()] = oldSession;
+            }
+            else
+            {
+                delete oldSession;
+            }
         }
     }
 
@@ -365,6 +405,11 @@ int32 World::GetQueuePos(WorldSession* sess)
             return position;
 
     return 0;
+}
+
+SQLQueryHolderCallback& World::AddQueryHolderCallback(SQLQueryHolderCallback&& callback)
+{
+    return _queryHolderProcessor.AddCallback(std::move(callback));
 }
 
 void World::AddQueuedPlayer(WorldSession* sess)
@@ -1804,6 +1849,9 @@ void World::SetInitialWorldSettings()
     TC_LOG_INFO("server.loading", "Loading Instance Template...");
     sObjectMgr->LoadInstanceTemplate();
 
+    TC_LOG_INFO("server.loading", "Loading Character Cache...");
+    sCharacterCache->LoadCharacterCacheStorage();
+
     // Must be called before `creature_respawn`/`gameobject_respawn` tables
     TC_LOG_INFO("server.loading", "Loading instances...");
     sInstanceSaveMgr->LoadInstances();
@@ -2573,6 +2621,8 @@ void World::Update(uint32 diff)
         sGuildMgr->ResetGuildChallenges();
     }
 
+    sScriptMgr->OnPlayerbotUpdate(diff);
+
     /// <ul><li> Handle auctions when the timer has passed
     if (m_timers[WUPDATE_BLACK_MARKET].Passed())
     {
@@ -2994,6 +3044,10 @@ void World::KickAll()
     // session not removed at kick and will removed in next update tick
     for (SessionMap::const_iterator itr = m_sessions.begin(); itr != m_sessions.end(); ++itr)
         itr->second->KickPlayer();
+
+    for (SessionMap::const_iterator itr = _offlineSessions.begin(); itr != _offlineSessions.end(); ++itr)
+        itr->second->KickPlayer();
+    sScriptMgr->OnPlayerbotLogoutBots();
 }
 
 /// Kick (and save) all players with security level less `sec`
@@ -3335,6 +3389,23 @@ void World::UpdateSessions(uint32 diff)
         WorldSession* pSession = itr->second;
         WorldSessionFilter updater(pSession);
 
+        if (pSession->HandleSocketClosed())
+        {
+            if (!RemoveQueuedPlayer(pSession))
+                m_disconnects[pSession->GetAccountId()] = time(NULL);
+            m_sessions.erase(itr);
+            // there should be no offline session if current one is logged onto a character
+            SessionMap::iterator iter;
+            if ((iter = _offlineSessions.find(pSession->GetAccountId())) != _offlineSessions.end())
+            {
+                WorldSession* tmp = iter->second;
+                _offlineSessions.erase(iter);
+                delete tmp;
+            }
+            _offlineSessions[pSession->GetAccountId()] = pSession;
+            continue;
+        }
+
         if (!pSession->Update(diff, updater))    // As interval = 0
         {
             if (!RemoveQueuedPlayer(itr->second) && itr->second && getIntConfig(CONFIG_INTERVAL_DISCONNECT_TOLERANCE))
@@ -3343,6 +3414,21 @@ void World::UpdateSessions(uint32 diff)
             m_sessions.erase(itr);
             delete pSession;
 
+        }
+    }
+
+    if (_offlineSessions.empty())
+        return;
+    uint32 currTime = time(NULL);
+    for (SessionMap::iterator itr = _offlineSessions.begin(), next; itr != _offlineSessions.end(); itr = next)
+    {
+        next = itr;
+        ++next;
+        WorldSession* pSession = itr->second;
+        if (!pSession->GetPlayer() || m_disconnects[pSession->GetAccountId()] + 60 < currTime)
+        {
+            _offlineSessions.erase(itr);
+            delete pSession;
         }
     }
 }
@@ -3910,6 +3996,7 @@ uint64 World::getWorldState(uint32 index) const
 void World::ProcessQueryCallbacks()
 {
     _queryProcessor.ProcessReadyCallbacks();
+    _queryHolderProcessor.ProcessReadyCallbacks();
     // PreparedQueryResult result;
 
     // while (!m_realmCharCallbacks.is_empty())

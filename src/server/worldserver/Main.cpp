@@ -26,10 +26,10 @@
 #include "Config.h"
 #include "DatabaseEnv.h"
 #include "DatabaseLoader.h"
-#include "DatabaseWorkerPool.h"
 #include "Implementation/LoginDatabase.h"
 #include "Implementation/CharacterDatabase.h"
 #include "Implementation/WorldDatabase.h"
+#include "Implementation/PlayerbotsDatabase.h"
 
 #include "AppenderDB.h"
 #include "AsyncAcceptor.h"
@@ -37,7 +37,6 @@
 #include "BattlegroundMgr.h"
 #include "BigNumber.h"
 #include "CliRunnable.h"
-#include "DeadlineTimer.h"
 #include "GitRevision.h"
 #include "IoContext.h"
 #include "InstanceSaveMgr.h"
@@ -61,7 +60,6 @@
 
 #include <boost/dll/runtime_symbol_info.hpp>
 #include <boost/asio/signal_set.hpp>
-#include <boost/dll/runtime_symbol_info.hpp>
 #include <boost/filesystem/operations.hpp>
 #include <boost/program_options.hpp>
 
@@ -194,6 +192,7 @@ void WorldUpdateLoop()
     LoginDatabase.WarnAboutSyncQueries(true);
     CharacterDatabase.WarnAboutSyncQueries(true);
     WorldDatabase.WarnAboutSyncQueries(true);
+    PlayerbotsDatabase.WarnAboutSyncQueries(true);
 
     sWorld->OnStartup();
 
@@ -229,6 +228,7 @@ void WorldUpdateLoop()
     LoginDatabase.WarnAboutSyncQueries(false);
     CharacterDatabase.WarnAboutSyncQueries(false);
     WorldDatabase.WarnAboutSyncQueries(false);
+    PlayerbotsDatabase.WarnAboutSyncQueries(false);
 }
 
 void SignalHandler(boost::system::error_code const& error, int /*signalNumber*/)
@@ -276,7 +276,8 @@ AsyncAcceptor* StartRaSocketAcceptor(boost::asio::any_io_executor ioContext)
     uint16 raPort = uint16(sConfigMgr->GetIntDefault("Ra.Port", 3443));
     std::string raListener = sConfigMgr->GetStringDefault("Ra.IP", "0.0.0.0");
 
-    AsyncAcceptor* acceptor = new AsyncAcceptor(ioContext, raListener, raPort);
+    // memory leak from main
+    auto* acceptor = new AsyncAcceptor(ioContext, raListener, raPort);
     if (!acceptor->Bind())
     {
         TC_LOG_ERROR("server.worldserver", "Failed to bind RA socket acceptor");
@@ -345,7 +346,8 @@ bool StartDB()
     loader
         .AddDatabase(LoginDatabase, "Login")
         .AddDatabase(CharacterDatabase, "Character")
-        .AddDatabase(WorldDatabase, "World");
+        .AddDatabase(WorldDatabase, "World")
+        .AddDatabase(PlayerbotsDatabase, "Playerbots");
 
     if (!loader.Load())
         return false;
@@ -390,6 +392,7 @@ void StopDB()
     CharacterDatabase.Close();
     WorldDatabase.Close();
     LoginDatabase.Close();
+    PlayerbotsDatabase.Close();
 
     MySQL::Library_End();
 }

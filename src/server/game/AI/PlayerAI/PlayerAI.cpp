@@ -819,7 +819,7 @@ PlayerAI::TargetedSpell SimpleCharmedPlayerAI::SelectAppropriateCastForSpec()
                 if (victim->HasUnitState(UNIT_STATE_CASTING))
                     VerifyAndPushSpellCast(spells, SPELL_KICK, TARGET_VICTIM, 25);
 
-                uint8 const cp = (me->GetComboTarget() == victim->GetGUID()) ? me->GetComboPoints() : 0;
+                uint8 const cp = (me->GetComboTarget() == victim) ? me->GetComboPoints() : 0;
                 if (cp >= 4)
                     VerifyAndPushSpellCast(spells, finisher, TARGET_VICTIM, 10);
                 if (cp <= 4)
@@ -1131,7 +1131,7 @@ PlayerAI::TargetedSpell SimpleCharmedPlayerAI::SelectAppropriateCastForSpec()
                     VerifyAndPushSpellCast(spells, SPELL_DASH, TARGET_NONE, 5);
                     if (Unit* victim = me->GetVictim())
                     {
-                        uint8 const cp = (me->GetComboTarget() == victim->GetGUID()) ? me->GetComboPoints() : 0;
+                        uint8 const cp = (me->GetComboTarget() == victim) ? me->GetComboPoints() : 0;
                         if (victim->HasUnitState(UNIT_STATE_CASTING) && cp >= 1)
                             VerifyAndPushSpellCast(spells, SPELL_MAIM, TARGET_VICTIM, 25);
                         if (!me->IsWithinMeleeRange(victim))

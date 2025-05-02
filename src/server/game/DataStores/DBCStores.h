@@ -70,6 +70,7 @@ TC_GAME_API extern DBCStorage <ChrClassesEntry>              sChrClassesStore;
 TC_GAME_API extern DBCStorage <ChrRacesEntry>                sChrRacesStore;
 TC_GAME_API extern DBCStorage <ChrPowerTypesEntry>           sChrPowerTypesStore;
 TC_GAME_API extern DBCStorage <ChrSpecializationEntry>       sChrSpecializationStore;
+TC_GAME_API extern DBCStorage <CharSectionsEntry>            sChrSectionStore;
 TC_GAME_API extern DBCStorage <CinematicCameraEntry>         sCinematicCameraStore;
 TC_GAME_API extern DBCStorage <CinematicSequencesEntry>      sCinematicSequencesStore;
 TC_GAME_API extern DBCStorage <CreatureDisplayInfoEntry>     sCreatureDisplayInfoStore;
@@ -94,7 +95,6 @@ TC_GAME_API extern DBCStorage <GameObjectDisplayInfoEntry>   sGameObjectDisplayI
 TC_GAME_API extern DBCStorage <GemPropertiesEntry>           sGemPropertiesStore;
 TC_GAME_API extern DBCStorage <GlyphPropertiesEntry>         sGlyphPropertiesStore;
 TC_GAME_API extern DBCStorage <GlyphSlotEntry>               sGlyphSlotStore; 
-
 TC_GAME_API extern DBCStorage <GtBarberShopCostBaseEntry>    sGtBarberShopCostBaseStore;
 TC_GAME_API extern DBCStorage <GtBattlePetTypeDamageModEntry>sGtBattlePetTypeDamageModStore;
 TC_GAME_API extern DBCStorage <GtBattlePetXpEntry>           sGtBattlePetXpStore;

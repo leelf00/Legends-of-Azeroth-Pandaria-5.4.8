@@ -208,6 +208,9 @@ class TC_GAME_API MotionMaster //: private std::stack<MovementGenerator *>
         void MoveSplinePath(const Position* path, uint32 count, bool fly = false, bool walk = false, float speed = 0.0f, bool cyclic = false, bool catmullrom = true, bool uncompressed = true);
         void MoveRotate(uint32 time, RotateDirection direction);
 
+        void MoveKnockbackFromForPlayer(float srcX, float srcY, float speedXY, float speedZ);
+        void MovePointBackwards(uint32 id, float x, float y, float z, bool generatePath = true, bool forceDestination = true, MovementSlot slot = MOTION_SLOT_ACTIVE, float orientation = 0.0f);
+
         void LaunchMoveSpline(Movement::MoveSplineInit&& init, uint32 id = 0, MovementSlot slot = MOTION_SLOT_ACTIVE, MovementGeneratorType type = EFFECT_MOTION_TYPE);
 
         MovementGeneratorType GetCurrentMovementGeneratorType() const;

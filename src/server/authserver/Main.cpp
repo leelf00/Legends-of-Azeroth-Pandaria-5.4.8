@@ -26,7 +26,6 @@
 #include "AppenderDB.h"
 #include "AuthSocketMgr.h"
 #include "Banner.h"
-#include "Common.h"
 #include "Configuration/Config.h"
 #include "DatabaseEnv.h"
 #include "DatabaseLoader.h"
@@ -37,7 +36,6 @@
 #include "ProcessPriority.h"
 #include "RealmList.h"
 #include "SignalHandler.h"
-#include "SystemConfig.h"
 #include "Util.h"
 
 #include <boost/asio/signal_set.hpp>
@@ -46,7 +44,6 @@
 #include <boost/filesystem/operations.hpp>
 #include <boost/asio/thread_pool.hpp>
 #include <boost/asio/co_spawn.hpp>
-#include <boost/asio/coroutine.hpp>
 #include <boost/asio/awaitable.hpp>
 #include <boost/asio/detached.hpp>
 #include <boost/asio/use_awaitable.hpp>
@@ -244,13 +241,16 @@ Async<int> async_main(boost::asio::thread_pool& pool)
     timer.expires_after(std::chrono::seconds(2));
     co_await timer.async_wait(boost::asio::use_awaitable);
 
-    if (sRealmList->GetRealms().empty())
+    int i = 0;
+    while (sRealmList->GetRealms().empty() && i < 5)
     {
-        TC_LOG_ERROR("server.authserver", "No valid realms specified.");
-        pool.stop();
-        co_return 1;
+        if (i >= 5)
+        {
+            TC_LOG_ERROR("server.authserver", "No valid realms specified.");
+            pool.stop();
+            co_return 1;
+        }
     }
-
     // Launch the listening network socket
     int32 port = sConfigMgr->GetIntDefault("RealmServerPort", 3724);
     if (port < 0 || port > 0xFFFF)

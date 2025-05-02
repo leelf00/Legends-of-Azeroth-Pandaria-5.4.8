@@ -1322,6 +1322,23 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
     bool ActivateTaxiPathTo(uint32 taxi_path_id, uint32 spellid = 0);
     void CleanupAfterTaxiFlight();
     void ContinueTaxiFlight();
+    // flags
+    bool HasPlayerFlag(PlayerFlags flags) const
+    {
+        return HasFlag(PLAYER_FIELD_PLAYER_FLAGS, flags) != 0;
+    }
+    void SetPlayerFlag(PlayerFlags flags)
+    {
+        SetFlag(PLAYER_FIELD_PLAYER_FLAGS, flags);
+    }
+    void RemovePlayerFlag(PlayerFlags flags)
+    {
+        RemoveFlag(PLAYER_FIELD_PLAYER_FLAGS, flags);
+    }
+    void ReplaceAllPlayerFlags(PlayerFlags flags)
+    {
+        SetUInt32Value(PLAYER_FIELD_PLAYER_FLAGS, flags);
+    }
     // mount_id can be used in scripting calls
     bool isAcceptWhispers() const
     {
@@ -1920,9 +1937,15 @@ class TC_GAME_API Player : public Unit, public GridObject<Player>
     {
         return m_comboPoints;
     }
-    ObjectGuid GetComboTarget() const
+    Unit* GetComboTarget() const
     {
         return m_comboTarget;
+    }
+    ObjectGuid GetComboTargetGUID() const
+    {
+        if (m_comboTarget)
+            return m_comboTarget->GetGUID();
+        return ObjectGuid::Empty;
     }
 
     void AddComboPoints(Unit* target, int8 count, Spell* spell = NULL);
@@ -3450,7 +3473,7 @@ protected:
 
     uint32 m_ExtraFlags;
 
-    ObjectGuid m_comboTarget;
+    Unit* m_comboTarget;
     int8 m_comboPoints;
 
     QuestStatusMap m_QuestStatus;

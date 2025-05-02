@@ -557,65 +557,65 @@ struct npc_undertaker_mordo : public ScriptedAI
                 break;
             case TirisfalGlades::UNDERTAKER_MORDO_PHASE_01:
                 Talk(UNDERTAKER_MORDO_TEXT_01);
-                me->HandleEmoteCommand(Emote::EMOTE_ONESHOT_TALK);
+                //me->HandleEmoteCommand(Emote::EMOTE_ONESHOT_TALK);
                 m_timer = 3 * TimeConstants::IN_MILLISECONDS;
                 m_phase = TirisfalGlades::UNDERTAKER_MORDO_PHASE_02;
                 break;
             case TirisfalGlades::UNDERTAKER_MORDO_PHASE_02:
-                if (m_npc && m_npc->IsAlive())
+                //if (m_npc && m_npc->IsAlive())
                 {
-                    m_npc->SetStandState(UnitStandStateType::UNIT_STAND_STATE_KNEEL);
-                    m_npc->SetFacingToObject(me);
+                    //m_npc->SetStandState(UnitStandStateType::UNIT_STAND_STATE_KNEEL);
+                    //m_npc->SetFacingToObject(me);
                 }
                 m_timer = 1 * TimeConstants::IN_MILLISECONDS;
                 m_phase = TirisfalGlades::UNDERTAKER_MORDO_PHASE_03;
                 break;
             case TirisfalGlades::UNDERTAKER_MORDO_PHASE_03:
-                me->m_Events.Schedule(4 * TimeConstants::IN_MILLISECONDS, [this]() { me->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, Emote::EMOTE_STATE_USE_STANDING); });
-                me->m_Events.Schedule(6 * TimeConstants::IN_MILLISECONDS, [this]() { me->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, Emote::EMOTE_STATE_NONE); });
+                //me->m_Events.Schedule(4 * TimeConstants::IN_MILLISECONDS, [this]() { me->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, Emote::EMOTE_STATE_USE_STANDING); });
+                //me->m_Events.Schedule(6 * TimeConstants::IN_MILLISECONDS, [this]() { me->SetUInt32Value(UNIT_FIELD_NPC_EMOTESTATE, Emote::EMOTE_STATE_NONE); });
                 m_timer = uint32(7.5) * TimeConstants::IN_MILLISECONDS;
                 m_phase = TirisfalGlades::UNDERTAKER_MORDO_PHASE_04;
                 break;
             case TirisfalGlades::UNDERTAKER_MORDO_PHASE_04:
-                me->HandleEmoteCommand(Emote::EMOTE_ONESHOT_POINT);
+                //me->HandleEmoteCommand(Emote::EMOTE_ONESHOT_POINT);
                 m_timer = uint32(3.5) * TimeConstants::IN_MILLISECONDS;
                 m_phase = TirisfalGlades::UNDERTAKER_MORDO_PHASE_05;
                 break;
             case TirisfalGlades::UNDERTAKER_MORDO_PHASE_05:
                 Talk(UNDERTAKER_MORDO_TEXT_02);
-                me->HandleEmoteCommandWithDelay(1 * TimeConstants::IN_MILLISECONDS, Emote::EMOTE_ONESHOT_TALK);
+                //me->HandleEmoteCommandWithDelay(1 * TimeConstants::IN_MILLISECONDS, Emote::EMOTE_ONESHOT_TALK);
                 m_timer = uint32(0.5) * TimeConstants::IN_MILLISECONDS;
                 m_phase = TirisfalGlades::UNDERTAKER_MORDO_PHASE_06;
                 break;
             case TirisfalGlades::UNDERTAKER_MORDO_PHASE_06:
-                if (m_npc && m_npc->IsAlive())
+                //if (m_npc && m_npc->IsAlive())
                 {
-                    m_npc->AddAura(TirisfalGlades::SPELL_RISEN_DEAD_TRANSFORM, m_npc);
-                    m_npc->CastSpell(m_npc, TirisfalGlades::SPELL_RISEN_DEAD_TRANSFORM);
-                    m_npc->SetDisplayId(36775);
-                    m_npc->SetStandState(UnitStandStateType::UNIT_STAND_STATE_STAND);
+                    //m_npc->AddAura(TirisfalGlades::SPELL_RISEN_DEAD_TRANSFORM, m_npc);
+                    //m_npc->CastSpell(m_npc, TirisfalGlades::SPELL_RISEN_DEAD_TRANSFORM);
+                    //m_npc->SetDisplayId(36775);
+                    //m_npc->SetStandState(UnitStandStateType::UNIT_STAND_STATE_STAND);
                 }
                 m_timer = 2 * TimeConstants::IN_MILLISECONDS;
                 m_phase = TirisfalGlades::UNDERTAKER_MORDO_PHASE_07;
                 break;
             case TirisfalGlades::UNDERTAKER_MORDO_PHASE_07:
-                if (m_npc && m_npc->IsAlive())
+                //if (m_npc && m_npc->IsAlive())
                 {
-                    m_npc->HandleEmoteCommand(Emote::EMOTE_ONESHOT_TALK);
-                    m_npc->AI()->Talk(RISEN_RECRUIT_TEXT_01);
+                    //m_npc->HandleEmoteCommand(Emote::EMOTE_ONESHOT_TALK);
+                    //m_npc->AI()->Talk(RISEN_RECRUIT_TEXT_01);
                 }
                 m_timer = 3 * TimeConstants::IN_MILLISECONDS;
                 m_phase = TirisfalGlades::UNDERTAKER_MORDO_PHASE_08;
                 break;
             case TirisfalGlades::UNDERTAKER_MORDO_PHASE_08:
-                if (m_npc && m_npc->IsAlive())
-                    m_npc->HandleEmoteCommand(Emote::EMOTE_ONESHOT_SALUTE);
+                //if (m_npc && m_npc->IsAlive())
+                    //m_npc->HandleEmoteCommand(Emote::EMOTE_ONESHOT_SALUTE);
                 m_timer = 2 * TimeConstants::IN_MILLISECONDS;
                 m_phase = TirisfalGlades::UNDERTAKER_MORDO_PHASE_09;
                 break;
             case TirisfalGlades::UNDERTAKER_MORDO_PHASE_09:
-                if (m_npc && m_npc->IsAlive())
-                    m_npc->GetMotionMaster()->MovePath(TirisfalGlades::RISEN_RECRUIT_PATH_02, false);
+                //if (m_npc && m_npc->IsAlive())
+                    //m_npc->GetMotionMaster()->MovePath(TirisfalGlades::RISEN_RECRUIT_PATH_02, false);
                 m_timer = urand(15, 45) * TimeConstants::IN_MILLISECONDS;
                 m_phase = TirisfalGlades::UNDERTAKER_MORDO_PHASE_00;
                 break;

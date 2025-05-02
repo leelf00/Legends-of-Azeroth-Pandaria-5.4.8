@@ -81,6 +81,11 @@ set(MODULES_LOADER_FILES
 list(APPEND MODULES_SOURCES ${MODULES_LOADER_FILES})
 source_group("ModulesLoader" FILES ${MODULES_LOADER_FILES})
 
+# Base sources which are used by every script project
+if (USE_COREPCH)
+  set(PRIVATE_PCH_HEADER ModulesPCH.h)
+endif()
+
 # Création de la bibliothèque statique "modules"
 add_library(modules STATIC ${MODULES_SOURCES})
 

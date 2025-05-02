@@ -28,6 +28,8 @@
 #include "Opcodes.h"
 #include "WorldPacket.h"
 #include "WorldSession.h"
+
+#include <memory>
 #include "Player.h"
 #include "Vehicle.h"
 #include "ObjectMgr.h"
@@ -97,11 +99,11 @@ bool WorldSessionFilter::Process(WorldPacket* packet)
         return true;
 
     //lets process all packets for non-in-the-world player
-    return (player->IsInWorld() == false);
+    return !player->IsInWorld();
 }
 
 /// WorldSession constructor
-WorldSession::WorldSession(uint32 id, std::shared_ptr<WorldSocket> sock, AccountTypes sec, uint8 expansion, time_t mute_time, LocaleConstant locale, uint32 recruiter, uint32 flags, bool isARecruiter, bool hasBoost):
+WorldSession::WorldSession(uint32 id, std::shared_ptr<WorldSocket> sock, AccountTypes sec, uint8 expansion, time_t mute_time, LocaleConstant locale, uint32 recruiter, uint32 flags, bool isARecruiter, bool hasBoost, bool isBot):
     m_muteTime(mute_time),
     m_timeOutTime(0),
     AntiDOS(this),
@@ -122,12 +124,14 @@ WorldSession::WorldSession(uint32 id, std::shared_ptr<WorldSocket> sock, Account
     m_sessionDbLocaleIndex(locale),
     m_latency(0),
     m_clientTimeDelay(0),
+    m_flags(flags),
     m_TutorialsChanged(false),
     _filterAddonMessages(false),
     recruiterId(recruiter),
     isRecruiter(isARecruiter),
     m_hasBoost(hasBoost),
-    timeLastWhoCommand(0), m_flags(flags),
+    _isBot{isBot},
+    timeLastWhoCommand(0),
     m_currentVendorEntry(0)
 {
     if (sock)
@@ -139,7 +143,7 @@ WorldSession::WorldSession(uint32 id, std::shared_ptr<WorldSocket> sock, Account
 
     // At current time it will never be removed from container, so pointer must be valid all of the session life time.
 
-    _achievementMgr.reset(new AccountAchievementMgr(this));
+    _achievementMgr = std::make_unique<AccountAchievementMgr>();
 }
 
 /// WorldSession destructor
@@ -208,20 +212,20 @@ void WorldSession::SendPacket(WorldPacket const* packet, bool forced /*= false*/
         TC_LOG_ERROR("network.opcode", "Prevented sending of UNKNOWN_OPCODE to %s", GetPlayerInfo().c_str());
         return;
     }
-
+    sScriptMgr->OnPlayerbotPacketSent(GetPlayer(), packet);
+    
     ServerOpcodeHandler const* handler = opcodeTable[static_cast<OpcodeServer>(packet->GetOpcode())];
-
     if (!handler)
     {
-        TC_LOG_ERROR("network.opcode", "Prevented sending of opcode %s with non existing handler to %s",
-                     GetOpcodeNameForLogging(static_cast<OpcodeClient>(packet->GetOpcode())).c_str(),
-                     GetPlayerInfo().c_str());
+        //TC_LOG_ERROR("network.opcode", "Prevented sending of opcode %s with non existing handler to %s",
+        //             GetOpcodeNameForLogging(static_cast<OpcodeClient>(packet->GetOpcode())).c_str(),
+        //             GetPlayerInfo().c_str());
         return;
     }
 
     if (!m_Socket)
     {
-        TC_LOG_ERROR("network.opcode", "Prevented sending of %s to non existent socket to %s", GetOpcodeNameForLogging(static_cast<OpcodeServer>(packet->GetOpcode())).c_str(), GetPlayerInfo().c_str());
+        //TC_LOG_ERROR("network.opcode", "Prevented sending of %s to non existent socket to %s", GetOpcodeNameForLogging(static_cast<OpcodeServer>(packet->GetOpcode())).c_str(), GetPlayerInfo().c_str());
         return;
     }
 
@@ -287,6 +291,17 @@ void WorldSession::QueuePacket(WorldPacket* new_packet)
         _recvQueue.add(new_packet);
 }
 
+bool WorldSession::HandleSocketClosed()
+{
+    if (m_Socket && !m_Socket->IsOpen() && GetPlayer() && !PlayerLogout() && GetPlayer()->m_taxi.empty() && GetPlayer()->IsInWorld() && !World::IsStopped())
+    {
+        m_Socket = nullptr;
+        GetPlayer()->TradeCancel(false);
+        return true;
+    }
+    return false;
+}
+
 /// Logging helper for unexpected opcodes
 void WorldSession::LogUnexpectedOpcode(WorldPacket* packet, const char* status, const char *reason)
 {
@@ -324,7 +339,7 @@ bool WorldSession::Update(uint32 diff, PacketFilter& updater)
 
     ///- Before we process anything:
     /// If necessary, kick the player from the character select screen
-    if (IsConnectionIdle())
+    if (IsConnectionIdle() && m_Socket)
         m_Socket->CloseSocket();
 
     ///- Retrieve packets from the receive queue and call the appropriate handlers
@@ -459,9 +474,9 @@ bool WorldSession::Update(uint32 diff, PacketFilter& updater)
         _warden->Update();
 
     ProcessQueryCallbacks();
+    sScriptMgr->OnPlayerbotUpdateSessions(GetPlayer());
+
     uint32 sessionDiff = getMSTime();
-
-
     sessionDiff = getMSTime() - sessionDiff;
     if (sessionDiff > 20 && !pktHandle.empty())
     {
@@ -520,8 +535,12 @@ void WorldSession::LogoutPlayer(bool save)
 
     if (_player)
     {
+        //sScriptMgr->OnBeforePlayerLogout(_player);
+
         if (uint64 lguid = _player->GetLootGUID())
             DoLootReleaseAll();
+
+        sScriptMgr->OnPlayerbotLogout(_player);
 
         ///- If the player just died before logging out, make him appear as a ghost
         //FIXME: logout must be delayed in case lost connection with client in time of combat

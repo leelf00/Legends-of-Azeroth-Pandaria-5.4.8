@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -30,7 +30,6 @@
 #include "RandomMovementGenerator.h"
 #include "MoveSpline.h"
 #include "MoveSplineInit.h"
-#include <cassert>
 
 inline bool isStatic(MovementGenerator *mv)
 {
@@ -57,7 +56,7 @@ void MotionMaster::InitDefault()
     if (_owner->GetTypeId() == TYPEID_UNIT)
     {
         MovementGenerator* movement = FactorySelector::selectMovementGenerator(_owner->ToCreature());
-        Mutate(movement == NULL ? &si_idleMovement : movement, MOTION_SLOT_IDLE);
+        Mutate(movement == nullptr ? &si_idleMovement : movement, MOTION_SLOT_IDLE);
     }
     else
     {
@@ -128,7 +127,7 @@ void MotionMaster::UpdateMotion(uint32 diff)
         }
 
         delete _expList;
-        _expList = NULL;
+        _expList = nullptr;
 
         if (empty())
             Initialize();
@@ -504,7 +503,7 @@ void MotionMaster::MoveFall(uint32 id /*=0*/)
 
 void MotionMaster::MoveCharge(float x, float y, float z, float speed, uint32 id, bool generatePath)
 {
-    if (Impl[MOTION_SLOT_CONTROLLED] && Impl[MOTION_SLOT_CONTROLLED]->GetMovementGeneratorType() != DISTRACT_MOTION_TYPE || Impl[MOTION_SLOT_CRITICAL])
+    if ((Impl[MOTION_SLOT_CONTROLLED] && Impl[MOTION_SLOT_CONTROLLED]->GetMovementGeneratorType() != DISTRACT_MOTION_TYPE) || Impl[MOTION_SLOT_CRITICAL])
         return;
 
     if (_owner->GetTypeId() == TYPEID_PLAYER)
@@ -639,7 +638,7 @@ void MotionMaster::Mutate(MovementGenerator *m, MovementSlot slot)
 {
     if (MovementGenerator *curr = Impl[slot])
     {
-        Impl[slot] = NULL; // in case a new one is generated in this slot during directdelete
+        Impl[slot] = nullptr; // in case a new one is generated in this slot during directdelete
         if (_top == slot && (_cleanFlag & MMCF_UPDATE))
             DelayedDelete(curr);
         else
@@ -684,7 +683,7 @@ void MotionMaster::MovePath(uint32 path_id, bool repeatable)
         _owner->GetGUID().GetCounter(), path_id, repeatable ? "YES" : "NO");
 }
 
-void MotionMaster::MoveSplinePath(const Position* path, uint32 count, bool fly, bool walk, float speed, bool cyclic, bool catmullrom, bool uncompressed)
+void MotionMaster::MoveSplinePath(const Position* path, uint32 count, bool fly, bool walk, float speed, bool cyclic, bool /*catmullrom*/, bool uncompressed)
 {
     if (_owner->isMoving())
         _owner->StopMoving();
@@ -696,14 +695,14 @@ void MotionMaster::MoveSplinePath(const Position* path, uint32 count, bool fly, 
     init.Path().push_back(vertice);
 
     for (uint32 i = 0; i < count; i++)
-        init.Path().push_back(G3D::Vector3(path[i].m_positionX, path[i].m_positionY, path[i].m_positionZ));
+        init.Path().emplace_back(path[i].m_positionX, path[i].m_positionY, path[i].m_positionZ);
 
     init.SetWalk(walk);
     if (fly)
         init.SetFly();
     if (cyclic)
         init.SetCyclic();
-    if (speed)
+    if (speed != 0)
         init.SetVelocity(speed);
     if (uncompressed)
         init.SetUncompressed();
@@ -716,6 +715,46 @@ void MotionMaster::MoveRotate(uint32 time, RotateDirection direction)
         return;
 
     Mutate(new RotateMovementGenerator(time, direction), MOTION_SLOT_ACTIVE);
+}
+
+void MotionMaster::MoveKnockbackFromForPlayer(float srcX, float srcY, float speedXY, float speedZ)
+{
+    if (speedXY <= 0.1f)
+        return;
+
+    Position dest = _owner->GetPosition();
+    float moveTimeHalf = speedZ / Movement::gravity;
+    float dist = 2 * moveTimeHalf * speedXY;
+    float max_height = -Movement::computeFallElevation(moveTimeHalf, false, -speedZ);
+
+    // Use a mmap raycast to get a valid destination.
+    _owner->MovePositionToFirstCollision(dest, dist, _owner->GetRelativeAngle(srcX, srcY) + float(M_PI));
+
+    Movement::MoveSplineInit init(_owner);
+    init.MoveTo(dest.GetPositionX(), dest.GetPositionY(), dest.GetPositionZ());
+    init.SetParabolic(max_height, 0);
+    init.SetOrientationFixed(true);
+    init.SetVelocity(speedXY);
+    init.Launch();
+    Mutate(new EffectMovementGenerator(0), MOTION_SLOT_CONTROLLED);
+}
+
+// Similar to MovePoint except setting orientationInversed
+void MotionMaster::MovePointBackwards(uint32 id, float x, float y, float z, bool generatePath, bool forceDestination, MovementSlot slot, float orientation /* = 0.0f*/)
+{
+    if (_owner->HasUnitFlag(UNIT_FLAG_DISABLE_MOVE))
+        return;
+
+    if (_owner->IsPlayer())
+    {
+        TC_LOG_DEBUG("movement.motionmaster", "Player (%u) targeted point (Id: %u X: %f Y: %f Z: %f)", _owner->GetGUID().GetCounter(), id, x, y, z);
+        Mutate(new PointMovementGenerator<Player>(id, x, y, z, generatePath), slot);
+    }
+    else
+    {
+        TC_LOG_DEBUG("movement.motionmaster", "Creature (%u) targeted point (ID: %u X: %f Y: %f Z: %f)", _owner->GetGUID().GetCounter(), id, x, y, z);
+        Mutate(new PointMovementGenerator<Creature>(id, x, y, z, generatePath), slot);
+    }
 }
 
 void MotionMaster::LaunchMoveSpline(Movement::MoveSplineInit&& init, uint32 id/*= 0*/, MovementSlot slot/*= MOTION_SLOT_ACTIVE*/, MovementGeneratorType type/*= EFFECT_MOTION_TYPE*/)
@@ -778,7 +817,7 @@ void MotionMaster::DirectDelete(int slot)
 {
     if (MovementGenerator* curr = Impl[slot])
     {
-        Impl[slot] = NULL;
+        Impl[slot] = nullptr;
         if (_top == slot && (_cleanFlag & MMCF_UPDATE))
             DelayedDelete(curr);
         else

@@ -77,7 +77,7 @@ inline unsigned long long atoull(char const* str) { return strtoull(str, nullptr
 
 #define STRINGIZE(a) #a
 
-enum TimeConstants
+enum TimeConstants : uint32
 {
     MINUTE          = 60,
     HOUR            = MINUTE*60,
@@ -150,6 +150,7 @@ struct LocalizedString
 
 #ifndef M_PI
 #define M_PI            3.14159265358979323846f
+#define M_PI_2          1.57079632679489661923f   // pi/2
 #endif
 
 #define MAX_QUERY_LEN 32*1024

@@ -46,7 +46,7 @@ jobs:
         
     - name: Configure CMake
       run: >
-        cmake -GNinja -B ${{ steps.strings.outputs.build-output-dir }}
+        cmake -GNinja -B ${{ steps.strings.outputs.build-output-dir }} 
         -DWITH_WARNINGS=1 -DWITH_COREDEBUG=0 -DELUNA=0 -DCMAKE_INSTALL_PREFIX=check_install
         -S ${{ github.workspace }}       
 

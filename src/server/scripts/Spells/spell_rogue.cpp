@@ -247,7 +247,7 @@ public:
                 Remove(AURA_REMOVE_BY_EXPIRE);
         }
 
-        void ResetTimerCheck(AuraEffect const* aurEff, ProcEventInfo& eventInfo)
+        void ResetTimerCheck(AuraEffect const* /*aurEff*/, ProcEventInfo& /*eventInfo*/)
         {
             tickCount = 0;
         }
@@ -1240,7 +1240,7 @@ class spell_rog_blade_flurry_damage : public SpellScript
 {
     PrepareSpellScript(spell_rog_blade_flurry_damage);
 
-    void SelectTargets(std::list<WorldObject*>& targets)
+    void SelectTargets(std::list<WorldObject*>& /*targets*/)
     {
         RemoveUnitTarget(GetExplTargetUnit()->GetGUID());
     }
@@ -1466,7 +1466,7 @@ class spell_rog_honor_among_thieves : public AuraScript
         return GetUnitOwner()->IsInCombat();
     }
 
-    void HandleProc(ProcEventInfo& eventInfo)
+    void HandleProc(ProcEventInfo& /*eventInfo*/)
     {
         // We need to check this because proc cooldown applied to the actor and not to the aura owner (and it's okay, e.g. stormlash)
         if (GetUnitOwner()->ToPlayer()->HasSpellCooldown(SPELL_ROGUE_HONOR_AMONG_THIEVES))
@@ -1477,9 +1477,7 @@ class spell_rog_honor_among_thieves : public AuraScript
             if (!rogue->IsInCombat())
                 return;
 
-            Unit* target = nullptr;
-            if (ObjectGuid guid = rogue->ToPlayer()->GetComboTarget())
-                target = ObjectAccessor::GetUnit(*rogue, guid);
+            Unit* target = rogue->ToPlayer()->GetComboTarget();
             if (!target)
                 target = rogue->GetVictim();
             if (!target)
@@ -1572,8 +1570,8 @@ class spell_rog_fan_of_knives : public SpellScript
 
         if (Player* rogue = GetCaster()->ToPlayer())
         {
-            if (Unit* comboTarget = ObjectAccessor::GetUnit(*rogue, rogue->GetComboTarget()))
-                target = comboTarget;
+            if (rogue->GetComboTarget())
+                target = rogue->GetComboTarget();
             else if (Unit* comboTarget = ObjectAccessor::GetUnit(*rogue, rogue->GetTarget()))
             {
                 if (rogue->IsValidAttackTarget(comboTarget))
@@ -1944,7 +1942,7 @@ class spell_rog_bandits_guile : public AuraScript
         return !GetUnitOwner()->HasAura(84747); // Deep
     }
 
-    void HandleProc(ProcEventInfo& eventInfo)
+    void HandleProc(ProcEventInfo& /*eventInfo*/)
     {
         PreventDefaultAction();
         ++m_counter;
@@ -2114,7 +2112,7 @@ class spell_rog_redirect : public SpellScript
             return SPELL_FAILED_DONT_REPORT;
         if (!rogue->GetComboPoints())
             return SPELL_FAILED_NO_COMBO_POINTS;
-        if (rogue->GetComboTarget() == GetSpell()->m_targets.GetUnitTargetGUID())
+        if (!rogue->GetComboTarget() || (rogue->GetComboTarget() && rogue->GetComboTarget()->GetGUID() == GetSpell()->m_targets.GetUnitTargetGUID()))
             return SPELL_FAILED_BAD_TARGETS;
 
         return SPELL_CAST_OK;
@@ -2363,7 +2361,7 @@ class spell_rog_glyph_of_deadly_momentum : public AuraScript
 {
     PrepareAuraScript(spell_rog_glyph_of_deadly_momentum);
 
-    void HandleProc(ProcEventInfo& eventInfo)
+    void HandleProc(ProcEventInfo& /*eventInfo*/)
     {
         if (Aura* snd = GetUnitOwner()->GetAura(SPELL_ROGUE_SLICE_AND_DICE))
             snd->RefreshDuration();
@@ -2438,7 +2436,7 @@ class spell_rog_t16_2p_bonus : public AuraScript
         }
     }
 
-    void HandleProc(ProcEventInfo& eventInfo)
+    void HandleProc(ProcEventInfo& /*eventInfo*/)
     {
         GetUnitOwner()->CastCustomSpell(SPELL_ROGUE_SILENT_BLADES, SPELLVALUE_BASE_POINT0, GetAmount(), GetUnitOwner(), true);
     }
@@ -2694,7 +2692,7 @@ class spell_rog_distract : public SpellScript
     {
         if (targets.empty())
         {
-            auto check = [=](Unit* unit)
+            auto check = [this](Unit* unit)
             {
                 return unit->IsInDist(GetExplTargetDest(), 10.0f) && GetCaster()->IsValidAttackTarget(unit) && !unit->IsTotem();
             };
@@ -2727,7 +2725,7 @@ class spell_rog_duration_check : public SpellScript
 
     SpellCastResult CheckCast()
     {
-        if (Player* druid = GetCaster()->ToPlayer())
+        if (GetCaster()->ToPlayer())
         {
             if (Aura* existing = GetCaster()->GetAura(GetSpellInfo()->Id))
             {

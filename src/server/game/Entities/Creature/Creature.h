@@ -75,6 +75,7 @@ typedef std::unordered_map<uint32, EquipmentInfoContainerInternal> EquipmentInfo
 struct CreatureData
 {
     CreatureData() : dbData(true) { }
+    ObjectGuid::LowType spawnId;
     uint32 id;                                              // entry in creature_template
     uint16 mapId;
     uint32 phaseMask;
