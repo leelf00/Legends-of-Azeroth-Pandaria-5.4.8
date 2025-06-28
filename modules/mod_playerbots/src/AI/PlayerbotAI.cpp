@@ -2190,6 +2190,8 @@ bool PlayerbotAI::CastSpell(std::string const name, Unit* target, Item* itemTarg
 {
     TC_LOG_DEBUG("playerbots", "%s cast: %s", bot->GetName(), name);
     bool result = CastSpell(_aiObjectContext->GetValue<uint32>("spell id", name)->Get(), target, itemTarget);
+    //const std::string res = result ? "success" : "failed";
+    //TC_LOG_DEBUG("playerbots", "%s cast: %s => %s", bot->GetName().c_str(), name.c_str(), res.c_str());
     if (result)
     {
         _aiObjectContext->GetValue<time_t>("last spell cast time", name)->Set(time(nullptr));
@@ -2323,7 +2325,7 @@ bool PlayerbotAI::CastSpell(uint32 spellId, Unit* target, Item* itemTarget)
     if (result != SPELL_CAST_OK)
     {
         // if (!sPlayerbotAIConfig->logInGroupOnly || (bot->GetGroup() && HasRealPlayerMaster())) {
-        //TC_LOG_DEBUG("playerbots", "Spell cast failed. - target name: %s, spellid: %u, bot name: %s, result: %u", target->GetName().c_str(), spellId, bot->GetName().c_str(), result);
+        TC_LOG_DEBUG("playerbots", "Spell cast failed. - target name: %s, spellid: %u, bot name: %s, result: %u", target->GetName().c_str(), spellId, bot->GetName().c_str(), result);
         // }
         return false;
     }
