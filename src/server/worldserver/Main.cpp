@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -30,7 +30,9 @@
 #include "Implementation/LoginDatabase.h"
 #include "Implementation/CharacterDatabase.h"
 #include "Implementation/WorldDatabase.h"
+#ifdef PLAYERBOTS
 #include "Implementation/PlayerbotsDatabase.h"
+#endif
 #include "AppenderDB.h"
 #include "AsyncAcceptor.h"
 #include "Banner.h"
@@ -415,8 +417,9 @@ void WorldUpdateLoop()
     LoginDatabase.WarnAboutSyncQueries(true);
     CharacterDatabase.WarnAboutSyncQueries(true);
     WorldDatabase.WarnAboutSyncQueries(true);
+#ifdef PLAYERBOTS    
     PlayerbotsDatabase.WarnAboutSyncQueries(true);
-
+#endif
     sWorld->OnStartup();
 
     ///- While we have not World::m_stopEvent, update the world
@@ -451,7 +454,9 @@ void WorldUpdateLoop()
     LoginDatabase.WarnAboutSyncQueries(false);
     CharacterDatabase.WarnAboutSyncQueries(false);
     WorldDatabase.WarnAboutSyncQueries(false);
+#ifdef PLAYERBOTS    
     PlayerbotsDatabase.WarnAboutSyncQueries(false);
+#endif    
 }
 
 void SignalHandler(boost::system::error_code const& error, int /*signalNumber*/)
@@ -568,9 +573,10 @@ bool StartDB()
     loader
         .AddDatabase(LoginDatabase, "Login")
         .AddDatabase(CharacterDatabase, "Character")
-        .AddDatabase(WorldDatabase, "World")
-        .AddDatabase(PlayerbotsDatabase, "Playerbots");
-
+        .AddDatabase(WorldDatabase, "World");
+#ifdef PLAYERBOTS        
+    loader.AddDatabase(PlayerbotsDatabase, "Playerbots");
+#endif
     if (!loader.Load())
         return false;
 
@@ -614,7 +620,9 @@ void StopDB()
     CharacterDatabase.Close();
     WorldDatabase.Close();
     LoginDatabase.Close();
+#ifdef PLAYERBOTS    
     PlayerbotsDatabase.Close();
+#endif
 
     MySQL::Library_End();
 }
