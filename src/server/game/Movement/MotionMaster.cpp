@@ -748,12 +748,12 @@ void MotionMaster::MovePointBackwards(uint32 id, float x, float y, float z, bool
 
     if (_owner->IsPlayer())
     {
-        TC_LOG_DEBUG("movement.motionmaster", "Player ({}) targeted point (Id: {} X: {} Y: {} Z: {})", _owner->GetGUID().ToString(), id, x, y, z);
+        TC_LOG_DEBUG("movement.motionmaster", "Player (%u) targeted point (Id: %u X: %f Y: %f Z: %f)", _owner->GetGUID().GetCounter(), id, x, y, z);
         Mutate(new PointMovementGenerator<Player>(id, x, y, z, generatePath), slot);
     }
     else
     {
-        TC_LOG_DEBUG("movement.motionmaster", "Creature ({}) targeted point (ID: {} X: {} Y: {} Z: {})", _owner->GetGUID().ToString(), id, x, y, z);
+        TC_LOG_DEBUG("movement.motionmaster", "Creature (%u) targeted point (ID: %u X: %f Y: %f Z: %f)", _owner->GetGUID().GetCounter(), id, x, y, z);
         Mutate(new PointMovementGenerator<Creature>(id, x, y, z, generatePath), slot);
     }
 }

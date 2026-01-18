@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -206,7 +206,7 @@ void RealmList::UpdateRealms(boost::system::error_code const& error)
 
     if (_updateInterval)
     {
-        _updateTimer->expires_from_now(boost::posix_time::seconds(_updateInterval));
+        _updateTimer->expires_after(std::chrono::seconds(_updateInterval));
         _updateTimer->async_wait(std::bind(&RealmList::UpdateRealms, this, std::placeholders::_1));
     }    
 }
