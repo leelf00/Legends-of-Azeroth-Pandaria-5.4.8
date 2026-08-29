@@ -356,14 +356,14 @@ void Transport::Update(uint32 diff)
             for (auto itr = m_goValue.Transport.AnimationInfo->Path.begin(); itr != m_goValue.Transport.AnimationInfo->Path.end(); prev = (itr++)->second)
             {
                 next = itr->second;
-                if (realTimer <= next->TimeSeg)
+                if (realTimer <= next->TimeIndex)
                     break;
             }
             if (prev == next)
                 prev = nullptr;
 
             if (prev)
-                pos = G3D::Vector3{ prev->X, prev->Y, prev->Z }.lerp({ next->X, next->Y, next->Z }, (float)(realTimer - prev->TimeSeg) / (next->TimeSeg - prev->TimeSeg));
+                pos = G3D::Vector3{ prev->X, prev->Y, prev->Z }.lerp({ next->X, next->Y, next->Z }, (float)(realTimer - prev->TimeIndex) / (next->TimeIndex - prev->TimeIndex));
             else if (next)
                 pos = G3D::Vector3{ next->X, next->Y, next->Z };
 
@@ -387,14 +387,14 @@ void Transport::Update(uint32 diff)
             for (auto itr = m_goValue.Transport.AnimationInfo->Rotations.begin(); itr != m_goValue.Transport.AnimationInfo->Rotations.end(); prev = (itr++)->second)
             {
                 next = itr->second;
-                if (realTimer <= next->TimeSeg)
+                if (realTimer <= next->TimeIndex)
                     break;
             }
             if (prev == next)
                 prev = nullptr;
 
             if (prev)
-                rot = G3D::Quat{ prev->X, prev->Y, prev->Z, prev->W }.slerp({ next->X, next->Y, next->Z, next->W }, (float)(realTimer - prev->TimeSeg) / (next->TimeSeg - prev->TimeSeg));
+                rot = G3D::Quat{ prev->X, prev->Y, prev->Z, prev->W }.slerp({ next->X, next->Y, next->Z, next->W }, (float)(realTimer - prev->TimeIndex) / (next->TimeIndex - prev->TimeIndex));
             else if (next)
                 rot = G3D::Quat{ next->X, next->Y, next->Z, next->W };
 

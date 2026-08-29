@@ -1711,7 +1711,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                     SkillLineAbilityMapBounds bounds = sSpellMgr->GetSkillLineAbilityMapBounds(spellIter->first);
                     for (SkillLineAbilityMap::const_iterator skillIter = bounds.first; skillIter != bounds.second; ++skillIter)
                     {
-                        if (skillIter->second->skillId == achievementCriteria->Entry->Asset.SkillLine)
+                        if (skillIter->second->SkillLine == achievementCriteria->Entry->Asset.SkillLine)
                             spellCount++;
                     }
                 }
@@ -1736,7 +1736,7 @@ void AchievementMgr::UpdateAchievementCriteria(AchievementCriteriaTypes type, ui
                 {
                     SkillLineAbilityMapBounds bounds = sSpellMgr->GetSkillLineAbilityMapBounds(spellIter->first);
                     for (SkillLineAbilityMap::const_iterator skillIter = bounds.first; skillIter != bounds.second; ++skillIter)
-                        if (skillIter->second->skillId == achievementCriteria->Entry->Asset.SkillLine)
+                        if (skillIter->second->SkillLine == achievementCriteria->Entry->Asset.SkillLine)
                             spellCount++;
                 }
                 SetCriteriaProgress(achievementCriteria, spellCount, referencePlayer);

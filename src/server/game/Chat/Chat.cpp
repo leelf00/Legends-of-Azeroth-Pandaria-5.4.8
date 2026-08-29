@@ -1117,7 +1117,7 @@ uint32 ChatHandler::extractSpellIdFromLink(char* text)
             if (!talentEntry)
                 return 0;
 
-            return talentEntry->SpellId;
+            return talentEntry->SpellID;
         }
         case SPELL_LINK_ENCHANT:
         case SPELL_LINK_TRADE:

@@ -346,7 +346,7 @@ class Battleground
 
         /* Battleground */
         // Get methods:
-        char const* GetName(LocaleConstant locale = DEFAULT_LOCALE) const { return sBattlemasterListStore.LookupEntry(m_TypeID)->name[locale]; }
+        char const* GetName(LocaleConstant locale = DEFAULT_LOCALE) const { return sBattlemasterListStore.LookupEntry(m_TypeID)->name; }
         ObjectGuid GetGUID() { return m_Guid; }
         BattlegroundTypeId GetTypeID(bool GetRandom = false) const { return GetRandom ? m_RandomTypeID : m_TypeID; }
         BattlegroundBracketId GetBracketId() const { return m_BracketId; }

@@ -202,7 +202,7 @@ void LFGMgr::LoadLFGDungeons(bool reload /* = false */)
         if (!dungeon)
             continue;
 
-        switch (dungeon->type)
+        switch (dungeon->TypeID)
         {
             case LFG_TYPE_DUNGEON:
             case LFG_TYPE_RAID:
@@ -699,7 +699,7 @@ void LFGMgr::JoinLfg(Player* player, LfgRoles roles, LfgDungeonSet& dungeons, co
 
         DungeonQueue const& queue = GetQueueManager(gguid).GetQueue(*dungeons.begin());
         LFGDungeonEntry const* dungeon = sLFGDungeonStore.LookupEntry(*dungeons.begin());
-        bool flex = dungeon && dungeon->difficulty == RAID_DIFFICULTY_1025MAN_FLEX;
+        bool flex = dungeon && dungeon->DifficultyID == RAID_DIFFICULTY_1025MAN_FLEX;
 
         roleCheck.neededTanks   = flex ? 0 : queue.GetRoleSlots(PLAYER_ROLE_TANK);
         roleCheck.neededHealers = flex ? 0 : queue.GetRoleSlots(PLAYER_ROLE_HEALER);

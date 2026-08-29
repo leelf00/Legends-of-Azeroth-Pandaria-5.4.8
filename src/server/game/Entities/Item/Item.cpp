@@ -1869,7 +1869,7 @@ bool Item::IsEyeOfTheBlackPrinceAllowed() const
             if (IsPvPItem())
                 return false;
             if (auto entry = sItemNameDescriptionStore.LookupEntry(GetEntry()))
-                if (entry && strcmp(entry->Description[LOCALE_enUS], "Raid Finder") == 0)   // SoO LFR
+                if (entry && strcmp(entry->Description, "Raid Finder") == 0)   // SoO LFR
                     return false;
             return true;
     }

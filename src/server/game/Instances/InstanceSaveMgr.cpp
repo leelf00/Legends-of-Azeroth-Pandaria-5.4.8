@@ -15,13 +15,19 @@
 * with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "Common.h"
-#include "Player.h"
-#include "GridNotifiers.h"
-#include "Log.h"
-#include "GameTime.h"
-#include "GridStates.h"
 #include "CellImpl.h"
+#include "Common.h"
+#include "Config.h"
+#include "DatabaseEnv.h"
+#include "DB2Stores.h"
+#include "GameTime.h"
+#include "GridNotifiers.h"
+#include "GridNotifiersImpl.h"
+#include "GridStates.h"
+#include "Group.h"
+#include "InstanceScript.h"
+#include "InstanceSaveMgr.h"
+#include "Log.h"
 #include "Map.h"
 #include "MapManager.h"
 #include "MapInstanced.h"
@@ -29,12 +35,11 @@
 #include "Timer.h"
 #include "GridNotifiersImpl.h"
 #include "Config.h"
-#include "Transport.h"
 #include "ObjectMgr.h"
+#include "Player.h"
+#include "Timer.h"
+#include "Transport.h"
 #include "World.h"
-#include "Group.h"
-#include "InstanceScript.h"
-#include "DatabaseEnv.h"
 
 uint16 InstanceSaveManager::ResetTimeDelay[] = {3600, 900, 300, 60};
 
@@ -382,7 +387,7 @@ void InstanceSaveManager::LoadResetTimes()
             Difficulty difficulty = Difficulty(fields[1].GetUInt8());
             time_t oldresettime = fields[2].GetUInt32();
 
-            MapDifficulty const* mapDiff = GetMapDifficultyData(mapid, difficulty);
+            MapDifficulty const* mapDiff = sDBCManager.GetMapDifficultyData(mapid, difficulty);
             if (!mapDiff)
             {
                 TC_LOG_ERROR("misc", "InstanceSaveManager::LoadResetTimes: invalid mapid(%u)/difficulty(%u) pair in instance_reset!", mapid, difficulty);
@@ -655,7 +660,7 @@ void InstanceSaveManager::_ResetOrWarnAll(uint32 mapid, Difficulty difficulty, b
 
     if (!warn)
     {
-        MapDifficulty const* mapDiff = GetMapDifficultyData(mapid, difficulty);
+        MapDifficulty const* mapDiff = sDBCManager.GetMapDifficultyData(mapid, difficulty);
         if (!mapDiff || !mapDiff->resetTime)
         {
             TC_LOG_ERROR("misc", "InstanceSaveManager::ResetOrWarnAll: not valid difficulty or no reset delay for map %d", mapid);
