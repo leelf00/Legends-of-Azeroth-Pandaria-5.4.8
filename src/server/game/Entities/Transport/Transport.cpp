@@ -234,6 +234,8 @@ bool Transport::Create(uint32 guidlow, uint32 entry, uint32 mapid, float x, floa
     _currentFrame = _nextFrame++;
     _triggeredArrivalEvent = false;
     _triggeredDepartureEvent = false;
+    _delayedTeleport = false;
+    _pendingStop = false;
 
     m_goValue.Transport.PathProgress = 0;
     SetObjectScale(goinfo->size);
@@ -267,6 +269,11 @@ bool Transport::Create(uint32 guidlow, uint32 entry, uint32 mapid, float x, floa
 
 void Transport::CleanupsBeforeDelete(bool finalCleanup)
 {
+    _delayedTeleport = false;
+    _triggeredArrivalEvent = false;
+    _triggeredDepartureEvent = false;
+    _pendingStop = false;
+    
     UnloadStaticPassengers();
     while (!_passengers.empty())
     {
@@ -943,15 +950,11 @@ bool Transport::TeleportTransport(uint32 newMapid, float x, float y, float z, fl
     if (oldMap->GetId() != newMapid)
     {
         _delayedTeleport = true;
-
         UnloadStaticPassengers();
         return true;
     }
     else
     {
-        Relocate(x, y, z, o);
-        SetWorldRotationAngles(o, 0, 0);
-
         // Teleport players, they need to know it
         for (PassengerSet::iterator itr = _passengers.begin(); itr != _passengers.end(); ++itr)
         {
@@ -966,7 +969,8 @@ bool Transport::TeleportTransport(uint32 newMapid, float x, float y, float z, fl
                 (*itr)->m_movementInfo.transport.pos.GetPosition(destX, destY, destZ, destO);
                 CalculatePassengerPosition(destX, destY, destZ, &destO);
 
-                (*itr)->ToUnit()->NearTeleportTo(destX, destY, destZ, destO);
+                (*itr)->ToPlayer()->TeleportTo(newMapid, destX, destY, destZ, destO,
+                    TELE_TO_NOT_LEAVE_TRANSPORT | TELE_TO_NOT_LEAVE_COMBAT | TELE_TO_NOT_UNSUMMON_PET | TELE_TO_TRANSPORT_TELEPORT);
             }
         }
 
@@ -981,6 +985,9 @@ void Transport::DelayedTeleportTransport()
         return;
 
     _delayedTeleport = false;
+    _triggeredArrivalEvent = false;
+    _triggeredDepartureEvent = false;
+    
     Map* newMap = sMapMgr->CreateBaseMap(_nextFrame->Node->MapId);
     GetMap()->RemoveFromMap<Transport>(this, false);
     SetMap(newMap);
@@ -1015,7 +1022,7 @@ void Transport::DelayedTeleportTransport()
                 }
                 break;
             case TYPEID_PLAYER:
-                if (!obj->ToPlayer()->TeleportTo(_nextFrame->Node->MapId, destX, destY, destZ, destO, TELE_TO_NOT_LEAVE_TRANSPORT))
+                if (!obj->ToPlayer()->TeleportTo(_nextFrame->Node->MapId, destX, destY, destZ, destO, TELE_TO_NOT_LEAVE_TRANSPORT | TELE_TO_TRANSPORT_TELEPORT))
                     RemovePassenger(obj);
                 break;
             case TYPEID_GAMEOBJECT:
@@ -1089,6 +1096,8 @@ void Transport::UpdatePassengerPositions(PassengerSet& passengers)
                 vehicle->RelocatePassengers();
     }
 }
+
+
 
 void Transport::DoEventIfAny(KeyFrame const& node, bool departure)
 {

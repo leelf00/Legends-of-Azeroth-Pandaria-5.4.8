@@ -30,6 +30,7 @@
 #include "CreatureTextMgr.h"
 #include "MoveSplineInit.h"
 #include <G3D/Vector3.h>
+#include <functional>
 
 /*######
 ##Quest 12848
@@ -412,26 +413,16 @@ struct npc_eye_of_acherus : public ScriptedAI
                     break;
                 case EVENT_LAUNCH_TOWARDS_DESTINATION:
                 {
-                    // std::function<void(Movement::MoveSplineInit&)> initializer = [=](Movement::MoveSplineInit& init)
-                    // {
-                    //     Movement::PointsArray path(EyeOfAcherusPath, EyeOfAcherusPath + EyeOfAcherusPathSize);
-                    //     init.MovebyPath(path);
-                    //     init.SetFly();
-                    //     if (Unit* owner = me->GetCharmerOrOwner())
-                    //         init.SetVelocity(owner->GetSpeed(MOVE_RUN));
-                    // };
-                    // //me->GetMotionMaster()->MovePoint(EYE_POINT_DESTINATION_1, EYE_DESTINATION_1);
-                    // me->GetMotionMaster()->LaunchMoveSpline(std::move(initializer), POINT_NEW_AVALON, MOTION_SLOT_ACTIVE, POINT_MOTION_TYPE);
-                    Movement::PointsArray path(EyeOfAcherusPath, EyeOfAcherusPath + EyeOfAcherusPathSize);
-                    Movement::MoveSplineInit init(me);
-                    init.MovebyPath(path);
-                    init.SetFly();
-                    init.SetUncompressed();
-                    init.SetSmooth();
-                    if (Unit* owner = me->GetCharmerOrOwner())
-                        init.SetVelocity(owner->GetSpeed(MOVE_RUN));
+                    std::function<void(Movement::MoveSplineInit&)> initializer = [=, me = me](Movement::MoveSplineInit& init)
+                    {
+                        Movement::PointsArray path(EyeOfAcherusPath, EyeOfAcherusPath + EyeOfAcherusPathSize);
+                        init.MovebyPath(path);
+                        init.SetFly();
+                        if (Unit* owner = me->GetCharmerOrOwner())
+                            init.SetVelocity(owner->GetSpeed(MOVE_RUN));
+                    };
 
-                    me->GetMotionMaster()->LaunchMoveSpline(std::move(init), POINT_NEW_AVALON, MOTION_SLOT_ACTIVE, POINT_MOTION_TYPE);
+                    me->GetMotionMaster()->LaunchMoveSpline(std::move(initializer), POINT_NEW_AVALON, MOTION_SLOT_ACTIVE, POINT_MOTION_TYPE);
                     break;
                 }
                 case EVENT_GRANT_CONTROL:
@@ -492,6 +483,80 @@ public:
     SpellScript* GetSpellScript() const override
     {
         return new spell_q12641_death_comes_from_on_high_summon_ghouls_SpellScript();
+    }
+};
+
+enum DeathComesFromOnHigh
+{
+    SPELL_FORGE_CREDIT                  = 51974,
+    SPELL_TOWN_HALL_CREDIT              = 51977,
+    SPELL_SCARLET_HOLD_CREDIT           = 51980,
+    SPELL_CHAPEL_CREDIT                 = 51982,
+
+    NPC_NEW_AVALON_FORGE                = 28525,
+    NPC_NEW_AVALON_TOWN_HALL            = 28543,
+    NPC_SCARLET_HOLD                    = 28542,
+    NPC_CHAPEL_OF_THE_CRIMSON_FLAME     = 28544
+};
+
+// 51858 - Siphon of Acherus
+class spell_chapter1_siphon_of_acherus : public SpellScriptLoader
+{
+public:
+    spell_chapter1_siphon_of_acherus() : SpellScriptLoader("spell_chapter1_siphon_of_acherus") { }
+
+    class spell_chapter1_siphon_of_acherus_SpellScript : public SpellScript
+    {
+        PrepareSpellScript(spell_chapter1_siphon_of_acherus_SpellScript);
+
+        bool Validate(SpellInfo const* /*spellInfo*/) override
+        {
+            if (!sSpellMgr->GetSpellInfo(SPELL_FORGE_CREDIT) ||
+                !sSpellMgr->GetSpellInfo(SPELL_TOWN_HALL_CREDIT) ||
+                !sSpellMgr->GetSpellInfo(SPELL_SCARLET_HOLD_CREDIT) ||
+                !sSpellMgr->GetSpellInfo(SPELL_CHAPEL_CREDIT))
+                return false;
+            return true;
+        }
+
+        void HandleDummy(SpellEffIndex /*effIndex*/)
+        {
+            uint32 spellId = 0;
+
+            switch (GetHitCreature()->GetEntry())
+            {
+                case NPC_NEW_AVALON_FORGE:
+                    spellId = SPELL_FORGE_CREDIT;
+                    break;
+                case NPC_NEW_AVALON_TOWN_HALL:
+                    spellId = SPELL_TOWN_HALL_CREDIT;
+                    break;
+                case NPC_SCARLET_HOLD:
+                    spellId = SPELL_SCARLET_HOLD_CREDIT;
+                    break;
+                case NPC_CHAPEL_OF_THE_CRIMSON_FLAME:
+                    spellId = SPELL_CHAPEL_CREDIT;
+                    break;
+                default:
+                    return;
+            }
+
+            // Exactly as in TC 3.3.5: the eye is the caster, the credit spell's
+            // implicit target 27 (TARGET_UNIT_MASTER) resolves to the player.
+            // (The explicit Unit* cast disambiguates this engine's extra
+            // GameObject* overload; TC 3.3.5 compiles the bare literal.)
+            GetCaster()->CastSpell((Unit*)nullptr, spellId, true);
+        }
+
+        void Register() override
+        {
+            OnEffectHitTarget += SpellEffectFn(spell_chapter1_siphon_of_acherus_SpellScript::HandleDummy, EFFECT_0, SPELL_EFFECT_DUMMY);
+        }
+    };
+
+    SpellScript* GetSpellScript() const override
+    {
+        return new spell_chapter1_siphon_of_acherus_SpellScript();
     }
 };
 
@@ -1319,5 +1384,6 @@ void AddSC_the_scarlet_enclave_c1()
     new npc_scarlet_miner();
     new npc_scarlet_miner_cart();
     RegisterCreatureAI(npc_eye_of_acherus);
-    new spell_q12641_death_comes_from_on_high_summon_ghouls();    
+    new spell_q12641_death_comes_from_on_high_summon_ghouls();
+    new spell_chapter1_siphon_of_acherus();
 }

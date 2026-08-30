@@ -16,6 +16,7 @@
 */
 
 #include "Player.h"
+#include "GameClient.h"
 #include "AccountMgr.h"
 #include "AchievementMgr.h"
 #include "Battlefield.h"
@@ -1958,7 +1959,8 @@ bool Player::TeleportTo(uint32 mapid, float x, float y, float z, float orientati
                 transport->CalculatePassengerOffset(x, y, z, &orientation);
                 m_movementInfo.transport.pos.Relocate(x, y, z, orientation);
             }
-            SendTeleportPacket(oldPos); // this automatically relocates to oldPos in order to broadcast the packet in the right place
+            // use TELE_TO_TRANSPORT_TELEPORT option if player is on transport
+            SendTeleportPacket(oldPos, (options & TELE_TO_TRANSPORT_TELEPORT) != 0);
 
             if (HasUnitState(UNIT_STATE_FLEEING | UNIT_STATE_CONFUSED | UNIT_STATE_POSSESSED) || IsCharmed() || isPossessed())
                 SetClientControl(this, false);
@@ -26817,9 +26819,11 @@ void Player::SetClientControl(Unit* target, bool allowMove)
         SetViewpoint(target, allowMove);
 
     if (allowMove)
-        SetMover(this);
+        SetMover(target);
     else
         m_clientMoverGuid = 0;
+
+    GetSession()->GetGameClient()->SetMovedUnit(target, allowMove);
 }
 
 void Player::SetMover(Unit* target)
@@ -27183,14 +27187,15 @@ void Player::SetViewpoint(WorldObject* target, bool apply)
     {
         TC_LOG_DEBUG("maps", "Player::CreateViewpoint: Player %s create seer %u (TypeId: %u).", GetName().c_str(), target->GetEntry(), target->GetTypeId());
 
+        // Clear existing farsight object before setting a new one
+        if (ObjectGuid oldFarsight = GetGuidValue(PLAYER_FIELD_FARSIGHT_OBJECT))
+            SetGuidValue(PLAYER_FIELD_FARSIGHT_OBJECT, ObjectGuid());
+
         if (!AddGuidValue(PLAYER_FIELD_FARSIGHT_OBJECT, target->GetGUID()))
         {
             TC_LOG_FATAL("entities.player", "Player::CreateViewpoint: Player %s cannot add new viewpoint!", GetName().c_str());
             return;
         }
-
-        // farsight dynobj or puppet may be very far away
-        UpdateVisibilityOf(target);
 
         if (Unit* targetUnit = target->ToUnit(); targetUnit && targetUnit != GetVehicleBase())
             targetUnit->AddPlayerToVision(this);

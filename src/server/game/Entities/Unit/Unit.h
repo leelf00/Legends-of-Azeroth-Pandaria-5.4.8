@@ -210,6 +210,8 @@ class TransportBase;
 class SpellCastTargets;
 class SpellHistory;
 
+class GameClient;
+
 namespace Movement
 {
     class ExtraMovementStatusElement;
@@ -1697,7 +1699,7 @@ public:
     void SendSpellDamageImmune(Unit* target, uint32 spellId);
 
     void NearTeleportTo(float x, float y, float z, float orientation, bool casting = false);
-    void SendTeleportPacket(Position& pos);
+    void SendTeleportPacket(Position& pos, bool teleportingTransport = false);
     void BuildTeleportUpdateData(WorldPacket* data);
     virtual bool UpdatePosition(float x, float y, float z, float ang, bool teleport = false);
     // returns true if unit's position really changed
@@ -1725,6 +1727,7 @@ public:
     bool SetFall(bool enable);
     bool SetSwim(bool enable);
     bool SetCanFly(bool enable);
+    bool SetAlwaysAllowPitching(bool enable);
     bool SetWaterWalking(bool enable, bool packetOnly = false);
     bool SetFeatherFall(bool enable, bool packetOnly = false);
     bool SetHover(bool enable, bool packetOnly = false);
@@ -1826,6 +1829,8 @@ public:
     void UpdateCharmAI();
     //Player* GetMoverSource() const;
     Player* m_movedPlayer;
+
+    GameClient* _gameClientMovingMe;
     SharedVisionList const& GetSharedVisionList()
     {
         return m_sharedVision;
@@ -2520,6 +2525,12 @@ public:
 
     // Movement info
     Movement::MoveSpline* movespline;
+
+    // real time client control status of this unit (possess effects, vehicles and similar). For example, if this unit is a player temporarily under fear, it will return false.
+    bool IsMovedByClient() const { return GetGameClientMovingMe() != nullptr; }
+    bool IsMovedByServer() const { return !IsMovedByClient(); }
+    GameClient* GetGameClientMovingMe() const { return _gameClientMovingMe; }
+    void SetGameClientMovingMe(GameClient* gameClientMovingMe) { _gameClientMovingMe = gameClientMovingMe; }
 
     virtual void Talk(std::string const& text, ChatMsg msgType, Language language, float textRange, WorldObject const* target);
     virtual void Say(std::string const& text, Language language, WorldObject const* target = nullptr);

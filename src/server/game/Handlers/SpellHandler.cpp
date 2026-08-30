@@ -725,7 +725,6 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
     bool hasOrientation = false;
     bool hasUnkMovementField = false;
     uint32 unkMovementLoopCounter = 0;
-    Unit* caster = mover;
 
     recvPacket.ReadBit(); // Fake bit
     bool hasTargetString = !recvPacket.ReadBit();
@@ -964,11 +963,11 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
     }
     else
     {
-        destTransportGuid = caster->GetTransGUID();
+        destTransportGuid = _player->GetTransGUID();
         if (destTransportGuid)
-            destPos.Relocate(caster->GetTransOffsetX(), caster->GetTransOffsetY(), caster->GetTransOffsetZ(), caster->GetTransOffsetO());
+            destPos.Relocate(_player->GetTransOffsetX(), _player->GetTransOffsetY(), _player->GetTransOffsetZ(), _player->GetTransOffsetO());
         else
-            destPos.Relocate(caster);
+            destPos.Relocate(_player);
     }
 
     recvPacket.ReadByteSeq(targetGuid[3]);
@@ -998,11 +997,11 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
     }
     else
     {
-        srcTransportGuid = caster->GetTransGUID();
+        srcTransportGuid = _player->GetTransGUID();
         if (srcTransportGuid)
-            srcPos.Relocate(caster->GetTransOffsetX(), caster->GetTransOffsetY(), caster->GetTransOffsetZ(), caster->GetTransOffsetO());
+            srcPos.Relocate(_player->GetTransOffsetX(), _player->GetTransOffsetY(), _player->GetTransOffsetZ(), _player->GetTransOffsetO());
         else
-            srcPos.Relocate(caster);
+            srcPos.Relocate(_player);
     }
 
     if (hasTargetString)
@@ -1039,15 +1038,18 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
         return;
     }
 
-    if (caster->GetTypeId() == TYPEID_PLAYER &&  caster->GetMap()->IsDungeon() && caster->GetMap()->IsChallengeDungeon() &&
-        caster->GetInstanceScript() && caster->GetInstanceScript()->IsChallengeModeStarted() &&
+    if (_player->GetTypeId() == TYPEID_PLAYER && _player->GetMap()->IsDungeon() && _player->GetMap()->IsChallengeDungeon() &&
+        _player->GetInstanceScript() && _player->GetInstanceScript()->IsChallengeModeStarted() &&
         (spellInfo->Id == 63645 || spellInfo->Id == 63644 || spellInfo->Targets & TARGET_FLAG_GLYPH_SLOT))
     {
-        caster->ToPlayer()->SendGameError(GameError::ERR_NOT_IN_COMBAT);
+        _player->ToPlayer()->SendGameError(GameError::ERR_NOT_IN_COMBAT);
         recvPacket.rfinish(); // prevent spam at ignore packet
         return;
     }
 
+    // Character controlling another unit (vehicle) - let the controlled unit cast, e.g. the
+    // Eye of Acherus must be the caster for its channel visuals to show (matches TC 3.3.5 pre-0a34290484)
+    Unit* caster = mover;
     if (caster->GetTypeId() == TYPEID_UNIT && !caster->ToCreature()->HasSpell(spellId))
     {
         // If the vehicle creature does not have the spell but it allows the passenger to cast own spells
@@ -1065,7 +1067,7 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
     SpellCastTargets targets(caster, targetMask, targetGuid, itemTargetGuid, srcTransportGuid, destTransportGuid, srcPos, destPos, elevation, missileSpeed, targetString);
 
     // not have spell in spellbook
-    if (caster->GetTypeId() == TYPEID_PLAYER && !caster->ToPlayer()->HasActiveSpell(spellId) && !spellInfo->IsRaidMarker() &&
+    if (caster->GetTypeId() == TYPEID_PLAYER && !_player->HasActiveSpell(spellId) && !spellInfo->IsRaidMarker() &&
         spellId != 101603 && // Hack for Throw Totem, Echo of Baine
         spellId != 119393 && // Hack for Siege Explosive, General Pa'valak
         spellId != 123039 && // Hack for Player Throw Barrel, Commander Vo'jak
@@ -1074,10 +1076,10 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
         // allow casting of unknown spells for special lock cases
         bool allow = false;
         if (GameObject* go = targets.GetGOTarget())
-            if (go->GetSpellForLock(caster->ToPlayer()) == spellInfo)
+            if (go->GetSpellForLock(_player->ToPlayer()) == spellInfo)
                 allow = true;
 
-        for (auto&& it : caster->GetAuraEffectsByType(SPELL_AURA_BONUS_ROLL_TRIGGER))
+        for (auto&& it : _player->GetAuraEffectsByType(SPELL_AURA_BONUS_ROLL_TRIGGER))
             if (spellId == it->GetSpellEffectInfo().TriggerSpell)
                 allow = true;
 
@@ -1120,8 +1122,8 @@ void WorldSession::HandleCastSpellOpcode(WorldPacket& recvPacket)
 
     // Client is resending autoshot cast opcode when other spell is casted during shoot rotation
     // Skip it to prevent "interrupt" message
-    if (spellInfo->IsAutoRepeatRangedSpell() && caster->GetCurrentSpell(CURRENT_AUTOREPEAT_SPELL)
-        && caster->GetCurrentSpell(CURRENT_AUTOREPEAT_SPELL)->m_spellInfo == spellInfo)
+    if (spellInfo->IsAutoRepeatRangedSpell() && _player->GetCurrentSpell(CURRENT_AUTOREPEAT_SPELL)
+        && _player->GetCurrentSpell(CURRENT_AUTOREPEAT_SPELL)->m_spellInfo == spellInfo)
         return;
 
     // can't use our own spells when we're in possession of another unit,
