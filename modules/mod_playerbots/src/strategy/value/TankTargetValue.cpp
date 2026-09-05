@@ -25,10 +25,10 @@ public:
             result = creature;
         }
         // neglect if victim is main tank, or no victim (for untauntable target)
-        if (threatMgr->getCurrentVictim())
+        if (threatMgr->GetCurrentVictim())
         {
-            // float max_threat = threatMgr->GetThreat(threatMgr->getCurrentVictim()->getTarget());
-            Unit* victim = threatMgr->getCurrentVictim()->getTarget();
+            // float max_threat = threatMgr->GetThreat(threatMgr->GetCurrentVictim()->GetVictim());
+            Unit* victim = threatMgr->GetCurrentVictim()->GetVictim();
             if (victim && victim->ToPlayer() && PlayerBotSpec::IsMainTank(victim->ToPlayer()))
             {
                 return;
