@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -143,7 +143,7 @@ public:
                 Unit* owner = Unit::GetUnit(*me, victimGUID);
                 if (owner && owner->IsAlive())
                 {
-                    me->AddThreat(owner, 999999);
+                    me->GetThreatManager().AddThreat(owner, 999999);
                     AttackStart(owner);
                 } else if (owner && owner->isDead())
                 {
@@ -228,6 +228,7 @@ public:
             Berserk_Timer = 600000;
             InnerDemons_Timer = 30000;
             me->SetCanDualWield(true);
+            me->SetIsCombatDisallowed(true);
             DealDamage = true;
             DemonForm = false;
             IsFinalForm = false;
@@ -318,12 +319,15 @@ public:
                 // and reseting equipment
                 me->LoadEquipment();
 
+                // Leotheras is now allowed to enter combat
+                me->SetIsCombatDisallowed(false);
+
                 if (instance && instance->GetGuidData(DATA_LEOTHERAS_EVENT_STARTER))
                 {
                     Unit* victim = NULL;
                     victim = Unit::GetUnit(*me, instance->GetGuidData(DATA_LEOTHERAS_EVENT_STARTER));
                     if (victim)
-                        me->GetThreatManager().addThreat(victim, 1);
+                        me->GetThreatManager().AddThreat(victim, 1);
                     StartEvent();
                 }
             }
@@ -516,11 +520,11 @@ public:
                 //Summon Inner Demon
                 if (InnerDemons_Timer <= diff)
                 {
-                    ThreatContainer::StorageType const & ThreatList = me->GetThreatManager().getThreatList();
+                    auto ThreatList = me->GetThreatManager().GetUnsortedThreatList();
                     std::vector<Unit*> TargetList;
-                    for (ThreatContainer::StorageType::const_iterator itr = ThreatList.begin(); itr != ThreatList.end(); ++itr)
+                    for (ThreatReference const* ref : ThreatList)
                     {
-                        Unit* tempTarget = Unit::GetUnit(*me, (*itr)->getUnitGuid());
+                        Unit* tempTarget = Unit::GetUnit(*me, ref->GetVictim()->GetGUID());
                         if (tempTarget && tempTarget->GetTypeId() == TYPEID_PLAYER && tempTarget->GetGUID() != me->GetVictim()->GetGUID() && TargetList.size()<5)
                             TargetList.push_back(tempTarget);
                     }

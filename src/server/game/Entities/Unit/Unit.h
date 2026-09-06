@@ -28,7 +28,6 @@
 #include "SpellDefines.h"
 #include "ThreatManager.h"
 #include "CombatManager.h"
-#include "HostileRefManager.h"
 #include "MoveSplineInit.h"
 #include "SpellMgr.h"
 #include "TimeValue.h"
@@ -2166,24 +2165,15 @@ public:
 
     // Threat related methods
     bool CanHaveThreatList() const;
-    void AddThreat(Unit* victim, float fThreat, SpellSchoolMask schoolMask = SPELL_SCHOOL_MASK_NORMAL, SpellInfo const* threatSpell = NULL);
-    void DeleteThreatList();
-    void TauntApply(Unit* victim);
-    void TauntFadeOut(Unit* taunter);
     ThreatManager& GetThreatManager() { return m_ThreatManager; }
     ThreatManager const& GetThreatManager() const { return m_ThreatManager; }
     CombatManager& GetCombatManager() { return m_CombatManager; }
     CombatManager const& GetCombatManager() const { return m_CombatManager; }
-    void addHatedBy(HostileReference* /*pHostileReference*/)
-    { /* nothing to do yet */
-    }
-    void removeHatedBy(HostileReference* /*pHostileReference*/)
-    { /* nothing to do yet */
-    }
-    HostileRefManager& getHostileRefManager()
-    {
-        return m_HostileRefManager;
-    }
+
+    // returns if the unit can't enter combat
+    bool IsCombatDisallowed() const { return _isCombatDisallowed; }
+    // enables / disables combat interaction of this unit
+    void SetIsCombatDisallowed(bool apply) { _isCombatDisallowed = apply; }
 
     VisibleAuraMap const* GetVisibleAuras()
     {
@@ -2673,6 +2663,7 @@ protected:
 
     ThreatManager m_ThreatManager;
     CombatManager m_CombatManager;
+    bool _isCombatDisallowed = false;
 
     Vehicle* m_vehicle;
     std::shared_ptr<Vehicle> m_vehicleKit;
@@ -2726,8 +2717,6 @@ private:
     TimeTrackerSmall m_splineSyncTimer;
 
     Diminishing m_Diminishing;
-
-    HostileRefManager m_HostileRefManager;
 
     std::set<AbstractFollower*> _followers;
 
