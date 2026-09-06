@@ -38,10 +38,9 @@ Unit* EnemyPlayerValue::Calculate()
     // 1. Check units we are currently in combat with.
     std::vector<Unit*> targets;
     Unit* pVictim = bot->GetVictim();
-    HostileReference* pReference = bot->getHostileRefManager().getFirst();
-    while (pReference)
+    for (auto const& pair : bot->GetThreatManager().GetThreatenedByMeList())
     {
-        ThreatManager* threatMgr = pReference->GetSource();
+        ThreatManager* threatMgr = &pair.second->GetThreatManager();
         if (Unit* pTarget = threatMgr->GetOwner())
         {
             if (pTarget != pVictim && pTarget->IsPlayer() && pTarget->CanSeeOrDetect(bot) &&
@@ -61,8 +60,6 @@ Unit* EnemyPlayerValue::Calculate()
                 targets.push_back(pTarget);
             }
         }
-
-        pReference = pReference->next();
     }
 
     if (!targets.empty())
