@@ -16516,8 +16516,6 @@ void Player::CompleteQuest(uint32 quest_id, bool completely, bool fromCommand)
                 RewardQuest(qInfo, 0, this, false);
             else
                 SendQuestComplete(qInfo);
-
-            sScriptMgr->OnPlayerQuestCompleted(this, qInfo);
         }
     }
 }
@@ -16768,8 +16766,8 @@ void Player::RewardQuest(Quest const* quest, uint32 reward, Object* questGiver, 
         SendQuestReward(quest, XP);
 
     // cast spells after mark quest complete (some spells have quest completed state requirements in spell_area data)
-    if (quest->GetRewSpell() > 0)
-        CastSpell(this, quest->GetRewSpell(), true);
+    if (quest->GetRewDisplaySpell() > 0)
+        CastSpell(this, quest->GetRewDisplaySpell(), true);
     else if (quest->GetRewSpell() > 0)
         CastSpell(this, quest->GetRewSpell(), true);
 
@@ -16827,6 +16825,8 @@ void Player::RewardQuest(Quest const* quest, uint32 reward, Object* questGiver, 
 
     sScriptMgr->OnQuestStatusChange(this, quest, oldStatus, QUEST_STATUS_REWARDED);
     sScriptMgr->OnPlayerQuestRewarded(this, quest);
+
+    SendQuestGiverStatusMultiple();
 
     SetSaveTimer(1);
 

@@ -79,7 +79,7 @@ bool FollowMovementGenerator::Update(Unit* owner, uint32 diff)
     if (!target || !target->IsInWorld())
         return false;
 
-    if (owner->HasUnitState(UNIT_STATE_NOT_MOVE) || owner->IsNonMeleeSpellCasted(false))
+    if (owner->HasUnitState(UNIT_STATE_NOT_MOVE) || owner->IsMovementPreventedByCasting())
     {
         _path = nullptr;
         owner->StopMoving();
@@ -135,7 +135,7 @@ bool FollowMovementGenerator::Update(Unit* owner, uint32 diff)
                     tAngle = _angle.LowerBound();
             }
 
-            target->GetNearPoint(owner, x, y, z, 0.0f, _range, target->ToAbsoluteAngle(tAngle));
+            target->GetNearPoint(owner, x, y, z, _range, target->ToAbsoluteAngle(tAngle));
 
             bool success = _path->CalculatePath(x, y, z, false);
             if (!success || (_path->GetPathType() & PATHFIND_NOPATH))

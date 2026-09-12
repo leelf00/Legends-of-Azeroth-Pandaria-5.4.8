@@ -107,6 +107,9 @@ class TC_GAME_API CreatureAI : public UnitAI
         // Called if IsVisible(Unit* who) is true at each who move, reaction at visibility zone enter
         void MoveInLineOfSight_Safe(Unit* who);
 
+        // Distract creature, if player gets too close while stealthed/prowling
+        void TriggerAlert(Unit const* who) const;
+
         bool CanSeeEvenInPassiveMode() { return m_canSeeEvenInPassiveMode; }
         void SetCanSeeEvenInPassiveMode(bool canSeeEvenInPassiveMode) { m_canSeeEvenInPassiveMode = canSeeEvenInPassiveMode; }
         
@@ -168,7 +171,7 @@ class TC_GAME_API CreatureAI : public UnitAI
         virtual bool IsEscorted() { return false; }
 
         // Called when creature is spawned or respawned (for reseting variables)
-        virtual void JustAppeared() { Reset(); }
+        virtual void JustAppeared();
 
         // Called at waypoint reached or point movement finished
         virtual void MovementInform(uint32 /*type*/, uint32 /*id*/) { }

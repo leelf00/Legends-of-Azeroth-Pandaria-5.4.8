@@ -1290,7 +1290,7 @@ public:
         if (quest->GetQuestId() == QUEST_SAVE_KRENNAN_ARANAS)
         {
             float x, y;
-            creature->GetNearPoint2D(x, y, 2.0f, player->GetOrientation() + M_PI / 2);
+            creature->GetNearPoint2D(nullptr, x, y, 2.0f, player->GetOrientation() + M_PI / 2);
 
             if (Creature* horse = player->SummonCreature(NPC_KING_GREYMANES_HORSE, x, y, creature->GetPositionZ(), creature->GetOrientation()))
             {
@@ -2002,10 +2002,37 @@ struct npc_mountain_horse_summoned : public ScriptedAI
     npc_mountain_horse_summoned(Creature* creature) : ScriptedAI(creature) { }
 
     EventMap events;
+    ObjectGuid followTargetGuid;
+
+    Unit* GetFollowTarget()
+    {
+        Unit* owner = me->GetCharmerOrOwner();
+        if (!owner && me->ToTempSummon())
+            owner = me->ToTempSummon()->GetSummoner();
+
+        if (owner)
+        {
+            if (Unit* vehicle = owner->GetVehicleBase())
+            {
+                if (vehicle != me && vehicle->IsInWorld())
+                    return vehicle;
+            }
+            return owner;
+        }
+        return nullptr;
+    }
 
     void IsSummonedBy(Unit* summoner) override
     {
-        me->GetMotionMaster()->MoveFollow(summoner, 6.0f, 0);
+        if (!summoner)
+            return;
+
+        Unit* followTarget = GetFollowTarget();
+        if (!followTarget)
+            followTarget = summoner;
+
+        me->GetMotionMaster()->MoveFollow(followTarget, 6.0f, 0);
+        followTargetGuid = followTarget->GetGUID();
         me->CastSpell(summoner, SPELL_ROPE_CHANNEL, true);
         me->ClearUnitState(UNIT_STATE_CASTING);
         events.ScheduleEvent(EVENT_CHECK_LORNA, 2s);
@@ -2014,9 +2041,32 @@ struct npc_mountain_horse_summoned : public ScriptedAI
         me->SetSpeed(MOVE_RUN, 2.0f, true);
     }
 
+    void JustAppeared() override
+    {
+        ScriptedAI::JustAppeared();
+
+        if (Unit* followTarget = GetFollowTarget())
+        {
+            if (followTarget->IsInWorld())
+            {
+                me->GetMotionMaster()->MoveFollow(followTarget, 6.0f, 0);
+                followTargetGuid = followTarget->GetGUID();
+            }
+        }
+    }
+
     void UpdateAI(uint32 diff) override
     {
         events.Update(diff);
+
+        if (Unit* followTarget = GetFollowTarget())
+        {
+            if (followTarget->IsInWorld() && (followTargetGuid != followTarget->GetGUID() || me->GetMotionMaster()->GetCurrentMovementGeneratorType() != FOLLOW_MOTION_TYPE))
+            {
+                me->GetMotionMaster()->MoveFollow(followTarget, 6.0f, 0);
+                followTargetGuid = followTarget->GetGUID();
+            }
+        }
 
         while (uint32 eventId = events.ExecuteEvent())
         {
@@ -2042,7 +2092,7 @@ struct npc_mountain_horse_summoned : public ScriptedAI
                 {
                     if (Unit* owner = me->GetCharmerOrOwner())
                     {
-                        if (!owner->IsAlive() || !owner->IsInWorld() || !owner->GetVehicleBase())
+                        if (!owner->IsAlive() || !owner->IsInWorld())
                             me->DespawnOrUnsummon(1);
 
                         events.CancelEvent(EVENT_CHECK_OWNER);
