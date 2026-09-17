@@ -246,6 +246,7 @@ bool ChatHandler::SendError(char const* format, ...)
     return false;
 }
 
+
 bool ChatHandler::ParseCommands(char const* text)
 {
     ASSERT(text);

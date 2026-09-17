@@ -101,11 +101,11 @@ class npc_ranger_lilatha : public CreatureScript
 public:
     npc_ranger_lilatha() : CreatureScript("npc_ranger_lilatha") { }
 
-    struct npc_ranger_lilathaAI : public npc_escortAI
+    struct npc_ranger_lilathaAI : public EscortAI
     {
-        npc_ranger_lilathaAI(Creature* creature) : npc_escortAI(creature) { }
+        npc_ranger_lilathaAI(Creature* creature) : EscortAI(creature) { }
 
-        void WaypointReached(uint32 waypointId) override
+        void WaypointReached(uint32 waypointId, uint32 pathId) override
         {
             Player* player = GetPlayerForEscort();
             if (!player)
@@ -175,8 +175,8 @@ public:
         {
             creature->SetFaction(113);
 
-            if (npc_escortAI* pEscortAI = CAST_AI(npc_ranger_lilatha::npc_ranger_lilathaAI, creature->AI()))
-                pEscortAI->Start(true, false, player->GetGUID());
+            if (EscortAI* pEscortAI = CAST_AI(npc_ranger_lilatha::npc_ranger_lilathaAI, creature->AI()))
+                pEscortAI->Start(true, player->GetGUID());
         }
         return true;
     }

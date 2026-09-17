@@ -142,14 +142,14 @@ public:
             }
 
             if (!SpawnAssoc)
-                TC_LOG_ERROR("sql.sql", "TCSR: Creature template entry %u has ScriptName npc_air_force_bots, but it's not handled by that script", creature->GetEntry());
+                TC_LOG_ERROR("sql.sql", "TCSR: Creature template entry {} has ScriptName npc_air_force_bots, but it's not handled by that script", creature->GetEntry());
             else
             {
                 CreatureTemplate const* spawnedTemplate = sObjectMgr->GetCreatureTemplate(SpawnAssoc->spawnedCreatureEntry);
 
                 if (!spawnedTemplate)
                 {
-                    TC_LOG_ERROR("sql.sql", "TCSR: Creature template entry %u does not exist in DB, which is required by npc_air_force_bots", SpawnAssoc->spawnedCreatureEntry);
+                    TC_LOG_ERROR("sql.sql", "TCSR: Creature template entry {} does not exist in DB, which is required by npc_air_force_bots", SpawnAssoc->spawnedCreatureEntry);
                     SpawnAssoc = NULL;
                     return;
                 }
@@ -169,7 +169,7 @@ public:
                 SpawnedGUID = summoned->GetGUID();
             else
             {
-                TC_LOG_ERROR("sql.sql", "TCSR: npc_air_force_bots: wasn't able to spawn Creature %u", SpawnAssoc->spawnedCreatureEntry);
+                TC_LOG_ERROR("sql.sql", "TCSR: npc_air_force_bots: wasn't able to spawn Creature {}", SpawnAssoc->spawnedCreatureEntry);
                 SpawnAssoc = NULL;
             }
 
@@ -910,9 +910,9 @@ class npc_garments_of_quests : public CreatureScript
 public:
     npc_garments_of_quests() : CreatureScript("npc_garments_of_quests") { }
 
-    struct npc_garments_of_questsAI : public npc_escortAI
+    struct npc_garments_of_questsAI : public EscortAI
     {
-        npc_garments_of_questsAI(Creature* creature) : npc_escortAI(creature)
+        npc_garments_of_questsAI(Creature* creature) : EscortAI(creature)
         {
             Reset();
         }
@@ -1050,7 +1050,7 @@ public:
             }
         }
 
-        void WaypointReached(uint32 /*waypointId*/) override
+        void WaypointReached(uint32 waypointId, uint32 pathId) override
         {
 
         }
@@ -1082,7 +1082,7 @@ public:
                                 break;
                         }
 
-                        Start(false, true, ObjectGuid(uint64(1)));
+                        SetRun(true); Start(false, ObjectGuid(uint64(1)));
                     }
                     else
                         EnterEvadeMode();                       //something went wrong
@@ -1093,7 +1093,7 @@ public:
                     RunAwayTimer -= diff;
             }
 
-            npc_escortAI::UpdateAI(diff);
+            EscortAI::UpdateAI(diff);
         }
     };
 

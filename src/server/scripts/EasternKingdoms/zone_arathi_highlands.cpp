@@ -70,11 +70,11 @@ class npc_professor_phizzlethorpe : public CreatureScript
         {
         }
 
-        struct npc_professor_phizzlethorpeAI : public npc_escortAI
+        struct npc_professor_phizzlethorpeAI : public EscortAI
         {
-            npc_professor_phizzlethorpeAI(Creature* creature) : npc_escortAI(creature) { }
+            npc_professor_phizzlethorpeAI(Creature* creature) : EscortAI(creature) { }
 
-            void WaypointReached(uint32 waypointId) override
+            void WaypointReached(uint32 waypointId, uint32 pathId) override
             {
                 Player* player = GetPlayerForEscort();
                 if (!player)
@@ -138,7 +138,7 @@ class npc_professor_phizzlethorpe : public CreatureScript
                             break;
                     }
                 }
-                npc_escortAI::UpdateAI(diff);
+                EscortAI::UpdateAI(diff);
             }
 
             EventMap events;
@@ -154,8 +154,8 @@ class npc_professor_phizzlethorpe : public CreatureScript
             if (quest->GetQuestId() == QUEST_GOGGLE_BOGGLE)
             {
                 creature->AI()->Talk(SAY_PROGRESS_1, player);
-                if (npc_escortAI* pEscortAI = CAST_AI(npc_professor_phizzlethorpeAI, (creature->AI())))
-                    pEscortAI->Start(false, false, player->GetGUID(), quest);
+                if (EscortAI* pEscortAI = CAST_AI(npc_professor_phizzlethorpeAI, (creature->AI())))
+                    pEscortAI->Start(false, player->GetGUID(), quest);
 
                 creature->SetFaction(42);
             }

@@ -793,7 +793,7 @@ void Spell::EffectDummy(SpellEffIndex effIndex)
 
         if (!spellInfo)
         {
-            TC_LOG_ERROR("spells", "EffectDummy of spell %u: triggering unknown spell id %i\n", m_spellInfo->Id, spell_id);
+            TC_LOG_ERROR("spells", "EffectDummy of spell {}: triggering unknown spell id {}\n", m_spellInfo->Id, spell_id);
             return;
         }
 
@@ -811,7 +811,7 @@ void Spell::EffectDummy(SpellEffIndex effIndex)
     }
 
     // normal DB scripted effect
-    TC_LOG_DEBUG("spells", "Spell ScriptStart spellid %u in EffectDummy(%u)", m_spellInfo->Id, effIndex);
+    TC_LOG_DEBUG("spells", "Spell ScriptStart spellid {} in EffectDummy({})", m_spellInfo->Id, effIndex);
     m_caster->GetMap()->ScriptsStart(sSpellScripts, uint32(m_spellInfo->Id | (effIndex << 24)), m_caster, unitTarget);
 
     // Script based implementation. Must be used only for not good for implementation in core spell effects
@@ -926,7 +926,7 @@ void Spell::EffectTriggerSpell(SpellEffIndex effIndex)
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(triggered_spell_id);
     if (!spellInfo)
     {
-        TC_LOG_DEBUG("spells", "Spell::EffectTriggerSpell spell %u tried to trigger unknown spell %u", m_spellInfo->Id, triggered_spell_id);
+        TC_LOG_DEBUG("spells", "Spell::EffectTriggerSpell spell {} tried to trigger unknown spell {}", m_spellInfo->Id, triggered_spell_id);
         return;
     }
 
@@ -991,7 +991,7 @@ void Spell::EffectTriggerMissileSpell(SpellEffIndex effIndex)
     SpellInfo const* spellInfo = sSpellMgr->GetSpellInfo(triggered_spell_id);
     if (!spellInfo)
     {
-        TC_LOG_DEBUG("spells", "Spell::EffectTriggerMissileSpell spell %u tried to trigger unknown spell %u", m_spellInfo->Id, triggered_spell_id);
+        TC_LOG_DEBUG("spells", "Spell::EffectTriggerMissileSpell spell {} tried to trigger unknown spell {}", m_spellInfo->Id, triggered_spell_id);
         return;
     }
 
@@ -1047,7 +1047,7 @@ void Spell::EffectForceCast(SpellEffIndex effIndex)
 
     if (!spellInfo)
     {
-        TC_LOG_ERROR("spells", "Spell::EffectForceCast of spell %u: triggering unknown spell id %i", m_spellInfo->Id, triggered_spell_id);
+        TC_LOG_ERROR("spells", "Spell::EffectForceCast of spell {}: triggering unknown spell id {}", m_spellInfo->Id, triggered_spell_id);
         return;
     }
 
@@ -1095,7 +1095,7 @@ void Spell::EffectTriggerRitualOfSummoning(SpellEffIndex effIndex)
 
     if (!spellInfo)
     {
-        TC_LOG_ERROR("spells", "EffectTriggerRitualOfSummoning of spell %u: triggering unknown spell id %i", m_spellInfo->Id, triggered_spell_id);
+        TC_LOG_ERROR("spells", "EffectTriggerRitualOfSummoning of spell {}: triggering unknown spell id {}", m_spellInfo->Id, triggered_spell_id);
         return;
     }
 
@@ -1187,7 +1187,7 @@ void Spell::EffectTeleportUnits(SpellEffIndex effIndex)
     // If not exist data for dest location - return
     if (!m_targets.HasDst())
     {
-        TC_LOG_ERROR("spells", "Spell::EffectTeleportUnits - does not have destination for spellId %u.", m_spellInfo->Id);
+        TC_LOG_ERROR("spells", "Spell::EffectTeleportUnits - does not have destination for spellId {}.", m_spellInfo->Id);
         return;
     }
 
@@ -1204,7 +1204,7 @@ void Spell::EffectTeleportUnits(SpellEffIndex effIndex)
     destTarget->GetPosition(x, y, z, orientation);
     if (!orientation && m_targets.GetUnitTarget())
         orientation = m_targets.GetUnitTarget()->GetOrientation();
-    TC_LOG_DEBUG("spells", "Spell::EffectTeleportUnits - teleport unit to %u %f %f %f %f\n", mapid, x, y, z, orientation);
+    TC_LOG_DEBUG("spells", "Spell::EffectTeleportUnits - teleport unit to {} {} {} {} {}\n", mapid, x, y, z, orientation);
 
     if (Player* player = unitTarget->ToPlayer())
     {
@@ -1224,7 +1224,7 @@ void Spell::EffectTeleportUnits(SpellEffIndex effIndex)
         unitTarget->NearTeleportTo(x, y, z, orientation, unitTarget == m_caster);
     else
     {
-        TC_LOG_ERROR("spells", "Spell::EffectTeleportUnits - spellId %u attempted to teleport creature to a different map.", m_spellInfo->Id);
+        TC_LOG_ERROR("spells", "Spell::EffectTeleportUnits - spellId {} attempted to teleport creature to a different map.", m_spellInfo->Id);
         return;
     }
 
@@ -1360,7 +1360,7 @@ void Spell::EffectUnlearnSpecialization(SpellEffIndex effIndex)
 
     player->RemoveSpell(spellToUnlearn);
 
-    TC_LOG_DEBUG("spells", "Spell: Player %u has unlearned spell %u from NpcGUID: %u", player->GetGUID().GetCounter(), spellToUnlearn, m_caster->GetGUID().GetCounter());
+    TC_LOG_DEBUG("spells", "Spell: Player {} has unlearned spell {} from NpcGUID: {}", player->GetGUID().GetCounter(), spellToUnlearn, m_caster->GetGUID().GetCounter());
 }
 
 void Spell::EffectPowerDrain(SpellEffIndex effIndex)
@@ -1427,7 +1427,7 @@ void Spell::EffectSendEvent(SpellEffIndex effIndex)
         /// @todo there should be a possibility to pass dest target to event script
     }
 
-    TC_LOG_DEBUG("spells", "Spell ScriptStart %u for spellid %u in EffectSendEvent ", m_spellInfo->Effects[effIndex].MiscValue, m_spellInfo->Id);
+    TC_LOG_DEBUG("spells", "Spell ScriptStart {} for spellid {} in EffectSendEvent ", m_spellInfo->Effects[effIndex].MiscValue, m_spellInfo->Id);
 
     if (ZoneScript* zoneScript = m_caster->GetZoneScript())
         zoneScript->ProcessEvent(target, m_spellInfo->Effects[effIndex].MiscValue);
@@ -1648,7 +1648,7 @@ void Spell::EffectHealthLeech(SpellEffIndex effIndex)
     damage = m_caster->SpellDamageBonusDone(unitTarget, m_spellInfo, effIndex, uint32(damage), SPELL_DIRECT_DAMAGE);
     damage = unitTarget->SpellDamageBonusTaken(m_caster, m_spellInfo, effIndex, uint32(damage), SPELL_DIRECT_DAMAGE);
 
-    TC_LOG_DEBUG("spells", "HealthLeech :%i", damage);
+    TC_LOG_DEBUG("spells", "HealthLeech :{}", damage);
 
     float healMultiplier = m_spellInfo->Effects[effIndex].CalcValueMultiplier(m_originalCaster, this);
 
@@ -2184,7 +2184,7 @@ void Spell::SendLoot(ObjectGuid guid, LootType loottype)
         // Players shouldn't be able to loot gameobjects that are currently despawned
         if (!gameObjTarget->isSpawned() && !player->IsGameMaster())
         {
-            TC_LOG_ERROR("spells", "Possible hacking attempt: Player %s [guid: %u] tried to loot a gameobject [entry: %u id: %u] which is on respawn time without being in GM mode!",
+            TC_LOG_ERROR("spells", "Possible hacking attempt: Player {} [guid: {}] tried to loot a gameobject [entry: {} id: {}] which is on respawn time without being in GM mode!",
                             player->GetName().c_str(), player->GetGUID().GetCounter(), gameObjTarget->GetEntry(), gameObjTarget->GetGUID().GetCounter());
             return;
         }
@@ -2223,7 +2223,7 @@ void Spell::SendLoot(ObjectGuid guid, LootType loottype)
                 /// @todo possible must be moved to loot release (in different from linked triggering)
                 if (gameObjTarget->GetGOInfo()->chest.eventId)
                 {
-                    TC_LOG_DEBUG("spells", "Chest ScriptStart id %u for GO %u", gameObjTarget->GetGOInfo()->chest.eventId, gameObjTarget->GetDBTableGUIDLow());
+                    TC_LOG_DEBUG("spells", "Chest ScriptStart id {} for GO {}", gameObjTarget->GetGOInfo()->chest.eventId, gameObjTarget->GetDBTableGUIDLow());
                     player->GetMap()->ScriptsStart(sEventScripts, gameObjTarget->GetGOInfo()->chest.eventId, player, gameObjTarget);
                 }
 
@@ -2500,7 +2500,7 @@ void Spell::EffectSummonType(SpellEffIndex effIndex)
     SummonPropertiesEntry const* properties = sSummonPropertiesStore.LookupEntry(m_spellInfo->Effects[effIndex].MiscValueB);
     if (!properties)
     {
-        TC_LOG_ERROR("spells", "EffectSummonType: Unhandled summon type %u", m_spellInfo->Effects[effIndex].MiscValueB);
+        TC_LOG_ERROR("spells", "EffectSummonType: Unhandled summon type {}", m_spellInfo->Effects[effIndex].MiscValueB);
         return;
     }
 
@@ -2733,7 +2733,7 @@ void Spell::EffectLearnSpell(SpellEffIndex effIndex)
     uint32 spellToLearn = (m_spellInfo->Id == 483 || m_spellInfo->Id == 55884) ? damage : m_spellInfo->Effects[effIndex].TriggerSpell;
     player->LearnSpell(spellToLearn, false);
 
-    TC_LOG_DEBUG("spells", "Spell: Player %u has learned spell %u from NpcGUID=%u", player->GetGUID().GetCounter(), spellToLearn, m_caster->GetGUID().GetCounter());
+    TC_LOG_DEBUG("spells", "Spell: Player {} has learned spell {} from NpcGUID={}", player->GetGUID().GetCounter(), spellToLearn, m_caster->GetGUID().GetCounter());
 }
 
 typedef std::list< std::pair<uint32, uint64> > DispelList;
@@ -3087,13 +3087,13 @@ void Spell::EffectLearnSkill(SpellEffIndex effIndex)
     auto entry = sDBCManager.GetSkillRaceClassInfo(skillid, unitTarget->GetRace(), unitTarget->GetClass());
     if (!entry)
     {
-        TC_LOG_ERROR("spells", "Spell::EffectLearnSkill skill (%u) not found in SkillRaceClassInfo.dbc", skillid);
+        TC_LOG_ERROR("spells", "Spell::EffectLearnSkill skill ({}) not found in SkillRaceClassInfo.dbc", skillid);
         return;
     }
     auto skillTier = sSkillTiersStore.LookupEntry(entry->SkillTierID);
     if (!skillTier)
     {
-        TC_LOG_ERROR("spells", "Spell::EffectLearnSkill skill tier (%u) not found for skill %u", entry->SkillTierID, skillid);
+        TC_LOG_ERROR("spells", "Spell::EffectLearnSkill skill tier ({}) not found for skill {}", entry->SkillTierID, skillid);
         return;
     }
 
@@ -3178,7 +3178,7 @@ void Spell::EffectEnchantItemPerm(SpellEffIndex effIndex)
 
         if (item_owner != player && player->GetSession()->HasPermission(rbac::RBAC_PERM_LOG_GM_TRADE))
         {
-            sLog->outCommand(player->GetSession()->GetAccountId(), "GM %s (Account: %u) enchanting(perm): %s (Entry: %d) for player: %s (Account: %u)",
+            sLog->OutCommand(player->GetSession()->GetAccountId(), "GM {} (Account: {}) enchanting(perm): {} (Entry: {}) for player: {} (Account: {})",
                 player->GetName().c_str(), player->GetSession()->GetAccountId(),
                 itemTarget->GetTemplate()->Name1.c_str(), itemTarget->GetEntry(),
                 item_owner->GetName().c_str(), item_owner->GetSession()->GetAccountId());
@@ -3234,7 +3234,7 @@ void Spell::EffectEnchantItemPrismatic(SpellEffIndex effIndex)
         }
         if (!add_socket)
         {
-            TC_LOG_ERROR("spells", "Spell::EffectEnchantItemPrismatic: attempt apply enchant spell %u with SPELL_EFFECT_ENCHANT_ITEM_PRISMATIC (%u) but without ITEM_ENCHANTMENT_TYPE_PRISMATIC_SOCKET (%u), not suppoted yet.",
+            TC_LOG_ERROR("spells", "Spell::EffectEnchantItemPrismatic: attempt apply enchant spell {} with SPELL_EFFECT_ENCHANT_ITEM_PRISMATIC ({}) but without ITEM_ENCHANTMENT_TYPE_PRISMATIC_SOCKET ({}), not suppoted yet.",
                 m_spellInfo->Id, SPELL_EFFECT_ENCHANT_ITEM_PRISMATIC, ITEM_ENCHANTMENT_TYPE_PRISMATIC_SOCKET);
             return;
         }
@@ -3247,7 +3247,7 @@ void Spell::EffectEnchantItemPrismatic(SpellEffIndex effIndex)
 
     if (item_owner != player && player->GetSession()->GetSecurity() > SEC_PLAYER && sWorld->getBoolConfig(CONFIG_GM_LOG_TRADE))
     {
-        sLog->outCommand(player->GetSession()->GetAccountId(), "GM %s (Account: %u) enchanting(perm): %s (Entry: %d) for player: %s (Account: %u)",
+        sLog->OutCommand(player->GetSession()->GetAccountId(), "GM {} (Account: {}) enchanting(perm): {} (Entry: {}) for player: {} (Account: {})",
             player->GetName().c_str(), player->GetSession()->GetAccountId(),
             itemTarget->GetTemplate()->Name1.c_str(), itemTarget->GetEntry(),
             item_owner->GetName().c_str(), item_owner->GetSession()->GetAccountId());
@@ -3280,14 +3280,14 @@ void Spell::EffectEnchantItemTmp(SpellEffIndex effIndex)
 
     if (!enchant_id)
     {
-        TC_LOG_ERROR("spells", "Spell %u Effect %u (SPELL_EFFECT_ENCHANT_ITEM_TEMPORARY) have 0 as enchanting id", m_spellInfo->Id, effIndex);
+        TC_LOG_ERROR("spells", "Spell {} Effect {} (SPELL_EFFECT_ENCHANT_ITEM_TEMPORARY) have 0 as enchanting id", m_spellInfo->Id, effIndex);
         return;
     }
 
     SpellItemEnchantmentEntry const* enchant = sSpellItemEnchantmentStore.LookupEntry(enchant_id);
     if (!enchant)
     {
-        TC_LOG_ERROR("spells", "Spell %u Effect %u (SPELL_EFFECT_ENCHANT_ITEM_TEMPORARY) have not existed enchanting id %u ", m_spellInfo->Id, effIndex, enchant_id);
+        TC_LOG_ERROR("spells", "Spell {} Effect {} (SPELL_EFFECT_ENCHANT_ITEM_TEMPORARY) have not existed enchanting id {} ", m_spellInfo->Id, effIndex, enchant_id);
         return;
     }
 
@@ -3324,7 +3324,7 @@ void Spell::EffectEnchantItemTmp(SpellEffIndex effIndex)
 
     if (item_owner != player && player->GetSession()->HasPermission(rbac::RBAC_PERM_LOG_GM_TRADE))
     {
-        sLog->outCommand(player->GetSession()->GetAccountId(), "GM %s (Account: %u) enchanting(temp): %s (Entry: %d) for player: %s (Account: %u)",
+        sLog->OutCommand(player->GetSession()->GetAccountId(), "GM {} (Account: {}) enchanting(temp): {} (Entry: {}) for player: {} (Account: {})",
             player->GetName().c_str(), player->GetSession()->GetAccountId(),
             itemTarget->GetTemplate()->Name1.c_str(), itemTarget->GetEntry(),
             item_owner->GetName().c_str(), item_owner->GetSession()->GetAccountId());
@@ -4581,7 +4581,7 @@ void Spell::EffectScriptEffect(SpellEffIndex effIndex)
     }
 
     // normal DB scripted effect
-    TC_LOG_DEBUG("spells", "Spell ScriptStart spellid %u in EffectScriptEffect(%u)", m_spellInfo->Id, effIndex);
+    TC_LOG_DEBUG("spells", "Spell ScriptStart spellid {} in EffectScriptEffect({})", m_spellInfo->Id, effIndex);
     m_caster->GetMap()->ScriptsStart(sSpellScripts, uint32(m_spellInfo->Id | (effIndex << 24)), m_caster, unitTarget);
 }
 
@@ -4779,7 +4779,7 @@ void Spell::EffectStuck(SpellEffIndex /*effIndex*/)
         return;
 
     TC_LOG_DEBUG("spells", "Spell Effect: Stuck");
-    TC_LOG_INFO("spells", "Player %s (guid %u) used auto-unstuck future at map %u (%f, %f, %f)", player->GetName().c_str(), player->GetGUID().GetCounter(), player->GetMapId(), player->GetPositionX(), player->GetPositionY(), player->GetPositionZ());
+    TC_LOG_INFO("spells", "Player {} (guid {}) used auto-unstuck future at map {} ({}, {}, {})", player->GetName().c_str(), player->GetGUID().GetCounter(), player->GetMapId(), player->GetPositionX(), player->GetPositionY(), player->GetPositionZ());
 
     if (player->IsInFlight())
         return;
@@ -4965,14 +4965,14 @@ void Spell::EffectEnchantHeldItem(SpellEffIndex effIndex)
         uint32 enchantId = m_spellInfo->Effects[effIndex].MiscValue;
         if (!enchantId)
         {
-            TC_LOG_ERROR("spells", "Spell %u Effect %u (SPELL_EFFECT_ENCHANT_HELD_ITEM) have 0 as enchanting id", m_spellInfo->Id, effIndex);
+            TC_LOG_ERROR("spells", "Spell {} Effect {} (SPELL_EFFECT_ENCHANT_HELD_ITEM) have 0 as enchanting id", m_spellInfo->Id, effIndex);
             return;
         }
 
         SpellItemEnchantmentEntry const* enchant = sSpellItemEnchantmentStore.LookupEntry(enchantId);
         if (!enchant)
         {
-            TC_LOG_ERROR("spells", "Spell %u Effect %u (SPELL_EFFECT_ENCHANT_HELD_ITEM) have not existing enchanting id %u", m_spellInfo->Id, effIndex, enchantId);
+            TC_LOG_ERROR("spells", "Spell {} Effect {} (SPELL_EFFECT_ENCHANT_HELD_ITEM) have not existing enchanting id {}", m_spellInfo->Id, effIndex, enchantId);
             return;
         }
 
@@ -5879,7 +5879,7 @@ void Spell::EffectTransmitted(SpellEffIndex effIndex)
 
     if (!goinfo)
     {
-        TC_LOG_ERROR("sql.sql", "Gameobject (Entry: %u) not exist and not created at spell (ID: %u) cast", name_id, m_spellInfo->Id);
+        TC_LOG_ERROR("sql.sql", "Gameobject (Entry: {}) not exist and not created at spell (ID: {}) cast", name_id, m_spellInfo->Id);
         return;
     }
 
@@ -6681,7 +6681,7 @@ void Spell::EffectPlayMusic(SpellEffIndex effIndex)
 
     if (!sSoundEntriesStore.LookupEntry(soundid))
     {
-        TC_LOG_ERROR("spells", "EffectPlayMusic: Sound (Id: %u) not exist in spell %u.", soundid, m_spellInfo->Id);
+        TC_LOG_ERROR("spells", "EffectPlayMusic: Sound (Id: {}) not exist in spell {}.", soundid, m_spellInfo->Id);
         return;
     }
 
@@ -6735,7 +6735,7 @@ void Spell::EffectPlaySound(SpellEffIndex effIndex)
 
     if (!sSoundEntriesStore.LookupEntry(soundId))
     {
-        TC_LOG_ERROR("spells", "EffectPlaySound: Sound (Id: %u) not exist in spell %u.", soundId, m_spellInfo->Id);
+        TC_LOG_ERROR("spells", "EffectPlaySound: Sound (Id: {}) not exist in spell {}.", soundId, m_spellInfo->Id);
         return;
     }
 
@@ -6892,7 +6892,7 @@ void Spell::EffectBind(SpellEffIndex effIndex)
     player->SetHomebind(homeLoc, areaId);
     player->SendBindPointUpdate();
 
-    TC_LOG_DEBUG("spells", "EffectBind: New homebind X: %f, Y: %f, Z: %f, MapId: %u, AreaId: %u",
+    TC_LOG_DEBUG("spells", "EffectBind: New homebind X: {}, Y: {}, Z: {}, MapId: {}, AreaId: {}",
         homeLoc.GetPositionX(), homeLoc.GetPositionY(), homeLoc.GetPositionZ(), homeLoc.GetMapId(), areaId);
 
     ObjectGuid guid = m_caster->GetGUID();
@@ -7218,7 +7218,7 @@ void Spell::EffectBonusRoll(SpellEffIndex effIndex)
         if (loot)
             loot.Reward(player);
         else
-            TC_LOG_ERROR("shitlog", "Spell::EffectBonusRoll - !loot, %u, " UI64FMTD, GetSpellInfo()->Id, m_caster->GetGUID().GetRawValue());
+            TC_LOG_ERROR("shitlog", "Spell::EffectBonusRoll - !loot, {}, " UI64FMTD, GetSpellInfo()->Id, m_caster->GetGUID().GetRawValue());
     }
     else
     {
@@ -7244,13 +7244,13 @@ void Spell::EffectBonusRoll(SpellEffIndex effIndex)
                     difficulty = Difficulty(triggeredByAura->GetAmount());
                 }
                 else
-                    TC_LOG_ERROR("shitlog", "Spell::EffectBonusRoll - !player->HasCurrency(bonusLoot->Currency, 1) %u, " UI64FMTD, GetSpellInfo()->Id, triggeredByAura->GetCasterGUID().GetRawValue());
+                    TC_LOG_ERROR("shitlog", "Spell::EffectBonusRoll - !player->HasCurrency(bonusLoot->Currency, 1) {}, " UI64FMTD, GetSpellInfo()->Id, triggeredByAura->GetCasterGUID().GetRawValue());
             }
             else
-                TC_LOG_ERROR("shitlog", "Spell::EffectBonusRoll - bonusLoot->Spell != triggeredByAura->GetId() %u, " UI64FMTD, GetSpellInfo()->Id, triggeredByAura->GetCasterGUID().GetRawValue());
+                TC_LOG_ERROR("shitlog", "Spell::EffectBonusRoll - bonusLoot->Spell != triggeredByAura->GetId() {}, " UI64FMTD, GetSpellInfo()->Id, triggeredByAura->GetCasterGUID().GetRawValue());
         }
         else
-            TC_LOG_ERROR("shitlog", "Spell::EffectBonusRoll - !bonusLoot %u, " UI64FMTD, GetSpellInfo()->Id, triggeredByAura->GetCasterGUID().GetRawValue());
+            TC_LOG_ERROR("shitlog", "Spell::EffectBonusRoll - !bonusLoot {}, " UI64FMTD, GetSpellInfo()->Id, triggeredByAura->GetCasterGUID().GetRawValue());
 
         if (currency)
         {
@@ -7262,7 +7262,7 @@ void Spell::EffectBonusRoll(SpellEffIndex effIndex)
                 player->AddLootLockout(LootLockoutType::BonusLoot, bonusLoot->Entry, difficulty);
             }
             else
-                TC_LOG_ERROR("shitlog", "Spell::EffectBonusRoll - !loot %u, " UI64FMTD, GetSpellInfo()->Id, triggeredByAura->GetCasterGUID().GetRawValue());
+                TC_LOG_ERROR("shitlog", "Spell::EffectBonusRoll - !loot {}, " UI64FMTD, GetSpellInfo()->Id, triggeredByAura->GetCasterGUID().GetRawValue());
         }
 
         player->RemoveAura(triggeredByAura->GetBase());
@@ -7331,7 +7331,7 @@ void Spell::EffectSummonPersonalGameObject(SpellEffIndex effIndex)
     if (!go->Create(map->GenerateLowGuid<HighGuid::GameObject>(), goId, map, m_caster->GetPhaseMask(), pos.GetPositionX(), pos.GetPositionY(), pos.GetPositionZ(), 
         pos.GetOrientation(), { }/*rot*/, 100, GO_STATE_READY))
     {
-        TC_LOG_WARN("spells", "SpellEffect Failed to summon personal gameobject. SpellId %u, effect %u", m_spellInfo->Id, effIndex);
+        TC_LOG_WARN("spells", "SpellEffect Failed to summon personal gameobject. SpellId {}, effect {}", m_spellInfo->Id, effIndex);
         delete go;
         return;
     }
@@ -7374,7 +7374,7 @@ void Spell::EffectSummonPersonalGameObject(SpellEffIndex effIndex)
         }
         else
         {
-            TC_LOG_WARN("spells", "SpellEffect Failed to summon linked gameobject. SpellId %u, effect %u", m_spellInfo->Id, effIndex);
+            TC_LOG_WARN("spells", "SpellEffect Failed to summon linked gameobject. SpellId {}, effect {}", m_spellInfo->Id, effIndex);
             delete linkedTrap;
             linkedTrap = nullptr;
             return;

@@ -79,9 +79,9 @@ class npc_wind_vehicle : public CreatureScript
     public:
         npc_wind_vehicle() : CreatureScript("npc_wind_vehicle") { }
 
-        struct npc_wind_vehicleAI : public npc_escortAI
+        struct npc_wind_vehicleAI : public EscortAI
         {
-            npc_wind_vehicleAI(Creature* creature) : npc_escortAI(creature) { }
+            npc_wind_vehicleAI(Creature* creature) : EscortAI(creature) { }
 
             uint32 IntroTimer;
 
@@ -90,7 +90,7 @@ class npc_wind_vehicle : public CreatureScript
                 IntroTimer = 100;
             }
 
-            void WaypointReached(uint32 waypointId) override
+            void WaypointReached(uint32 waypointId, uint32 pathId) override
             {
                 if (waypointId == 6)
                 {
@@ -107,14 +107,14 @@ class npc_wind_vehicle : public CreatureScript
                 {
                     if (IntroTimer <= diff)
                     {
-                        Start(false, true);
+                        SetRun(true); Start(false);
                         IntroTimer = 0;
                     }
                     else
                         IntroTimer -= diff;
                 }
 
-                npc_escortAI::UpdateAI(diff);
+                EscortAI::UpdateAI(diff);
             }
         };
 
@@ -147,14 +147,14 @@ class npc_aysa_wind_temple_escort : public CreatureScript
     public:
         npc_aysa_wind_temple_escort() : CreatureScript("npc_aysa_wind_temple_escort") { }
         
-        struct npc_aysa_wind_temple_escortAI : public npc_escortAI
+        struct npc_aysa_wind_temple_escortAI : public EscortAI
         {
             enum
             {
                 SPELL_SUMMON_AYSA_MARKER = 104571
             };
 
-            npc_aysa_wind_temple_escortAI(Creature* creature) : npc_escortAI(creature)
+            npc_aysa_wind_temple_escortAI(Creature* creature) : EscortAI(creature)
             {
                 if (auto const summon = me->ToTempSummon())
                     summon->SetExplicitSeerGuid(summon->GetSummonerGUID());
@@ -173,7 +173,7 @@ class npc_aysa_wind_temple_escort : public CreatureScript
                 SetEscortPaused(false);
             }
 
-            void WaypointReached(uint32 waypointId) override
+            void WaypointReached(uint32 waypointId, uint32 pathId) override
             {
                 switch (waypointId)
                 {
@@ -211,14 +211,14 @@ class npc_aysa_wind_temple_escort : public CreatureScript
                 {
                     if (introTimer_ <= diff)
                     {
-                        Start(false, true);
+                        SetRun(true); Start(false);
                         introTimer_ = 0;
                     }
                     else
                         introTimer_ -= diff;
                 }
 
-                npc_escortAI::UpdateAI(diff);
+                EscortAI::UpdateAI(diff);
             }
         };
 
@@ -587,9 +587,9 @@ class npc_master_shang_xi_after_zhao_escort : public CreatureScript
     public:
         npc_master_shang_xi_after_zhao_escort() : CreatureScript("npc_master_shang_xi_after_zhao_escort") { }
 
-        struct npc_master_shang_xi_after_zhao_escortAI : public npc_escortAI
+        struct npc_master_shang_xi_after_zhao_escortAI : public EscortAI
         {
-            npc_master_shang_xi_after_zhao_escortAI(Creature* creature) : npc_escortAI(creature)
+            npc_master_shang_xi_after_zhao_escortAI(Creature* creature) : EscortAI(creature)
             {
                 summonGUID = ObjectGuid::Empty;
             }
@@ -609,7 +609,7 @@ class npc_master_shang_xi_after_zhao_escort : public CreatureScript
                 playerGuid = guid;
             }
 
-            void WaypointReached(uint32 waypointId) override
+            void WaypointReached(uint32 waypointId, uint32 pathId) override
             {
                 switch (waypointId)
                 {
@@ -676,14 +676,14 @@ class npc_master_shang_xi_after_zhao_escort : public CreatureScript
                 {
                     if (IntroTimer <= diff)
                     {
-                        Start(false, true);
+                        SetRun(true); Start(false);
                         IntroTimer = 0;
                     }
                     else
                         IntroTimer -= diff;
                 }
 
-                npc_escortAI::UpdateAI(diff);
+                EscortAI::UpdateAI(diff);
             }
         private:
             ObjectGuid summonGUID;
@@ -812,9 +812,9 @@ class npc_shang_xi_air_balloon : public CreatureScript
     public:
         npc_shang_xi_air_balloon() : CreatureScript("npc_shang_xi_air_balloon") { }
 
-        struct npc_shang_xi_air_balloonAI : public npc_escortAI
+        struct npc_shang_xi_air_balloonAI : public EscortAI
         {
-            npc_shang_xi_air_balloonAI(Creature* creature) : npc_escortAI(creature) { }
+            npc_shang_xi_air_balloonAI(Creature* creature) : EscortAI(creature) { }
 
             ObjectGuid playerGUID;
             uint32 eventTimer;
@@ -843,7 +843,7 @@ class npc_shang_xi_air_balloon : public CreatureScript
                 }
             }
 
-            void WaypointReached(uint32 waypointId) override
+            void WaypointReached(uint32 waypointId, uint32 pathId) override
             {
                 switch (waypointId)
                 {
@@ -886,7 +886,7 @@ class npc_shang_xi_air_balloon : public CreatureScript
                     {
                         if (phase == 0)
                         {
-                            Start(false, true);
+                            SetRun(true); Start(false);
                             eventTimer = 2000;
                         }
                         else if (phase == 1)
@@ -1020,7 +1020,7 @@ class npc_shang_xi_air_balloon : public CreatureScript
                     }
                 }
 
-                npc_escortAI::UpdateAI(diff);
+                EscortAI::UpdateAI(diff);
             }
 
             void PassengerTalk(uint32 talkId, uint32 seatId)
@@ -1204,9 +1204,9 @@ class mop_air_balloon : public CreatureScript
 public:
     mop_air_balloon() : CreatureScript("mop_air_balloon") { }
 
-    struct mop_air_balloonAI : public npc_escortAI
+    struct mop_air_balloonAI : public EscortAI
     {
-        mop_air_balloonAI(Creature* creature) : npc_escortAI(creature) { }
+        mop_air_balloonAI(Creature* creature) : EscortAI(creature) { }
 
         ObjectGuid playerGuid;
         ObjectGuid aisaGUID;
@@ -1401,7 +1401,7 @@ public:
             events.ScheduleEvent(EVENT_1, 1000);
         }
 
-        void WaypointReached(uint32 waypointId) override
+        void WaypointReached(uint32 waypointId, uint32 pathId) override
         {
             switch (waypointId)
             {
@@ -1422,7 +1422,7 @@ public:
         void UpdateAI(uint32 diff) override
         {
             events.Update(diff);
-            npc_escortAI::UpdateAI(diff);
+            EscortAI::UpdateAI(diff);
 
             while (uint32 eventId = events.ExecuteEvent())
             {
@@ -1433,7 +1433,7 @@ public:
                         if (Creature* f = me->FindNearestCreature(NPC_AISA, 100.0f, true))
                             f->CastSpell(me, SPELL_AISA_ENTER_SEAT_2, true);
 
-                        Start(false, true);
+                        SetRun(true); Start(false);
                         break;
                     }
                     case EVENT_AISA_TALK_3:

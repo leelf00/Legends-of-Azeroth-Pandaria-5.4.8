@@ -71,7 +71,7 @@ public:
             creature->AI()->Talk(SAY_OOX_START, player);
 
             if (npc_00x09hlAI* pEscortAI = CAST_AI(npc_00x09hl::npc_00x09hlAI, creature->AI()))
-                pEscortAI->Start(false, false, player->GetGUID(), quest);
+                pEscortAI->Start(false, player->GetGUID(), quest);
         }
         return true;
     }
@@ -81,13 +81,13 @@ public:
         return new npc_00x09hlAI(creature);
     }
 
-    struct npc_00x09hlAI : public npc_escortAI
+    struct npc_00x09hlAI : public EscortAI
     {
-        npc_00x09hlAI(Creature* creature) : npc_escortAI(creature) { }
+        npc_00x09hlAI(Creature* creature) : EscortAI(creature) { }
 
         void Reset() override { }
 
-        void WaypointReached(uint32 waypointId) override
+        void WaypointReached(uint32 waypointId, uint32 pathId) override
         {
             switch (waypointId)
             {

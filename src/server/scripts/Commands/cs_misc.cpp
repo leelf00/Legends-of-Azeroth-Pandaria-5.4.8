@@ -1439,7 +1439,7 @@ public:
         if (!playerTarget)
             playerTarget = player;
 
-        TC_LOG_DEBUG("misc", handler->GetTrinityString(LANG_ADDITEM), itemId, count);
+        TC_LOG_DEBUG("misc", "Add item {} x {}", itemId, count);
 
         ItemTemplate const* itemTemplate = sObjectMgr->GetItemTemplate(itemId);
         if (!itemTemplate)
@@ -1519,7 +1519,7 @@ public:
         if (!playerTarget)
             playerTarget = player;
 
-        TC_LOG_DEBUG("misc", handler->GetTrinityString(LANG_ADDITEMSET), itemSetId);
+        TC_LOG_DEBUG("misc", "Add item set {}", itemSetId);
 
         bool found = false;
         ItemTemplateContainer const* its = sObjectMgr->GetItemTemplateStore();
@@ -1980,7 +1980,7 @@ public:
         {
             if (onlineMuteTimer)
             {
-                QueryResult qresult = LoginDatabase.PQuery("SELECT muted_by, mute_reason FROM account_muted WHERE id = '%u' AND acc_id = '%u' AND realmid = '%u'", activeMuteId, accId, realm.Id.Realm);
+                QueryResult qresult = LoginDatabase.PQuery("SELECT muted_by, mute_reason FROM account_muted WHERE id = '{}' AND acc_id = '{}' AND realmid = '{}'", activeMuteId, accId, realm.Id.Realm);
                 if (qresult)
                 {
                     Field* fields = qresult->Fetch();
@@ -2241,7 +2241,7 @@ public:
             if (session)
                 session->SetMute({ onlineMuteTimer, mutedBy, muteReason, publicChannelsOnly });
 
-            trans->PAppend("INSERT INTO mute_active (realmid, account, mute_id, mute_timer) VALUES ('%u', '%u', '%u', '%u')",
+            trans->PAppend("INSERT INTO mute_active (realmid, account, mute_id, mute_timer) VALUES ('{}', '{}', '{}', '{}')",
                 realm.Id.Realm, accId, muteId, onlineMuteTimer);
         }
         else
@@ -2253,7 +2253,7 @@ public:
             if (session)
                 session->m_muteTime = mutetime;
 
-            trans->PAppend("UPDATE account SET mutetime = " UI64FMTD " WHERE id = '%u'", uint64(mutetime), accId);
+            trans->PAppend("UPDATE account SET mutetime = " "{}" " WHERE id = '{}'", uint64(mutetime), accId);
         }
 
         LoginDatabase.CommitTransaction(trans);
@@ -2320,7 +2320,7 @@ public:
                 session->GetMute().Timer = 0;
             }
 
-            LoginDatabase.PExecute("DELETE FROM mute_active WHERE realmid = '%u' AND account = '%u'", realm.Id.Realm, accId);
+            LoginDatabase.PExecute("DELETE FROM mute_active WHERE realmid = '{}' AND account = '{}'", realm.Id.Realm, accId);
         }
         else
         {
@@ -2336,7 +2336,7 @@ public:
                 session->m_muteTime = 0;
             }
 
-            LoginDatabase.PExecute("UPDATE account SET mutetime = '0' WHERE id = '%u'", accId);
+            LoginDatabase.PExecute("UPDATE account SET mutetime = '0' WHERE id = '{}'", accId);
         }
 
         // Send messages
@@ -2399,7 +2399,7 @@ public:
         if (sWorld->getBoolConfig(CONFIG_GM_USE_ONLINE_MUTES))
         {
             // Get mute info
-            QueryResult result = LoginDatabase.PQuery("SELECT mute_timer, mute_id FROM mute_active WHERE account = '%u' AND realmid = '%u'", accId, realm.Id.Realm);
+            QueryResult result = LoginDatabase.PQuery("SELECT mute_timer, mute_id FROM mute_active WHERE account = '{}' AND realmid = '{}'", accId, realm.Id.Realm);
 
             if (result)
             {
@@ -2450,7 +2450,7 @@ public:
 
         // Get character and account id
         CharacterDatabase.EscapeString(name);
-        QueryResult result = CharacterDatabase.PQuery("SELECT guid, account FROM characters WHERE name = '%s'", name.c_str());
+        QueryResult result = CharacterDatabase.PQuery("SELECT guid, account FROM characters WHERE name = '{}'", name.c_str());
     
         Field* fields;
         uint32 charId = 0;
@@ -2467,7 +2467,7 @@ public:
             sAccountMgr->GetName(accId, acc);
 
             // Get mute info
-            result = LoginDatabase.PQuery("SELECT mute_timer, mute_id FROM mute_active WHERE account = '%u' AND realmid = '%u'", accId, realm.Id.Realm);
+            result = LoginDatabase.PQuery("SELECT mute_timer, mute_id FROM mute_active WHERE account = '{}' AND realmid = '{}'", accId, realm.Id.Realm);
 
             if (result)
             {
@@ -2499,13 +2499,13 @@ public:
         if (!limit)
         {
             //                                    0        1          2          3         4          5            6
-            result = LoginDatabase.PQuery("SELECT char_id, mute_name, mute_date, muted_by, mute_time, mute_reason, id = '%u' FROM account_muted "
+            result = LoginDatabase.PQuery("SELECT char_id, mute_name, mute_date, muted_by, mute_time, mute_reason, id = '{}' FROM account_muted "
                                           "WHERE realmid = '%u' AND mute_acc = '%s' AND char_id <> '%u' ORDER BY mute_date ASC", activeMuteId, realm.Id.Realm, acc.c_str(), excludeCharId);
         }
         else
         {
             //                                                   0        1          2          3         4          5            6
-            result = LoginDatabase.PQuery("SELECT * FROM (SELECT char_id, mute_name, mute_date, muted_by, mute_time, mute_reason, id = '%u' FROM account_muted "
+            result = LoginDatabase.PQuery("SELECT * FROM (SELECT char_id, mute_name, mute_date, muted_by, mute_time, mute_reason, id = '{}' FROM account_muted "
                                           "               WHERE realmid = '%u' AND mute_acc = '%s' AND char_id <> '%u' ORDER BY mute_date DESC LIMIT %u) AS last_muted "
                                           "ORDER BY last_muted.mute_date ASC", activeMuteId, realm.Id.Realm, acc.c_str(), excludeCharId, limit);
         }
@@ -2568,13 +2568,13 @@ public:
         if (!limit)
         {
             //                                    0        1         2          3          4         5          6            7
-            result = LoginDatabase.PQuery("SELECT char_id, mute_acc, mute_name, mute_date, muted_by, mute_time, mute_reason, id = '%u' FROM account_muted "
+            result = LoginDatabase.PQuery("SELECT char_id, mute_acc, mute_name, mute_date, muted_by, mute_time, mute_reason, id = '{}' FROM account_muted "
                                           "WHERE realmid = '%u' AND (char_id = '%u' OR mute_name = '%s') ORDER BY mute_date ASC", activeMuteId, realm.Id.Realm, charId, name.c_str());
         }
         else
         {
             //                                                   0        1         2          3          4         5          6            7
-            result = LoginDatabase.PQuery("SELECT * FROM (SELECT char_id, mute_acc, mute_name, mute_date, muted_by, mute_time, mute_reason, id = '%u' FROM account_muted "
+            result = LoginDatabase.PQuery("SELECT * FROM (SELECT char_id, mute_acc, mute_name, mute_date, muted_by, mute_time, mute_reason, id = '{}' FROM account_muted "
                                           "               WHERE realmid = %u AND (char_id = '%u' OR mute_name = '%s') ORDER BY mute_date DESC LIMIT %u) AS last_muted "
                                           "ORDER BY last_muted.mute_date ASC", activeMuteId, realm.Id.Realm, charId, name.c_str(), limit);
         }
@@ -2667,7 +2667,7 @@ public:
                 name = data->m_name;
 
                 // Get current character account
-                QueryResult result = LoginDatabase.PQuery("SELECT username FROM account WHERE id = '%u'", data->m_accountID);
+                QueryResult result = LoginDatabase.PQuery("SELECT username FROM account WHERE id = '{}'", data->m_accountID);
                 if (!result)
                 {
                     // Hmmm (2), character without account?
@@ -3674,7 +3674,7 @@ public:
 
             if (distance > 0)
             {
-                WorldDatabase.PExecute("INSERT INTO object_visibility (type, entry, distance, comment) VALUES (%u, %u, %f, \"%s\") ON DUPLICATE KEY UPDATE distance = %f", (uint32)type, entry, distance, comment.c_str(), distance);
+                WorldDatabase.PExecute("INSERT INTO object_visibility (type, entry, distance, comment) VALUES ({}, {}, {}, \"{}\") ON DUPLICATE KEY UPDATE distance = {}", (uint32)type, entry, distance, comment.c_str(), distance);
 
                 bool isNew = !sObjectMgr->GetCustomVisibilityInfo(type, entry);
                 CustomVisibility::Info& info = sObjectMgr->GetCustomVisibilityInfoMap()[type][entry];
@@ -3692,7 +3692,7 @@ public:
             }
             else
             {
-                WorldDatabase.PExecute("DELETE FROM object_visibility WHERE type = %u AND entry = %u", (uint32)type, entry);
+                WorldDatabase.PExecute("DELETE FROM object_visibility WHERE type = {} AND entry = {}", (uint32)type, entry);
 
                 sObjectMgr->GetCustomVisibilityInfoMap()[type].erase(entry);
 
@@ -3741,7 +3741,7 @@ public:
 
             if (distance > 0)
             {
-                WorldDatabase.PExecute("INSERT INTO object_visibility (type, entry, distance, comment) VALUES (%u, %u, %f, \"%s\") ON DUPLICATE KEY UPDATE distance = %f", (uint32)type, entry, distance, comment.c_str(), distance);
+                WorldDatabase.PExecute("INSERT INTO object_visibility (type, entry, distance, comment) VALUES ({}, {}, {}, \"{}\") ON DUPLICATE KEY UPDATE distance = {}", (uint32)type, entry, distance, comment.c_str(), distance);
 
                 bool isNew = !sObjectMgr->GetCustomVisibilityInfo(type, entry);
                 CustomVisibility::Info& info = sObjectMgr->GetCustomVisibilityInfoMap()[type][entry];
@@ -3759,7 +3759,7 @@ public:
             }
             else
             {
-                WorldDatabase.PExecute("DELETE FROM object_visibility WHERE type = %u AND entry = %u", (uint32)type, entry);
+                WorldDatabase.PExecute("DELETE FROM object_visibility WHERE type = {} AND entry = {}", (uint32)type, entry);
 
                 sObjectMgr->GetCustomVisibilityInfoMap()[type].erase(entry);
 
@@ -3975,7 +3975,7 @@ public:
 
         std::string chrNameLink = handler->playerLink(targetName);
 
-        QueryResult result = CharacterDatabase.PQuery("SELECT guid, skill FROM character_skills WHERE guid = %u AND skill = %u", targetGuid.GetCounter(), uint32(oldSkill));
+        QueryResult result = CharacterDatabase.PQuery("SELECT guid, skill FROM character_skills WHERE guid = {} AND skill = {}", targetGuid.GetCounter(), uint32(oldSkill));
         if (!result)
         {
             if (!target || (target && !target->HasSkill(oldSkill)))
@@ -4070,7 +4070,7 @@ public:
             if (!itemGuid)
                 return false;
 
-            QueryResult result = CharacterDatabase.PQuery("SELECT itemEntry, owner_guid, creatorGuid, giftCreatorGuid, count, duration, charges, flags, enchantments, randomPropertyId, reforgeId, transmogrifyId, upgradeId, durability, playedTime, text, pet_species, pet_breed, pet_quality, pet_level FROM item_instance WHERE guid='%u'", itemGuid);
+            QueryResult result = CharacterDatabase.PQuery("SELECT itemEntry, owner_guid, creatorGuid, giftCreatorGuid, count, duration, charges, flags, enchantments, randomPropertyId, reforgeId, transmogrifyId, upgradeId, durability, playedTime, text, pet_species, pet_breed, pet_quality, pet_level FROM item_instance WHERE guid='{}'", itemGuid);
             if (!result)
             {
                 handler->PSendSysMessage("Item with guid %u was not found in DB.", itemGuid);
@@ -4101,7 +4101,7 @@ public:
             info.quality = fields[i++].GetUInt32();
             info.level = fields[i++].GetUInt32();
 
-            result = CharacterDatabase.PQuery("SELECT guid, bag, slot FROM character_inventory WHERE item='%u'", itemGuid);
+            result = CharacterDatabase.PQuery("SELECT guid, bag, slot FROM character_inventory WHERE item='{}'", itemGuid);
             if (!result)
             {
                 handler->PSendSysMessage("Item with guid %u was not found in players's inventory.", itemGuid);
@@ -4232,7 +4232,7 @@ public:
             {
                 std::string itemName = citemName+1;
                 WorldDatabase.EscapeString(itemName);
-                QueryResult result = WorldDatabase.PQuery("SELECT entry FROM item_template WHERE name = '%s'", itemName.c_str());
+                QueryResult result = WorldDatabase.PQuery("SELECT entry FROM item_template WHERE name = '{}'", itemName.c_str());
                 if (!result)
                 {
                     handler->PSendSysMessage(LANG_COMMAND_COULDNOTFIND, citemName+1);
@@ -4313,7 +4313,7 @@ public:
 
         uint8 count = 0;
 
-        QueryResult result = CharacterDatabase.PQuery("SELECT id, old_item_guid, item_entry, item_count, delete_date, delete_type, restored FROM item_deleted WHERE owner_guid = '%u' ORDER BY delete_date DESC LIMIT 51", guid);
+        QueryResult result = CharacterDatabase.PQuery("SELECT id, old_item_guid, item_entry, item_count, delete_date, delete_type, restored FROM item_deleted WHERE owner_guid = '{}' ORDER BY delete_date DESC LIMIT 51", guid);
         if (!result)
         {
             handler->SetSentErrorMessage(true);
@@ -4395,7 +4395,7 @@ public:
             all = true;
         else for (auto&& itemIdStr : Tokenizer { tail, ' ' })
         {
-            QueryResult result = CharacterDatabase.PQuery("SELECT id FROM item_deleted WHERE id = '%u' AND owner_guid = '%u' AND (`restored`= 0 OR `restored`= 2)", atoi(itemIdStr), guid.GetCounter());
+            QueryResult result = CharacterDatabase.PQuery("SELECT id FROM item_deleted WHERE id = '{}' AND owner_guid = '{}' AND (`restored`= 0 OR `restored`= 2)", atoi(itemIdStr), guid.GetCounter());
             if (!result)
             {
                 handler->SetSentErrorMessage(true);
@@ -4421,9 +4421,9 @@ public:
         CharacterDatabaseTransaction trans = CharacterDatabase.BeginTransaction();
 
         if (all)
-            result = CharacterDatabase.PQuery("SELECT id, old_item_guid, item_entry, item_count FROM item_deleted WHERE owner_guid = '%u' AND `restored`=0", guid.GetCounter());
+            result = CharacterDatabase.PQuery("SELECT id, old_item_guid, item_entry, item_count FROM item_deleted WHERE owner_guid = '{}' AND `restored`=0", guid.GetCounter());
         else
-            result = CharacterDatabase.PQuery("SELECT id, old_item_guid, item_entry, item_count FROM item_deleted WHERE id in (%s) AND owner_guid = '%u' AND `restored`=0", itemsStr.c_str(), guid.GetCounter());
+            result = CharacterDatabase.PQuery("SELECT id, old_item_guid, item_entry, item_count FROM item_deleted WHERE id in ({}) AND owner_guid = '{}' AND `restored`=0", itemsStr.c_str(), guid.GetCounter());
 
         if (!result)
         {
@@ -4442,7 +4442,7 @@ public:
             uint32 itemCount = fields[3].GetUInt32();
 
             // keep in mind item will finally deleted only after logout
-            if (CharacterDatabase.PQuery("SELECT 1 FROM item_instance WHERE guid = '%u' AND owner_guid = '%u' AND itemEntry = '%u'", oldItemGuid, guid.GetCounter(), itemEntry))
+            if (CharacterDatabase.PQuery("SELECT 1 FROM item_instance WHERE guid = '{}' AND owner_guid = '{}' AND itemEntry = '{}'", oldItemGuid, guid.GetCounter(), itemEntry))
                 Item::DeleteFromDB(trans, oldItemGuid);
 
             if (Item* item = Item::CreateItem(itemEntry, itemCount))
@@ -4460,7 +4460,7 @@ public:
                 continue;
             }
 
-            CharacterDatabase.PExecute("UPDATE item_deleted SET `restored`=1, `restore_date`='%u' WHERE id = '%u' AND owner_guid = '%u'", uint32(time(NULL)), id, guid.GetCounter());
+            CharacterDatabase.PExecute("UPDATE item_deleted SET `restored`=1, `restore_date`='{}' WHERE id = '{}' AND owner_guid = '{}'", uint32(time(NULL)), id, guid.GetCounter());
         } while (result->NextRow());
 
         while (!itemStorage.empty())
