@@ -68,6 +68,102 @@ namespace WorldPackets
             bool Allow = false;
             GameObjectStats Stats;
         };
+
+        class QueryPlayerName final : public ClientPacket
+        {
+        public:
+            QueryPlayerName(WorldPacket&& packet) : ClientPacket(CMSG_NAME_QUERY, std::move(packet)) { }
+
+            void Read() override;
+
+            ObjectGuid Guid;
+        };
+
+        class QueryRealmName final : public ClientPacket
+        {
+        public:
+            QueryRealmName(WorldPacket&& packet) : ClientPacket(CMSG_REALM_NAME_QUERY, std::move(packet)) { }
+
+            void Read() override;
+
+            uint32 RealmId = 0;
+        };
+
+        class QueryCreature final : public ClientPacket
+        {
+        public:
+            QueryCreature(WorldPacket&& packet) : ClientPacket(CMSG_CREATURE_QUERY, std::move(packet)) { }
+
+            void Read() override;
+
+            uint32 Entry = 0;
+        };
+
+        class QueryCorpse final : public ClientPacket
+        {
+        public:
+            QueryCorpse(WorldPacket&& packet) : ClientPacket(CMSG_CORPSE_QUERY, std::move(packet)) { }
+
+            void Read() override { }
+        };
+
+        class QueryNPCText final : public ClientPacket
+        {
+        public:
+            QueryNPCText(WorldPacket&& packet) : ClientPacket(CMSG_NPC_TEXT_QUERY, std::move(packet)) { }
+
+            void Read() override;
+
+            uint32 TextID = 0;
+        };
+
+        class QueryPageText final : public ClientPacket
+        {
+        public:
+            QueryPageText(WorldPacket&& packet) : ClientPacket(CMSG_PAGE_TEXT_QUERY, std::move(packet)) { }
+
+            void Read() override;
+
+            uint32 PageID = 0;
+        };
+
+        class QueryCorpseTransport final : public ClientPacket
+        {
+        public:
+            QueryCorpseTransport(WorldPacket&& packet) : ClientPacket(CMSG_CORPSE_MAP_POSITION_QUERY, std::move(packet)) { }
+
+            void Read() override;
+        };
+
+        class QuestNPCQuery final : public ClientPacket
+        {
+        public:
+            QuestNPCQuery(WorldPacket&& packet) : ClientPacket(CMSG_QUEST_NPC_QUERY, std::move(packet)) { }
+
+            void Read() override;
+
+            std::vector<uint32> QuestIds;
+            uint32 Count = 0;
+        };
+
+        class QuestPOIQuery final : public ClientPacket
+        {
+        public:
+            QuestPOIQuery(WorldPacket&& packet) : ClientPacket(CMSG_QUEST_POI_QUERY, std::move(packet)) { }
+
+            void Read() override;
+
+            uint32 Count = 0;
+            std::vector<uint32> QuestIds;
+        };
+
+        class QueryCountdownTimer final : public ClientPacket
+        {
+        public:
+            QueryCountdownTimer(WorldPacket&& packet) : ClientPacket(CMSG_QUERY_COUNTDOWN_TIMER, std::move(packet)) { }
+
+            void Read() override;
+        };
     }
 }
 

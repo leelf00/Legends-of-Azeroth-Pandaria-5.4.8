@@ -21,3 +21,26 @@ void WorldPackets::ClientConfig::RequestAccountData::Read()
 {
     DataType = _worldPacket.ReadBits(3);
 }
+
+void WorldPackets::ClientConfig::UserClientUpdateAccountData::Read()
+{
+    _worldPacket >> DecompressedSize >> Time >> CompressedSize;
+
+    if (DecompressedSize == 0)
+    {
+        DataType = _worldPacket.ReadBits(3);
+        _worldPacket.FlushBits();
+        return;
+    }
+
+    if (DecompressedSize > 0xFFFF)
+    {
+        _worldPacket.rfinish();
+        return;
+    }
+
+    CompressedData = std::string(reinterpret_cast<char const*>(_worldPacket.contents() + _worldPacket.rpos()), CompressedSize);
+    _worldPacket.read_skip(CompressedSize);
+    DataType = _worldPacket.ReadBits(3);
+    _worldPacket.FlushBits();
+}

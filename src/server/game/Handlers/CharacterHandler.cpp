@@ -759,27 +759,9 @@ void WorldSession::HandleCharCreateOpcode(WorldPackets::Character::CreateCharact
 }
 
 
-void WorldSession::HandleCharDeleteOpcode(WorldPacket& recvData)
+void WorldSession::HandleCharDeleteOpcode(WorldPackets::Character::CharDelete& packet)
 {
-    ObjectGuid guid;
-
-    guid[1] = recvData.ReadBit();
-    guid[3] = recvData.ReadBit();
-    guid[2] = recvData.ReadBit();
-    guid[7] = recvData.ReadBit();
-    guid[4] = recvData.ReadBit();
-    guid[6] = recvData.ReadBit();
-    guid[0] = recvData.ReadBit();
-    guid[5] = recvData.ReadBit();
-
-    recvData.ReadByteSeq(guid[7]);
-    recvData.ReadByteSeq(guid[1]);
-    recvData.ReadByteSeq(guid[6]);
-    recvData.ReadByteSeq(guid[0]);
-    recvData.ReadByteSeq(guid[3]);
-    recvData.ReadByteSeq(guid[4]);
-    recvData.ReadByteSeq(guid[2]);
-    recvData.ReadByteSeq(guid[5]);
+    ObjectGuid guid = packet.Guid;
 
     TC_LOG_DEBUG("network", "Character (Guid: {}) deleted", guid.GetCounter());
 
@@ -876,11 +858,9 @@ void WorldSession::HandlePlayerLoginOpcode(WorldPackets::Character::PlayerLogin&
     });    
 }
 
-void WorldSession::HandleLoadScreenOpcode(WorldPacket& recvPacket)
+void WorldSession::HandleLoadScreenOpcode(WorldPackets::Character::LoadScreen& packet)
 {
     TC_LOG_INFO("general", "WORLD: Recvd CMSG_LOAD_SCREEN");
-    uint32 mapID = recvPacket.read<uint32>();
-    bool loading = recvPacket.ReadBit();
 }
 
 void WorldSession::HandlePlayerLogin(LoginQueryHolder const& holder)
@@ -1220,26 +1200,18 @@ void WorldSession::HandlePlayerLogin(LoginQueryHolder const& holder)
 
 }
 
-void WorldSession::HandleSetFactionAtWar(WorldPacket& recvData)
+void WorldSession::HandleSetFactionAtWar(WorldPackets::Character::SetFactionAtWar& packet)
 {
     TC_LOG_DEBUG("network", "WORLD: Received CMSG_SET_FACTION_ATWAR");
 
-    uint8 FactionIndexID;
-
-    recvData >> FactionIndexID;
-
-    GetPlayer()->GetReputationMgr().SetAtWar(FactionIndexID);
+    GetPlayer()->GetReputationMgr().SetAtWar(packet.FactionIndexId);
 }
 
-void WorldSession::HandleSetFactionNotAtWar(WorldPacket& recvData)
+void WorldSession::HandleSetFactionNotAtWar(WorldPackets::Character::SetFactionNotAtWar& packet)
 {
     TC_LOG_DEBUG("network", "WORLD: Received CMSG_SET_FACTION_NOTATWAR");
 
-    uint8 FactionIndexID;
-
-    recvData >> FactionIndexID;
-
-    GetPlayer()->GetReputationMgr().SetNotAtWar(FactionIndexID);
+    GetPlayer()->GetReputationMgr().SetNotAtWar(packet.FactionIndexId);
 }
 
 //I think this function is never used :/ I dunno, but i guess this opcode not exists
@@ -1249,10 +1221,9 @@ void WorldSession::HandleSetFactionCheat(WorldPacket & /*recvData*/)
     GetPlayer()->GetReputationMgr().SendStates();
 }
 
-void WorldSession::HandleTutorialFlag(WorldPacket& recvData)
+void WorldSession::HandleTutorialFlag(WorldPackets::Character::TutorialSetFlag& packet)
 {
-    uint32 data;
-    recvData >> data;
+    uint32 data = packet.Data;
 
     uint8 index = uint8(data / 32);
     if (index >= MAX_ACCOUNT_TUTORIAL_VALUES)
@@ -1265,37 +1236,32 @@ void WorldSession::HandleTutorialFlag(WorldPacket& recvData)
     SetTutorialInt(index, flag);
 }
 
-void WorldSession::HandleTutorialClear(WorldPacket& /*recvData*/)
+void WorldSession::HandleTutorialClear(WorldPackets::Character::TutorialClear& packet)
 {
     for (uint8 i = 0; i < MAX_ACCOUNT_TUTORIAL_VALUES; ++i)
         SetTutorialInt(i, 0xFFFFFFFF);
 }
 
-void WorldSession::HandleTutorialReset(WorldPacket& /*recvData*/)
+void WorldSession::HandleTutorialReset(WorldPackets::Character::TutorialReset& packet)
 {
     for (uint8 i = 0; i < MAX_ACCOUNT_TUTORIAL_VALUES; ++i)
         SetTutorialInt(i, 0x00000000);
 }
 
-void WorldSession::HandleSetWatchedFactionOpcode(WorldPacket& recvData)
+void WorldSession::HandleSetWatchedFactionOpcode(WorldPackets::Character::SetWatchedFaction& packet)
 {
     TC_LOG_DEBUG("network", "WORLD: Received CMSG_SET_WATCHED_FACTION");
-    uint32 fact;
-    recvData >> fact;
-    GetPlayer()->SetUInt32Value(PLAYER_FIELD_WATCHED_FACTION_INDEX, fact);
+    GetPlayer()->SetUInt32Value(PLAYER_FIELD_WATCHED_FACTION_INDEX, packet.Faction);
 }
 
-void WorldSession::HandleSetFactionInactiveOpcode(WorldPacket& recvData)
+void WorldSession::HandleSetFactionInactiveOpcode(WorldPackets::Character::SetFactionInactive& packet)
 {
     TC_LOG_DEBUG("network", "WORLD: Received CMSG_SET_FACTION_INACTIVE");
-    uint32 FactionIndex;
-    uint8 Status;
-    recvData >> FactionIndex >> Status;
 
-    _player->GetReputationMgr().SetInactive(FactionIndex, Status);
+    _player->GetReputationMgr().SetInactive(packet.FactionIndex, packet.Status);
 }
 
-void WorldSession::HandleRequestForcedReactionsOpcode(WorldPacket& recvData)
+void WorldSession::HandleRequestForcedReactionsOpcode(WorldPackets::Character::RequestForcedReactions& packet)
 {
     TC_LOG_DEBUG("network", "WORLD: Received CMSG_REQUEST_FORCED_REACTIONS");
 
@@ -1362,29 +1328,10 @@ void WorldSession::SendRenameResult(uint8 result, ObjectGuid guid, std::string n
     SendPacket(&data);
 }
 
-void WorldSession::HandleCharRenameOpcode(WorldPacket& recvData)
+void WorldSession::HandleCharRenameOpcode(WorldPackets::Character::CharacterRenameRequest& packet)
 {
-    ObjectGuid guid;
-
-    guid[6] = recvData.ReadBit();
-    guid[3] = recvData.ReadBit();
-    guid[0] = recvData.ReadBit();
-    uint32 nameLen = recvData.ReadBits(6);            // Name size
-    guid[1] = recvData.ReadBit();
-    guid[5] = recvData.ReadBit();
-    guid[7] = recvData.ReadBit();
-    guid[2] = recvData.ReadBit();
-    guid[4] = recvData.ReadBit();
-
-    recvData.ReadByteSeq(guid[1]);
-    recvData.ReadByteSeq(guid[6]);
-    recvData.ReadByteSeq(guid[5]);
-    std::string newName = recvData.ReadString(nameLen);  // New Name
-    recvData.ReadByteSeq(guid[2]);
-    recvData.ReadByteSeq(guid[4]);
-    recvData.ReadByteSeq(guid[3]);
-    recvData.ReadByteSeq(guid[7]);
-    recvData.ReadByteSeq(guid[0]);
+    ObjectGuid guid = packet.Guid;
+    std::string newName = packet.Name;
 
     // prevent character rename to invalid name
     if (!normalizePlayerName(newName))
@@ -1603,12 +1550,14 @@ void WorldSession::HandleSetPlayerDeclinedNames(WorldPacket& recvData)
 }
 
 
-void WorldSession::HandleAlterAppearance(WorldPacket& recvData)
+void WorldSession::HandleAlterAppearance(WorldPackets::Character::AlterAppearance& packet)
 {
     TC_LOG_DEBUG("network", "CMSG_ALTER_APPEARANCE");
 
-    uint32 Hair, Color, FacialHair, SkinColor;
-    recvData >> SkinColor >> Color >> Hair >> FacialHair;
+    uint32 Hair = packet.Hair;
+    uint32 Color = packet.Color;
+    uint32 FacialHair = packet.FacialHair;
+    uint32 SkinColor = packet.SkinColor;
 
     BarberShopStyleEntry const* bs_hair = sBarberShopStyleStore.LookupEntry(Hair);
 
@@ -1689,36 +1638,21 @@ void WorldSession::HandleRemoveGlyph(WorldPacket& recvData)
     }
 }
 
-void WorldSession::HandleCharCustomize(WorldPacket& recvData)
+void WorldSession::HandleCharCustomize(WorldPackets::Character::CharCustomize& packet)
 {
-    ObjectGuid guid;
-    uint8 gender, skin, face, hairStyle, hairColor, facialHair;
-
-    recvData >> hairStyle >> gender >> skin >> facialHair >> face >> hairColor;
-    guid[2] = recvData.ReadBit();
-    guid[6] = recvData.ReadBit();
-    guid[1] = recvData.ReadBit();
-    guid[0] = recvData.ReadBit();
-    guid[7] = recvData.ReadBit();
-    guid[5] = recvData.ReadBit();
-    uint32 namelen = recvData.ReadBits(6);               // Name size
-    guid[4] = recvData.ReadBit();
-    guid[3] = recvData.ReadBit();
-    recvData.ReadByteSeq(guid[4]);
-    std::string newName = recvData.ReadString(namelen);  // New Name
-    recvData.ReadByteSeq(guid[0]);
-    recvData.ReadByteSeq(guid[2]);
-    recvData.ReadByteSeq(guid[6]);
-    recvData.ReadByteSeq(guid[5]);
-    recvData.ReadByteSeq(guid[3]);
-    recvData.ReadByteSeq(guid[1]);
-    recvData.ReadByteSeq(guid[7]);
+    ObjectGuid guid = packet.Guid;
+    uint8 gender = packet.Gender;
+    uint8 skin = packet.Skin;
+    uint8 face = packet.Face;
+    uint8 hairStyle = packet.HairStyle;
+    uint8 hairColor = packet.HairColor;
+    uint8 facialHair = packet.FacialHair;
+    std::string newName = packet.Name;
 
     if (!IsLegitCharacterForAccount(guid))
     {
         TC_LOG_ERROR("network", "Account {}, IP: {} tried to customise character {}, but it does not belong to their account!",
             GetAccountId(), GetRemoteAddress().c_str(), guid.GetCounter());
-        recvData.rfinish();
         KickPlayer();
         return;
     }

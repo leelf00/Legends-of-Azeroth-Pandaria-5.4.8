@@ -1288,25 +1288,22 @@ void WorldSession::HandleAreaTriggerOpcode(WorldPackets::AreaTrigger::AreaTrigge
     }
 }
 
-void WorldSession::HandleUpdateAccountData(WorldPacket& recvData)
+void WorldSession::HandleUpdateAccountData(WorldPackets::ClientConfig::UserClientUpdateAccountData& packet)
 {
     TC_LOG_DEBUG("network", "WORLD: Received CMSG_UPDATE_ACCOUNT_DATA");
 
-    uint32 timestamp, type = 0, decompressedSize, compressedSize;
-    recvData >> decompressedSize  >> timestamp >> compressedSize;
+    uint32 decompressedSize = packet.DecompressedSize;
+    uint32 timestamp = packet.Time;
+    uint32 type = packet.DataType;
 
     if (decompressedSize == 0)                               // erase
     {
-        type = recvData.ReadBits(3);
-        recvData.FlushBits();
-
         SetAccountData(AccountDataType(type), 0, "");
         return;
     }
 
     if (decompressedSize > 0xFFFF)
     {
-        recvData.rfinish();                   // unnneded warning spam in this case
         TC_LOG_ERROR("network", "UAD: Account data packet too big, size {}", decompressedSize);
         return;
     }
@@ -1315,17 +1312,13 @@ void WorldSession::HandleUpdateAccountData(WorldPacket& recvData)
     dest.resize(decompressedSize);
 
     uLongf realSize = decompressedSize;
-    if (uncompress(const_cast<uint8*>(dest.contents()), &realSize, const_cast<uint8*>(recvData.contents() + recvData.rpos()), compressedSize) != Z_OK)
+    if (uncompress(dest.contents(), &realSize, reinterpret_cast<const uint8*>(packet.CompressedData.data()), packet.CompressedSize) != Z_OK)
     {
-        recvData.rfinish();                   // unnneded warning spam in this case
         TC_LOG_ERROR("network", "UAD: Failed to decompress account data");
         return;
     }
 
     std::string adata = dest.ReadString(decompressedSize);
-
-    recvData.read_skip(compressedSize);
-    type = recvData.ReadBits(3);
 
     if (type > NUM_ACCOUNT_DATA_TYPES)
         return;

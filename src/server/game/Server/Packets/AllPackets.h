@@ -27,6 +27,7 @@
 #include "ClientConfigPackets.h"
 #include "GameObjectPackets.h"
 #include "InspectPackets.h"
+#include "LFGPackets.h"
 #include "MiscPackets.h"
 #include "MovementPackets.h"
 #include "NPCPackets.h"

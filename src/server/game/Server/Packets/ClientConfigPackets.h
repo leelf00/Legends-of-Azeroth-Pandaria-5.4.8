@@ -19,6 +19,7 @@
 #define ClientConfigPackets_h__
 
 #include "Packet.h"
+#include <string>
 
 namespace WorldPackets
 {
@@ -31,7 +32,21 @@ namespace WorldPackets
 
             void Read() override;
 
-            int32 DataType = 0;
+            int32 DataType = 0; ///< @see enum AccountDataType
+        };
+
+        class UserClientUpdateAccountData final : public ClientPacket
+        {
+        public:
+            explicit UserClientUpdateAccountData(WorldPacket&& packet) : ClientPacket(CMSG_UPDATE_ACCOUNT_DATA, std::move(packet)) { }
+
+            void Read() override;
+
+            uint32 DecompressedSize = 0;
+            uint32 Time = 0;
+            uint32 CompressedSize = 0;
+            uint32 DataType = 0; ///< @see enum AccountDataType
+            std::string CompressedData;
         };
     }
 }
