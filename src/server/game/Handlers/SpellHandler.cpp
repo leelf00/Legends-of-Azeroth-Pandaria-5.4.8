@@ -593,27 +593,9 @@ void WorldSession::HandleOpenItemOpcode(WorldPacket& recvPacket)
         pUser->SendLoot(item->GetGUID(), LOOT_CORPSE);
 }
 
-void WorldSession::HandleGameObjectUseOpcode(WorldPacket& recvData)
+void WorldSession::HandleGameObjectUseOpcode(WorldPackets::GameObject::GameObjUse& packet)
 {
-    ObjectGuid guid;
-
-    guid[6] = recvData.ReadBit();
-    guid[1] = recvData.ReadBit();
-    guid[3] = recvData.ReadBit();
-    guid[4] = recvData.ReadBit();
-    guid[0] = recvData.ReadBit();
-    guid[5] = recvData.ReadBit();
-    guid[7] = recvData.ReadBit();
-    guid[2] = recvData.ReadBit();
-
-    recvData.ReadByteSeq(guid[0]);
-    recvData.ReadByteSeq(guid[1]);
-    recvData.ReadByteSeq(guid[6]);
-    recvData.ReadByteSeq(guid[2]);
-    recvData.ReadByteSeq(guid[3]);
-    recvData.ReadByteSeq(guid[4]);
-    recvData.ReadByteSeq(guid[5]);
-    recvData.ReadByteSeq(guid[7]);
+    ObjectGuid guid = packet.Guid;
 
     TC_LOG_DEBUG("network", "WORLD: Recvd CMSG_GAMEOBJ_USE Message [guid={}]", guid.GetCounter());
 
@@ -630,27 +612,9 @@ void WorldSession::HandleGameObjectUseOpcode(WorldPacket& recvData)
     }
 }
 
-void WorldSession::HandleGameobjectReportUse(WorldPacket& recvPacket)
+void WorldSession::HandleGameobjectReportUse(WorldPackets::GameObject::GameObjReportUse& packet)
 {
-    ObjectGuid guid;
-
-    guid[4] = recvPacket.ReadBit();
-    guid[7] = recvPacket.ReadBit();
-    guid[5] = recvPacket.ReadBit();
-    guid[3] = recvPacket.ReadBit();
-    guid[6] = recvPacket.ReadBit();
-    guid[1] = recvPacket.ReadBit();
-    guid[2] = recvPacket.ReadBit();
-    guid[0] = recvPacket.ReadBit();
-
-    recvPacket.ReadByteSeq(guid[7]);
-    recvPacket.ReadByteSeq(guid[1]);
-    recvPacket.ReadByteSeq(guid[6]);
-    recvPacket.ReadByteSeq(guid[5]);
-    recvPacket.ReadByteSeq(guid[0]);
-    recvPacket.ReadByteSeq(guid[3]);
-    recvPacket.ReadByteSeq(guid[2]);
-    recvPacket.ReadByteSeq(guid[4]);
+    ObjectGuid guid = packet.Guid;
 
     TC_LOG_DEBUG("network", "WORLD: Recvd CMSG_GAMEOBJ_REPORT_USE Message [in game guid: {}]", guid.GetCounter());
 
@@ -1368,34 +1332,14 @@ void WorldSession::HandleCancelChanneling(WorldPacket& recvData)
     mover->InterruptSpell(CURRENT_CHANNELED_SPELL);
 }
 
-void WorldSession::HandleTotemDestroyed(WorldPacket& recvPacket)
+void WorldSession::HandleTotemDestroyed(WorldPackets::Totem::TotemDestroyed& packet)
 {
     // ignore for remote control state
     if (_player->m_mover != _player)
         return;
 
-    ObjectGuid guid;
-    uint8 slotId;
-
-    recvPacket >> slotId;
-
-    guid[4] = recvPacket.ReadBit();
-    guid[2] = recvPacket.ReadBit();
-    guid[1] = recvPacket.ReadBit();
-    guid[3] = recvPacket.ReadBit();
-    guid[0] = recvPacket.ReadBit();
-    guid[6] = recvPacket.ReadBit();
-    guid[7] = recvPacket.ReadBit();
-    guid[5] = recvPacket.ReadBit();
-
-    recvPacket.ReadByteSeq(guid[6]);
-    recvPacket.ReadByteSeq(guid[2]);
-    recvPacket.ReadByteSeq(guid[4]);
-    recvPacket.ReadByteSeq(guid[1]);
-    recvPacket.ReadByteSeq(guid[5]);
-    recvPacket.ReadByteSeq(guid[0]);
-    recvPacket.ReadByteSeq(guid[3]);
-    recvPacket.ReadByteSeq(guid[7]);
+    ObjectGuid guid = packet.Totem;
+    uint8 slotId = packet.Slot;
 
     ++slotId;
     if (slotId >= SUMMON_SLOT_MAX_TOTEM)

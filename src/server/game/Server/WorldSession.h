@@ -517,7 +517,7 @@ class TC_GAME_API WorldSession
 
         void HandleCharEnumOpcode(WorldPackets::Character::EnumCharacters& /*enumCharacters*/);
         void HandleCharDeleteOpcode(WorldPacket& recvPacket);
-        void HandleCharCreateOpcode(WorldPacket& recvPacket);
+        void HandleCharCreateOpcode(WorldPackets::Character::CreateCharacter& packet);
         void HandlePlayerLoginOpcode(WorldPackets::Character::PlayerLogin& packet);
         void HandleLoadScreenOpcode(WorldPacket& recvPacket);
         void HandleCharEnum(PreparedQueryResult result);
@@ -537,7 +537,7 @@ class TC_GAME_API WorldSession
         void HandleReturnToGraveyard(WorldPacket& recvPacket);
 
         // new inspect
-        void HandleInspectOpcode(WorldPacket& recvPacket);
+        void HandleInspectOpcode(WorldPackets::Inspect::Inspect& packet);
 
         // new party stats
         void HandleInspectHonorStatsOpcode(WorldPacket& recvPacket);
@@ -601,7 +601,7 @@ class TC_GAME_API WorldSession
         void HandleZoneUpdateOpcode(WorldPacket& recvPacket);
         void HandleSetSelectionOpcode(WorldPacket& recvPacket);
         void HandleStandStateChangeOpcode(WorldPacket& recvPacket);
-        void HandleEmoteOpcode(WorldPacket& recvPacket);
+        void HandleEmoteOpcode(WorldPackets::Chat::EmoteClient& packet);
         void HandleContactListOpcode(WorldPacket& recvPacket);
         void HandleAddFriendOpcode(WorldPacket& recvPacket);
         void HandleAddFriendOpcodeCallBack(PreparedQueryResult result, std::string const& friendNote);
@@ -612,7 +612,7 @@ class TC_GAME_API WorldSession
         void HandleSetContactNotesOpcode(WorldPacket& recvPacket);
         void HandleBugOpcode(WorldPacket& recvPacket);
 
-        void HandleAreaTriggerOpcode(WorldPacket& recvPacket);
+        void HandleAreaTriggerOpcode(WorldPackets::AreaTrigger::AreaTrigger& packet);
 
         void HandleSetFactionAtWar(WorldPacket& recvData);
         void HandleSetFactionNotAtWar(WorldPacket& recvData);
@@ -622,12 +622,12 @@ class TC_GAME_API WorldSession
         void HandleRequestForcedReactionsOpcode(WorldPacket& recvData);
 
         void HandleUpdateAccountData(WorldPacket& recvPacket);
-        void HandleRequestAccountData(WorldPacket& recvPacket);
+        void HandleRequestAccountData(WorldPackets::ClientConfig::RequestAccountData& packet);
         void HandleSetActionButtonOpcode(WorldPacket& recvPacket);
 
-        void HandleGameObjectUseOpcode(WorldPacket& recPacket);
+        void HandleGameObjectUseOpcode(WorldPackets::GameObject::GameObjUse& packet);
         void HandleMeetingStoneInfo(WorldPacket& recPacket);
-        void HandleGameobjectReportUse(WorldPacket& recvPacket);
+        void HandleGameobjectReportUse(WorldPackets::GameObject::GameObjReportUse& packet);
 
         void HandleNameQueryOpcode(WorldPacket& recvPacket);
         void HandleRealmNameQueryOpcode(WorldPacket& recvPacket);
@@ -746,16 +746,16 @@ class TC_GAME_API WorldSession
         void SendActivateTaxiReply(ActivateTaxiReply reply);
 
         void HandleTabardVendorActivateOpcode(WorldPacket& recvPacket);
-        void HandleBankerActivateOpcode(WorldPacket& recvPacket);
-        void HandleBuyBankSlotOpcode(WorldPacket& recvPacket);
-        void HandleTrainerListOpcode(WorldPacket& recvPacket);
-        void HandleTrainerBuySpellOpcode(WorldPacket& recvPacket);
+        void HandleBankerActivateOpcode(WorldPackets::NPC::BankerActivate& packet);
+        void HandleBuyBankSlotOpcode(WorldPackets::Bank::BuyBankSlot& packet);
+        void HandleTrainerListOpcode(WorldPackets::NPC::TrainerList& packet);
+        void HandleTrainerBuySpellOpcode(WorldPackets::NPC::TrainerBuySpell& packet);
         void HandlePetitionShowListOpcode(WorldPacket& recvPacket);
-        void HandleGossipHelloOpcode(WorldPacket& recvPacket);
+        void HandleGossipHelloOpcode(WorldPackets::NPC::GossipHello& packet);
         void HandleGossipSelectOptionOpcode(WorldPacket& recvPacket);
         void HandleSpiritHealerActivateOpcode(WorldPacket& recvPacket);
         void HandleNpcTextQueryOpcode(WorldPacket& recvPacket);
-        void HandleBinderActivateOpcode(WorldPacket& recvPacket);
+        void HandleBinderActivateOpcode(WorldPackets::NPC::BinderActivate& packet);
         void HandleListPets(WorldPacket& recvPacket);
         void HandleSetPetSlot(WorldPacket& recvPacket);
         void HandleStablePetCallback(PreparedQueryResult result);
@@ -814,14 +814,14 @@ class TC_GAME_API WorldSession
         void HandleSellItemOpcode(WorldPacket& recvPacket);
         void HandleBuyItemInSlotOpcode(WorldPacket& recvPacket);
         void HandleBuyItemOpcode(WorldPacket& recvPacket);
-        void HandleListInventoryOpcode(WorldPacket& recvPacket);
+        void HandleListInventoryOpcode(WorldPackets::NPC::ListInventory& packet);
         void HandleAutoStoreBagItemOpcode(WorldPacket& recvPacket);
         void HandleReadItem(WorldPacket& recvPacket);
         void HandleAutoEquipItemSlotOpcode(WorldPacket& recvPacket);
         void HandleSwapItem(WorldPacket& recvPacket);
         void HandleBuybackItem(WorldPacket& recvPacket);
-        void HandleAutoBankItemOpcode(WorldPacket& recvPacket);
-        void HandleAutoStoreBankItemOpcode(WorldPacket& recvPacket);
+        void HandleAutoBankItemOpcode(WorldPackets::Bank::AutoBankItem& packet);
+        void HandleAutoStoreBankItemOpcode(WorldPackets::Bank::AutoStoreBankItem& packet);
         void HandleWrapItemOpcode(WorldPacket& recvPacket);
         void HandleUpgradeItemOpcode(WorldPacket& recvPacket);
         void SendItemUpgradeResult(bool success);
@@ -870,8 +870,8 @@ class TC_GAME_API WorldSession
         void SendPlayerNotFoundNotice(std::string const& name);
         void SendPlayerAmbiguousNotice(std::string const& name);
         void SendChatRestrictedNotice(ChatRestrictionType restriction);
-        void HandleTextEmoteOpcode(WorldPacket& recvPacket);
-        void HandleChatIgnoredOpcode(WorldPacket& recvPacket);
+        void HandleTextEmoteOpcode(WorldPackets::Chat::CTextEmote& packet);
+        void HandleChatIgnoredOpcode(WorldPackets::Chat::ChatIgnored& packet);
 
         void HandleUnregisterAddonPrefixesOpcode(WorldPacket& recvPacket);
         void HandleAddonRegisteredPrefixesOpcode(WorldPacket& recvPacket);
@@ -937,7 +937,7 @@ class TC_GAME_API WorldSession
         void HandleSetPlayerDeclinedNames(WorldPacket& recvData);
         void HandeSetTalentSpecialization(WorldPacket& recvData);
 
-        void HandleTotemDestroyed(WorldPacket& recvData);
+        void HandleTotemDestroyed(WorldPackets::Totem::TotemDestroyed& packet);
         void HandleDismissCritter(WorldPacket& recvData);
 
         //Battleground

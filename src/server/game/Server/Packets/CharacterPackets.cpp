@@ -50,6 +50,20 @@ void WorldPackets::Character::PlayerLogin::Read()
     _worldPacket.ReadByteSeq(Guid[3]);
 }
 
+void WorldPackets::Character::CreateCharacter::Read()
+{
+    _worldPacket >> OutfitId >> HairStyle >> Class >> Skin;
+    _worldPacket >> Face >> Race >> FacialHair >> Gender >> HairColor;
+
+    uint32 nameLength = _worldPacket.ReadBits(6);
+    uint8 unk = _worldPacket.ReadBit();
+    Name = _worldPacket.ReadString(nameLength);
+    if (unk)
+        _worldPacket.read_skip<uint32>();
+
+    Data = _worldPacket;
+}
+
 WorldPacket const* WorldPackets::Character::LogoutResponse::Write()
 {
     _worldPacket << uint32(LogoutResult);

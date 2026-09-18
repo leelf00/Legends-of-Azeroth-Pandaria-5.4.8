@@ -15,24 +15,26 @@
 * with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef AllPackets_h__
-#define AllPackets_h__
+#ifndef InspectPackets_h__
+#define InspectPackets_h__
 
-#include "AreaTriggerPackets.h"
-#include "AuctionHousePackets.h"
-#include "AuthenticationPackets.h"
-#include "BankPackets.h"
-#include "CharacterPackets.h"
-#include "ChatPackets.h"
-#include "ClientConfigPackets.h"
-#include "GameObjectPackets.h"
-#include "InspectPackets.h"
-#include "MiscPackets.h"
-#include "MovementPackets.h"
-#include "NPCPackets.h"
-#include "QueryPackets.h"
-#include "QuestPackets.h"
-#include "SpellPackets.h"
-#include "TotemPackets.h"
+#include "Packet.h"
+#include "ObjectGuid.h"
 
-#endif // AllPackets_h__
+namespace WorldPackets
+{
+    namespace Inspect
+    {
+        class Inspect final : public ClientPacket
+        {
+        public:
+            explicit Inspect(WorldPacket&& packet) : ClientPacket(CMSG_INSPECT, std::move(packet)) { }
+
+            void Read() override;
+
+            ObjectGuid Target;
+        };
+    }
+}
+
+#endif // InspectPackets_h__

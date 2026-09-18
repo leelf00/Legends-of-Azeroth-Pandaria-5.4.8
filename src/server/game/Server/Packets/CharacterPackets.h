@@ -32,6 +32,26 @@ namespace WorldPackets
 
             void Read() override { }
         };
+
+        class CreateCharacter final : public ClientPacket
+        {
+        public:
+            CreateCharacter(WorldPacket&& packet) : ClientPacket(CMSG_CHAR_CREATE, std::move(packet)) { }
+
+            void Read() override;
+
+            uint8 OutfitId = 0;
+            uint8 HairStyle = 0;
+            uint8 Class = 0;
+            uint8 Skin = 0;
+            uint8 Face = 0;
+            uint8 Race = 0;
+            uint8 FacialHair = 0;
+            uint8 Gender = 0;
+            uint8 HairColor = 0;
+            std::string Name;
+            WorldPacket Data; ///< remaining raw data (rpos at end of known fields) for CharacterCreateInfo
+        };
         
         class ShowingCloak final : public ClientPacket
         {

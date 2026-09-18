@@ -15,24 +15,25 @@
 * with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef AllPackets_h__
-#define AllPackets_h__
-
-#include "AreaTriggerPackets.h"
-#include "AuctionHousePackets.h"
-#include "AuthenticationPackets.h"
-#include "BankPackets.h"
-#include "CharacterPackets.h"
-#include "ChatPackets.h"
-#include "ClientConfigPackets.h"
-#include "GameObjectPackets.h"
-#include "InspectPackets.h"
-#include "MiscPackets.h"
-#include "MovementPackets.h"
-#include "NPCPackets.h"
-#include "QueryPackets.h"
-#include "QuestPackets.h"
-#include "SpellPackets.h"
 #include "TotemPackets.h"
 
-#endif // AllPackets_h__
+void WorldPackets::Totem::TotemDestroyed::Read()
+{
+    _worldPacket >> Slot;
+    Totem[4] = _worldPacket.ReadBit();
+    Totem[2] = _worldPacket.ReadBit();
+    Totem[1] = _worldPacket.ReadBit();
+    Totem[3] = _worldPacket.ReadBit();
+    Totem[0] = _worldPacket.ReadBit();
+    Totem[6] = _worldPacket.ReadBit();
+    Totem[7] = _worldPacket.ReadBit();
+    Totem[5] = _worldPacket.ReadBit();
+    _worldPacket.ReadByteSeq(Totem[6]);
+    _worldPacket.ReadByteSeq(Totem[2]);
+    _worldPacket.ReadByteSeq(Totem[4]);
+    _worldPacket.ReadByteSeq(Totem[1]);
+    _worldPacket.ReadByteSeq(Totem[5]);
+    _worldPacket.ReadByteSeq(Totem[0]);
+    _worldPacket.ReadByteSeq(Totem[3]);
+    _worldPacket.ReadByteSeq(Totem[7]);
+}

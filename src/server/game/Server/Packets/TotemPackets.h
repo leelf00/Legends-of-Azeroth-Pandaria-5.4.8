@@ -15,24 +15,27 @@
 * with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef AllPackets_h__
-#define AllPackets_h__
+#ifndef TotemPackets_h__
+#define TotemPackets_h__
 
-#include "AreaTriggerPackets.h"
-#include "AuctionHousePackets.h"
-#include "AuthenticationPackets.h"
-#include "BankPackets.h"
-#include "CharacterPackets.h"
-#include "ChatPackets.h"
-#include "ClientConfigPackets.h"
-#include "GameObjectPackets.h"
-#include "InspectPackets.h"
-#include "MiscPackets.h"
-#include "MovementPackets.h"
-#include "NPCPackets.h"
-#include "QueryPackets.h"
-#include "QuestPackets.h"
-#include "SpellPackets.h"
-#include "TotemPackets.h"
+#include "Packet.h"
+#include "ObjectGuid.h"
 
-#endif // AllPackets_h__
+namespace WorldPackets
+{
+    namespace Totem
+    {
+        class TotemDestroyed final : public ClientPacket
+        {
+        public:
+            TotemDestroyed(WorldPacket&& packet) : ClientPacket(CMSG_TOTEM_DESTROYED, std::move(packet)) { }
+
+            void Read() override;
+
+            uint8 Slot = 0;
+            ObjectGuid Totem;
+        };
+    }
+}
+
+#endif // TotemPackets_h__

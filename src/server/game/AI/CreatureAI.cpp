@@ -724,6 +724,8 @@ Creature* SummonablePremiumNpcAI::OpenGossip(PlayerOrChatHandler player, Creatur
     data.WriteByteSeq(guid[6]);
     data.WriteByteSeq(guid[2]);
 
-    player->GetSession()->HandleGossipHelloOpcode(data);
+    WorldPackets::NPC::GossipHello gossipHello(std::move(data));
+    gossipHello.Read();
+    player->GetSession()->HandleGossipHelloOpcode(gossipHello);
     return creature;
 }

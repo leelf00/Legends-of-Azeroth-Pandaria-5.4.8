@@ -362,20 +362,8 @@ void WorldSession::HandleCharEnumOpcode(WorldPackets::Character::EnumCharacters&
     _queryProcessor.AddCallback(CharacterDatabase.AsyncQuery(stmt).WithPreparedCallback(std::bind(&WorldSession::HandleCharEnum, this, std::placeholders::_1)));
 }
 
-void WorldSession::HandleCharCreateOpcode(WorldPacket& recvData)
+void WorldSession::HandleCharCreateOpcode(WorldPackets::Character::CreateCharacter& packet)
 {
-    uint8 hairStyle, face, facialHair, hairColor, race_, class_, skin, gender, outfitId;
-
-    recvData >> outfitId >> hairStyle >> class_ >> skin;
-    recvData >> face >> race_ >> facialHair >> gender >> hairColor;
-
-    uint32 nameLength = recvData.ReadBits(6);
-    uint8 unk = recvData.ReadBit();
-    std::string name = recvData.ReadString(nameLength);
-
-    if (unk)
-        recvData.read_skip<uint32>();
-
     WorldPacket data(SMSG_CHAR_CREATE, 1);                  // returned with diff.values in all cases
 
     if (!HasPermission(rbac::RBAC_PERM_SKIP_CHECK_CHARACTER_CREATION_TEAMMASK))
@@ -384,7 +372,7 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket& recvData)
         {
             bool disabled = false;
 
-            uint32 team = Player::TeamForRace(race_);
+            uint32 team = Player::TeamForRace(packet.Race);
             switch (team)
             {
             case ALLIANCE:
@@ -404,21 +392,21 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket& recvData)
         }
     }
 
-    ChrClassesEntry const* classEntry = sChrClassesStore.LookupEntry(class_);
+    ChrClassesEntry const* classEntry = sChrClassesStore.LookupEntry(packet.Class);
     if (!classEntry)
     {
         data << uint8(CHAR_CREATE_FAILED);
         SendPacket(&data);
-        TC_LOG_ERROR("network", "Class ({}) not found in DBC while creating new char for account (ID: {}): wrong DBC files or cheater?", class_, GetAccountId());
+        TC_LOG_ERROR("network", "Class ({}) not found in DBC while creating new char for account (ID: {}): wrong DBC files or cheater?", packet.Class, GetAccountId());
         return;
     }
 
-    ChrRacesEntry const* raceEntry = sChrRacesStore.LookupEntry(race_);
+    ChrRacesEntry const* raceEntry = sChrRacesStore.LookupEntry(packet.Race);
     if (!raceEntry)
     {
         data << uint8(CHAR_CREATE_FAILED);
         SendPacket(&data);
-        TC_LOG_ERROR("network", "Race ({}) not found in DBC while creating new char for account (ID: {}): wrong DBC files or cheater?", race_, GetAccountId());
+        TC_LOG_ERROR("network", "Race ({}) not found in DBC while creating new char for account (ID: {}): wrong DBC files or cheater?", packet.Race, GetAccountId());
         return;
     }
     /*
@@ -426,7 +414,7 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket& recvData)
     if (raceEntry->expansion > Expansion())
     {
     data << uint8(CHAR_CREATE_EXPANSION);
-    TC_LOG_ERROR("network", "Expansion {} account:[{}] tried to Create character with expansion {} race ({})", Expansion(), GetAccountId(), raceEntry->expansion, race_);
+    TC_LOG_ERROR("network", "Expansion {} account:[{}] tried to Create character with expansion {} race ({})", Expansion(), GetAccountId(), raceEntry->expansion, packet.Race);
     SendPacket(&data);
     return;
     }
@@ -435,7 +423,7 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket& recvData)
     if (classEntry->expansion > Expansion())
     {
     data << uint8(CHAR_CREATE_EXPANSION_CLASS);
-    TC_LOG_ERROR("network", "Expansion {} account:[{}] tried to Create character with expansion {} class ({})", Expansion(), GetAccountId(), classEntry->expansion, class_);
+    TC_LOG_ERROR("network", "Expansion {} account:[{}] tried to Create character with expansion {} class ({})", Expansion(), GetAccountId(), classEntry->expansion, packet.Class);
     SendPacket(&data);
     return;
     }*/
@@ -443,7 +431,7 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket& recvData)
     if (!HasPermission(rbac::RBAC_PERM_SKIP_CHECK_CHARACTER_CREATION_RACEMASK))
     {
         uint32 raceMaskDisabled = sWorld->getIntConfig(CONFIG_CHARACTER_CREATING_DISABLED_RACEMASK);
-        if ((1 << (race_ - 1)) & raceMaskDisabled)
+        if ((1 << (packet.Race - 1)) & raceMaskDisabled)
         {
             data << uint8(CHAR_CREATE_DISABLED);
             SendPacket(&data);
@@ -454,7 +442,7 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket& recvData)
     if (!HasPermission(rbac::RBAC_PERM_SKIP_CHECK_CHARACTER_CREATION_CLASSMASK))
     {
         uint32 classMaskDisabled = sWorld->getIntConfig(CONFIG_CHARACTER_CREATING_DISABLED_CLASSMASK);
-        if ((1 << (class_ - 1)) & classMaskDisabled)
+        if ((1 << (packet.Class - 1)) & classMaskDisabled)
         {
             data << uint8(CHAR_CREATE_DISABLED);
             SendPacket(&data);
@@ -463,7 +451,7 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket& recvData)
     }
 
     // prevent character creating with invalid name
-    if (!normalizePlayerName(name))
+    if (!normalizePlayerName(packet.Name))
     {
         data << uint8(CHAR_NAME_NO_NAME);
         SendPacket(&data);
@@ -472,7 +460,7 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket& recvData)
     }
 
     // check name limitations
-    uint8 res = ObjectMgr::CheckPlayerName(name, true);
+    uint8 res = ObjectMgr::CheckPlayerName(packet.Name, true);
     if (res != CHAR_NAME_SUCCESS)
     {
         data << uint8(res);
@@ -480,14 +468,14 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket& recvData)
         return;
     }
 
-    if (!HasPermission(rbac::RBAC_PERM_SKIP_CHECK_CHARACTER_CREATION_RESERVEDNAME) && sObjectMgr->IsReservedName(name))
+    if (!HasPermission(rbac::RBAC_PERM_SKIP_CHECK_CHARACTER_CREATION_RESERVEDNAME) && sObjectMgr->IsReservedName(packet.Name))
     {
         data << uint8(CHAR_NAME_RESERVED);
         SendPacket(&data);
         return;
     }
 
-    if (class_ == CLASS_DEATH_KNIGHT && !HasPermission(rbac::RBAC_PERM_SKIP_CHECK_CHARACTER_CREATION_DEATH_KNIGHT))
+    if (packet.Class == CLASS_DEATH_KNIGHT && !HasPermission(rbac::RBAC_PERM_SKIP_CHECK_CHARACTER_CREATION_DEATH_KNIGHT))
     {
         // speedup check for heroic class disabled case
         uint32 heroic_free_slots = sWorld->getIntConfig(CONFIG_HEROIC_CHARACTERS_PER_REALM);
@@ -509,9 +497,9 @@ void WorldSession::HandleCharCreateOpcode(WorldPacket& recvData)
     }
 
     CharacterDatabasePreparedStatement* stmt = CharacterDatabase.GetPreparedStatement(CHAR_SEL_CHECK_NAME);
-    stmt->setString(0, name);
+    stmt->setString(0, packet.Name);
 
-    CharacterCreateInfo* createInfo = new CharacterCreateInfo(name, race_, class_, gender, skin, face, hairStyle, hairColor, facialHair, outfitId, recvData);
+    CharacterCreateInfo* createInfo = new CharacterCreateInfo(packet.Name, packet.Race, packet.Class, packet.Gender, packet.Skin, packet.Face, packet.HairStyle, packet.HairColor, packet.FacialHair, packet.OutfitId, packet.Data);
     _queryProcessor.AddCallback(CharacterDatabase.AsyncQuery(stmt)
         .WithChainingPreparedCallback([this, createInfo](QueryCallback& queryCallback, PreparedQueryResult result)
     {

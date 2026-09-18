@@ -15,24 +15,25 @@
 * with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef AllPackets_h__
-#define AllPackets_h__
+#ifndef ClientConfigPackets_h__
+#define ClientConfigPackets_h__
 
-#include "AreaTriggerPackets.h"
-#include "AuctionHousePackets.h"
-#include "AuthenticationPackets.h"
-#include "BankPackets.h"
-#include "CharacterPackets.h"
-#include "ChatPackets.h"
-#include "ClientConfigPackets.h"
-#include "GameObjectPackets.h"
-#include "InspectPackets.h"
-#include "MiscPackets.h"
-#include "MovementPackets.h"
-#include "NPCPackets.h"
-#include "QueryPackets.h"
-#include "QuestPackets.h"
-#include "SpellPackets.h"
-#include "TotemPackets.h"
+#include "Packet.h"
 
-#endif // AllPackets_h__
+namespace WorldPackets
+{
+    namespace ClientConfig
+    {
+        class RequestAccountData final : public ClientPacket
+        {
+        public:
+            explicit RequestAccountData(WorldPacket&& packet) : ClientPacket(CMSG_REQUEST_ACCOUNT_DATA, std::move(packet)) { }
+
+            void Read() override;
+
+            int32 DataType = 0;
+        };
+    }
+}
+
+#endif // ClientConfigPackets_h__

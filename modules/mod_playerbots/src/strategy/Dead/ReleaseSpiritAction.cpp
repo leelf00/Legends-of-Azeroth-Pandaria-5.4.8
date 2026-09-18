@@ -131,9 +131,11 @@ bool AutoReleaseSpiritAction::Execute(Event event)
         else if (!botAI->IsRealPlayer()) // below doesnt work properly on realplayer, but its also not needed
         {
             bg_gossip_time = time(NULL);
-            WorldPacket packet(CMSG_GOSSIP_HELLO);
-            packet << guid;
-            bot->GetSession()->HandleGossipHelloOpcode(packet);
+            WorldPacket data(CMSG_GOSSIP_HELLO);
+            data << guid;
+            WorldPackets::NPC::GossipHello gossipHello(std::move(data));
+            gossipHello.Read();
+            bot->GetSession()->HandleGossipHelloOpcode(gossipHello);
         }
     }
     botAI->SetNextCheckDelay(1000);

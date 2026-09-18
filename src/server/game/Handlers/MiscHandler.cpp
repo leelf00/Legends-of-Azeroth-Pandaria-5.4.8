@@ -1130,13 +1130,11 @@ void WorldSession::HandleResurrectResponseOpcode(WorldPacket& recvData)
     GetPlayer()->ResurrectUsingRequestData();
 }
 
-void WorldSession::HandleAreaTriggerOpcode(WorldPacket& recvData)
+void WorldSession::HandleAreaTriggerOpcode(WorldPackets::AreaTrigger::AreaTrigger& packet)
 {
-    uint32 areaTriggerId;
-    uint8 entered, fromClient;
-    recvData >> areaTriggerId;
-    fromClient = recvData.ReadBit();
-    entered = recvData.ReadBit();
+    uint32 areaTriggerId = packet.AreaTriggerID;
+    uint8 entered = packet.Entered;
+    uint8 fromClient = packet.FromClient;
 
     TC_LOG_DEBUG("network", "CMSG_AREATRIGGER. Trigger ID: {}, Entered: {}, From Client: {}", areaTriggerId, entered, fromClient);
 
@@ -1337,11 +1335,11 @@ void WorldSession::HandleUpdateAccountData(WorldPacket& recvData)
     SetAccountData(AccountDataType(type), timestamp, adata);
 }
 
-void WorldSession::HandleRequestAccountData(WorldPacket& recvData)
+void WorldSession::HandleRequestAccountData(WorldPackets::ClientConfig::RequestAccountData& packet)
 {
     TC_LOG_DEBUG("network", "WORLD: Received CMSG_REQUEST_ACCOUNT_DATA");
 
-    uint32 type = recvData.ReadBits(3);
+    uint32 type = packet.DataType;
 
     TC_LOG_DEBUG("network", "RAD: type {}", type);
 
@@ -1589,27 +1587,9 @@ void WorldSession::HandlePlayedTime(WorldPacket& recvData)
     SendPacket(&data);
 }
 
-void WorldSession::HandleInspectOpcode(WorldPacket& recvData)
+void WorldSession::HandleInspectOpcode(WorldPackets::Inspect::Inspect& packet)
 {
-    ObjectGuid guid;
-
-    guid[0] = recvData.ReadBit();
-    guid[3] = recvData.ReadBit();
-    guid[7] = recvData.ReadBit();
-    guid[2] = recvData.ReadBit();
-    guid[5] = recvData.ReadBit();
-    guid[1] = recvData.ReadBit();
-    guid[4] = recvData.ReadBit();
-    guid[6] = recvData.ReadBit();
-
-    recvData.ReadByteSeq(guid[3]);
-    recvData.ReadByteSeq(guid[5]);
-    recvData.ReadByteSeq(guid[2]);
-    recvData.ReadByteSeq(guid[4]);
-    recvData.ReadByteSeq(guid[1]);
-    recvData.ReadByteSeq(guid[6]);
-    recvData.ReadByteSeq(guid[0]);
-    recvData.ReadByteSeq(guid[7]);
+    ObjectGuid guid = packet.Target;
 
     TC_LOG_DEBUG("network", "WORLD: Received CMSG_INSPECT");
 
