@@ -4121,6 +4121,8 @@ void Unit::_RegisterAuraEffect(AuraEffect* aurEff, bool apply)
 void Unit::RemoveOwnedAura(AuraMap::iterator &i, AuraRemoveMode removeMode)
 {
     Aura* aura = i->second;
+    if (aura->GetId() == 46598 && GetEntry() == 38765)
+        TC_LOG_INFO("spells", "[Q14465] RemoveOwnedAura spell=46598 owner guid={} entry=38765 removeMode={}", GetGUID().GetRawValue(), (int32)removeMode);
     ASSERT(!aura->IsRemoved());
 
     // if unit currently update aura list then make safe update iterator shift to next
