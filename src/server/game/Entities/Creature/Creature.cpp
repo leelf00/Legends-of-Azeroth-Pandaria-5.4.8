@@ -549,7 +549,7 @@ void Creature::Update(uint32 diff)
     {
         m_triggerJustAppeared = false;
         AI()->JustAppeared();
-        if (m_vehicleKit)
+        if (m_vehicleKit && !IsSummon())
             m_vehicleKit->Reset();
         if (GetMap()->IsRaid() && ((InstanceMap*)GetMap())->GetInstanceScript())
             ((InstanceMap*)GetMap())->GetInstanceScript()->UpdateDynamicHealth(GetGUID());
