@@ -315,9 +315,16 @@ void TempSummon::SetTempSummonType(TempSummonType type)
 void TempSummon::UnSummon(uint32 msTime)
 {
     if (IsVehicle())
-        TC_LOG_INFO("spells", "[Q14465] UnSummon entry={} guid={} m_type={} m_deathState={} m_timer={} m_lifetime={} IsAlive={} summoner={}",
+    {
+        Unit* s = GetSummoner();
+        TC_LOG_INFO("spells", "[Q14465] UnSummon entry={} guid={} m_type={} m_deathState={} m_timer={} m_lifetime={} IsAlive={} summoner={} ownerGuid={} charmerGuid={} inSummonerControlled={} summonerOnVehicle={}",
             GetEntry(), GetGUID().ToString().c_str(), uint32(m_type), uint32(m_deathState), m_timer, m_lifetime, IsAlive(),
-            GetSummoner() ? GetSummoner()->GetGUID().ToString().c_str() : "null");
+            s ? s->GetGUID().ToString().c_str() : "null",
+            GetOwnerGUID().ToString().c_str(),
+            GetCharmerGUID().ToString().c_str(),
+            (s && s->m_Controlled.find(this) != s->m_Controlled.end()),
+            (s != nullptr && s->GetVehicle() != nullptr));
+    }
 
     if (msTime)
     {
