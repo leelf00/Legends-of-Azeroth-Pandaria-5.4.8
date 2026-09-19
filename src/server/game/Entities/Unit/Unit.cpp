@@ -18165,7 +18165,10 @@ void Unit::_EnterVehicle(Vehicle* vehicle, int8 seatId, AuraApplication const* a
             return;
         }
         else
+        {
+            TC_LOG_INFO("spells", "[Q14465] ExitVehicle from _EnterVehicle(vehicle switch) for guid={}", GetGUID());
             ExitVehicle();
+        }
     }
 
     if (aurApp && aurApp->GetRemoveMode())
@@ -18228,6 +18231,9 @@ void Unit::ExitVehicle(Position const* /*exitPosition*/)
     //! This function can be called at upper level code to initialize an exit from the passenger's side.
     if (!m_vehicle)
         return;
+
+    TC_LOG_INFO("spells", "[Q14465] ExitVehicle called for guid={} vehicle entry={}",
+        GetGUID(), m_vehicle->GetBase()->GetEntry());
 
     GetVehicleBase()->RemoveAurasByType(SPELL_AURA_CONTROL_VEHICLE, GetGUID());
     //! The following call would not even be executed successfully as the

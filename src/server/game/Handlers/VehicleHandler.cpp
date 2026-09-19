@@ -41,6 +41,7 @@ void WorldSession::HandleDismissControlledVehicle(WorldPacket &recvData)
 
     _player->m_movementInfo = mi;
 
+    TC_LOG_INFO("spells", "[Q14465] ExitVehicle from HandleDismissControlledVehicle for guid={}", _player->GetGUID());
     _player->ExitVehicle();
 }
 
@@ -233,7 +234,10 @@ void WorldSession::HandleEjectPassenger(WorldPacket& data)
         VehicleSeatEntry const* seat = vehicle->GetSeatForPassenger(player);
         ASSERT(seat);
         if (seat->IsEjectable())
+        {
+            TC_LOG_INFO("spells", "[Q14465] ExitVehicle from HandleEjectPassenger(player) for guid={}", player->GetGUID());
             player->ExitVehicle();
+        }
         else
             TC_LOG_ERROR("network", "Player {} attempted to eject player {} from non-ejectable seat.", GetPlayer()->GetGUID().GetCounter(), guid.GetCounter());
     }
@@ -255,11 +259,12 @@ void WorldSession::HandleEjectPassenger(WorldPacket& data)
 
         VehicleSeatEntry const* seat = vehicle->GetSeatForPassenger(unit);
         ASSERT(seat);
-        if (seat->IsEjectable())
-        {
-            ASSERT(GetPlayer() == vehicle->GetBase());
-            unit->ExitVehicle();
-        }
+            if (seat->IsEjectable())
+            {
+                ASSERT(GetPlayer() == vehicle->GetBase());
+                TC_LOG_INFO("spells", "[Q14465] ExitVehicle from HandleEjectPassenger(unit) for guid={}", unit->GetGUID());
+                unit->ExitVehicle();
+            }
         else
             TC_LOG_ERROR("network", "Player {} attempted to eject creature GUID {} from non-ejectable seat.", GetPlayer()->GetGUID().GetCounter(), guid.GetCounter());
     }
@@ -276,7 +281,10 @@ void WorldSession::HandleRequestVehicleExit(WorldPacket& recvData)
         if (VehicleSeatEntry const* seat = vehicle->GetSeatForPassenger(GetPlayer()))
         {
             if (seat->CanEnterOrExit())
+            {
+                TC_LOG_INFO("spells", "[Q14465] ExitVehicle from HandleRequestVehicleExit for guid={}", GetPlayer()->GetGUID());
                 GetPlayer()->ExitVehicle();
+            }
             else
                 TC_LOG_ERROR("network", "Player {} tried to exit vehicle, but seatflags {} (ID: {}) don't permit that.",
                 GetPlayer()->GetGUID().GetCounter(), seat->m_ID, seat->m_flags);

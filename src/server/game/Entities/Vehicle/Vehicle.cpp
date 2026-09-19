@@ -535,7 +535,10 @@ bool Vehicle::AddPassenger(Unit* unit, int8 seatId)
         if (!seat->second.IsEmpty())
         {
             if (Unit* passenger = ObjectAccessor::GetUnit(*GetBase(), seat->second.Passenger.Guid))
+            {
+                TC_LOG_INFO("spells", "[Q14465] ExitVehicle from Vehicle::AddPassenger(seat occupied) for guid={}", passenger->GetGUID());
                 passenger->ExitVehicle();
+            }
             else
                 seat->second.Passenger.Reset();
         }
