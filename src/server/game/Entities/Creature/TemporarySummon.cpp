@@ -314,6 +314,11 @@ void TempSummon::SetTempSummonType(TempSummonType type)
 
 void TempSummon::UnSummon(uint32 msTime)
 {
+    if (IsVehicle())
+        TC_LOG_INFO("spells", "[Q14465] UnSummon entry={} guid={} m_type={} m_deathState={} m_timer={} m_lifetime={} IsAlive={} summoner={}",
+            GetEntry(), GetGUID().ToString().c_str(), uint32(m_type), uint32(m_deathState), m_timer, m_lifetime, IsAlive(),
+            GetSummoner() ? GetSummoner()->GetGUID().ToString().c_str() : "null");
+
     if (msTime)
     {
         ForcedUnsummonDelayEvent* pEvent = new ForcedUnsummonDelayEvent(*this);
