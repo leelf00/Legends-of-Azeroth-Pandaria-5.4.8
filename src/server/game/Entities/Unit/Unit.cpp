@@ -4158,6 +4158,8 @@ void Unit::RemoveOwnedAura(AuraMap::iterator &i, AuraRemoveMode removeMode)
 
 void Unit::RemoveOwnedAura(uint32 spellId, ObjectGuid casterGUID, uint32 reqEffMask, AuraRemoveMode removeMode)
 {
+    if (spellId == 46598 && GetEntry() == 38765)
+        TC_LOG_INFO("spells", "[Q14465] RemoveOwnedAura(spellId) spell=46598 owner={} entry=38765 mode={}", GetGUID().GetRawValue(), (int32)removeMode);
     for (AuraMap::iterator itr = m_ownedAuras.lower_bound(spellId); itr != m_ownedAuras.upper_bound(spellId);)
         if (((itr->second->GetEffectMask() & reqEffMask) == reqEffMask) && (!casterGUID || itr->second->GetCasterGUID() == casterGUID))
         {
@@ -4170,6 +4172,8 @@ void Unit::RemoveOwnedAura(uint32 spellId, ObjectGuid casterGUID, uint32 reqEffM
 
 void Unit::RemoveOwnedAura(Aura* aura, AuraRemoveMode removeMode)
 {
+    if (aura->GetId() == 46598 && GetEntry() == 38765)
+        TC_LOG_INFO("spells", "[Q14465] RemoveOwnedAura(aura) spell=46598 owner={} entry=38765 mode={}", GetGUID().GetRawValue(), (int32)removeMode);
     if (aura->IsRemoved())
         return;
 
@@ -4221,6 +4225,8 @@ void Unit::RemoveAura(AuraApplicationMap::iterator &i, AuraRemoveMode mode)
 
 void Unit::RemoveAura(uint32 spellId, uint64 caster, uint32 reqEffMask, AuraRemoveMode removeMode)
 {
+    if (spellId == 46598 && GetEntry() == 38765)
+        TC_LOG_INFO("spells", "[Q14465] RemoveAura(spellId) spell=46598 target={} entry=38765 mode={}", GetGUID().GetRawValue(), (int32)removeMode);
     AuraApplicationMapBoundsNonConst range = m_appliedAuras.equal_range(spellId);
     for (AuraApplicationMap::iterator iter = range.first; iter != range.second;)
     {
@@ -4238,6 +4244,8 @@ void Unit::RemoveAura(uint32 spellId, uint64 caster, uint32 reqEffMask, AuraRemo
 
 void Unit::RemoveAura(AuraApplication * aurApp, AuraRemoveMode mode)
 {
+    if (aurApp->GetBase()->GetId() == 46598 && GetEntry() == 38765)
+        TC_LOG_INFO("spells", "[Q14465] RemoveAura(aurApp) spell=46598 target={} entry=38765 mode={}", GetGUID().GetRawValue(), (int32)mode);
     // we've special situation here, RemoveAura called while during aura removal
     // this kind of call is needed only when aura effect removal handler
     // or event triggered by it expects to remove
@@ -4273,6 +4281,8 @@ void Unit::RemoveAura(AuraApplication * aurApp, AuraRemoveMode mode)
 
 void Unit::RemoveAura(Aura* aura, AuraRemoveMode mode)
 {
+    if (aura->GetId() == 46598 && GetEntry() == 38765)
+        TC_LOG_INFO("spells", "[Q14465] RemoveAura(aura) spell=46598 target={} entry=38765 mode={}", GetGUID().GetRawValue(), (int32)mode);
     if (aura->IsRemoved())
         return;
     if (AuraApplication * aurApp = aura->GetApplicationOfTarget(GetGUID()))
@@ -4281,6 +4291,8 @@ void Unit::RemoveAura(Aura* aura, AuraRemoveMode mode)
 
 void Unit::RemoveAurasDueToSpell(uint32 spellId, uint64 casterGUID, uint32 reqEffMask, AuraRemoveMode removeMode)
 {
+    if (spellId == 46598 && GetEntry() == 38765)
+        TC_LOG_INFO("spells", "[Q14465] RemoveAurasDueToSpell spell=46598 target={} entry=38765 mode={}", GetGUID().GetRawValue(), (int32)removeMode);
     for (AuraApplicationMap::iterator iter = m_appliedAuras.lower_bound(spellId); iter != m_appliedAuras.upper_bound(spellId);)
     {
         Aura const* aura = iter->second->GetBase();
@@ -4447,6 +4459,8 @@ void Unit::RemoveAurasDueToItemSpell(uint32 spellId, uint64 castItemGuid)
 
 void Unit::RemoveAurasByType(AuraType auraType, uint64 casterGUID, Aura* except, bool negative, bool positive)
 {
+    if (auraType == SPELL_AURA_CONTROL_VEHICLE && GetEntry() == 38765)
+        TC_LOG_INFO("spells", "[Q14465] RemoveAurasByType type=CONTROL_VEHICLE target={} entry=38765", GetGUID().GetRawValue());
     for (AuraEffectList::iterator iter = m_modAuras [auraType].begin(); iter != m_modAuras [auraType].end();)
     {
         Aura* aura = (*iter)->GetBase();
@@ -4785,6 +4799,8 @@ void Unit::RemoveAreaAurasDueToLeaveWorld()
 
 void Unit::RemoveAllAuras()
 {
+    if (GetEntry() == 38765)
+        TC_LOG_INFO("spells", "[Q14465] RemoveAllAuras target={} entry=38765", GetGUID().GetRawValue());
     // this may be a dead loop if some events on aura remove will continiously apply aura on remove
     // we want to have all auras removed, so use your brain when linking events
     while (!m_appliedAuras.empty() || !m_ownedAuras.empty())
