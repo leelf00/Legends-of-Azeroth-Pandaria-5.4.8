@@ -9316,7 +9316,10 @@ void Unit::RemoveAllMinionsByEntry(uint32 entry)
         ++itr;
         if (unit->GetEntry() == entry && unit->GetTypeId() == TYPEID_UNIT
             && unit->ToCreature()->IsSummon()) // minion, actually
+        {
+            TC_LOG_INFO("spells", "[Q14465] RemoveAllMinionsByEntry calling UnSummon on entry={} guid={}", unit->GetEntry(), unit->GetGUID().ToString().c_str());
             unit->ToTempSummon()->UnSummon();
+        }
         // i think this is safe because i have never heard that a despawned minion will trigger a same minion
     }
 }
@@ -9498,7 +9501,10 @@ void Unit::RemoveAllControlled()
         if (target->GetCharmerGUID() == GetGUID())
             target->RemoveCharmAuras();
         else if (target->GetOwnerGUID() == GetGUID() && target->IsSummon())
+        {
+            TC_LOG_INFO("spells", "[Q14465] RemoveAllControlled calling UnSummon on entry={} guid={}", target->GetEntry(), target->GetGUID().ToString().c_str());
             target->ToTempSummon()->UnSummon();
+        }
         else
             TC_LOG_ERROR("entities.unit", "Unit {} is trying to release unit {} which is neither charmed nor owned by it", GetEntry(), target->GetEntry());
     }
@@ -18286,7 +18292,11 @@ void Unit::_ExitVehicle(Position const* exitPosition)
 
     if (vehicle->GetBase()->HasUnitTypeMask(UNIT_MASK_MINION) && vehicle->GetBase()->GetTypeId() == TYPEID_UNIT)
         if (((Minion*) vehicle->GetBase())->GetOwner() == this)
+        {
+            TC_LOG_INFO("spells", "[Q14465] _ExitVehicle owner guid={} exiting minion vehicle entry={} guid={}, despawning in 1ms",
+                GetGUID(), vehicle->GetBase()->ToCreature()->GetEntry(), vehicle->GetBase()->ToCreature()->GetGUID());
             vehicle->GetBase()->ToCreature()->DespawnOrUnsummon(1);
+        }
 
     if (HasUnitTypeMask(UNIT_MASK_ACCESSORY))
     {
