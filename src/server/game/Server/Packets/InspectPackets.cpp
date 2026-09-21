@@ -15,25 +15,24 @@
 * with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef AllPackets_h__
-#define AllPackets_h__
-
-#include "AreaTriggerPackets.h"
-#include "AuctionHousePackets.h"
-#include "AuthenticationPackets.h"
-#include "BankPackets.h"
-#include "CharacterPackets.h"
-#include "ChatPackets.h"
-#include "ClientConfigPackets.h"
-#include "GameObjectPackets.h"
 #include "InspectPackets.h"
-#include "LFGPackets.h"
-#include "MiscPackets.h"
-#include "MovementPackets.h"
-#include "NPCPackets.h"
-#include "QueryPackets.h"
-#include "QuestPackets.h"
-#include "SpellPackets.h"
-#include "TotemPackets.h"
 
-#endif // AllPackets_h__
+void WorldPackets::Inspect::Inspect::Read()
+{
+    Target[0] = _worldPacket.ReadBit();
+    Target[3] = _worldPacket.ReadBit();
+    Target[7] = _worldPacket.ReadBit();
+    Target[2] = _worldPacket.ReadBit();
+    Target[5] = _worldPacket.ReadBit();
+    Target[1] = _worldPacket.ReadBit();
+    Target[4] = _worldPacket.ReadBit();
+    Target[6] = _worldPacket.ReadBit();
+    _worldPacket.ReadByteSeq(Target[3]);
+    _worldPacket.ReadByteSeq(Target[5]);
+    _worldPacket.ReadByteSeq(Target[2]);
+    _worldPacket.ReadByteSeq(Target[4]);
+    _worldPacket.ReadByteSeq(Target[1]);
+    _worldPacket.ReadByteSeq(Target[6]);
+    _worldPacket.ReadByteSeq(Target[0]);
+    _worldPacket.ReadByteSeq(Target[7]);
+}

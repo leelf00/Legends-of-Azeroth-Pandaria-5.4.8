@@ -1,4 +1,4 @@
-﻿/*
+/*
 * This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
@@ -4121,6 +4121,7 @@ void Unit::_RegisterAuraEffect(AuraEffect* aurEff, bool apply)
 void Unit::RemoveOwnedAura(AuraMap::iterator &i, AuraRemoveMode removeMode)
 {
     Aura* aura = i->second;
+    
     ASSERT(!aura->IsRemoved());
 
     // if unit currently update aura list then make safe update iterator shift to next
@@ -4156,6 +4157,7 @@ void Unit::RemoveOwnedAura(AuraMap::iterator &i, AuraRemoveMode removeMode)
 
 void Unit::RemoveOwnedAura(uint32 spellId, ObjectGuid casterGUID, uint32 reqEffMask, AuraRemoveMode removeMode)
 {
+    
     for (AuraMap::iterator itr = m_ownedAuras.lower_bound(spellId); itr != m_ownedAuras.upper_bound(spellId);)
         if (((itr->second->GetEffectMask() & reqEffMask) == reqEffMask) && (!casterGUID || itr->second->GetCasterGUID() == casterGUID))
         {
@@ -4168,6 +4170,7 @@ void Unit::RemoveOwnedAura(uint32 spellId, ObjectGuid casterGUID, uint32 reqEffM
 
 void Unit::RemoveOwnedAura(Aura* aura, AuraRemoveMode removeMode)
 {
+    
     if (aura->IsRemoved())
         return;
 
@@ -4219,6 +4222,7 @@ void Unit::RemoveAura(AuraApplicationMap::iterator &i, AuraRemoveMode mode)
 
 void Unit::RemoveAura(uint32 spellId, uint64 caster, uint32 reqEffMask, AuraRemoveMode removeMode)
 {
+    
     AuraApplicationMapBoundsNonConst range = m_appliedAuras.equal_range(spellId);
     for (AuraApplicationMap::iterator iter = range.first; iter != range.second;)
     {
@@ -4236,6 +4240,7 @@ void Unit::RemoveAura(uint32 spellId, uint64 caster, uint32 reqEffMask, AuraRemo
 
 void Unit::RemoveAura(AuraApplication * aurApp, AuraRemoveMode mode)
 {
+    
     // we've special situation here, RemoveAura called while during aura removal
     // this kind of call is needed only when aura effect removal handler
     // or event triggered by it expects to remove
@@ -4271,6 +4276,7 @@ void Unit::RemoveAura(AuraApplication * aurApp, AuraRemoveMode mode)
 
 void Unit::RemoveAura(Aura* aura, AuraRemoveMode mode)
 {
+    
     if (aura->IsRemoved())
         return;
     if (AuraApplication * aurApp = aura->GetApplicationOfTarget(GetGUID()))
@@ -4279,6 +4285,7 @@ void Unit::RemoveAura(Aura* aura, AuraRemoveMode mode)
 
 void Unit::RemoveAurasDueToSpell(uint32 spellId, uint64 casterGUID, uint32 reqEffMask, AuraRemoveMode removeMode)
 {
+    
     for (AuraApplicationMap::iterator iter = m_appliedAuras.lower_bound(spellId); iter != m_appliedAuras.upper_bound(spellId);)
     {
         Aura const* aura = iter->second->GetBase();
@@ -4445,6 +4452,7 @@ void Unit::RemoveAurasDueToItemSpell(uint32 spellId, uint64 castItemGuid)
 
 void Unit::RemoveAurasByType(AuraType auraType, uint64 casterGUID, Aura* except, bool negative, bool positive)
 {
+    
     for (AuraEffectList::iterator iter = m_modAuras [auraType].begin(); iter != m_modAuras [auraType].end();)
     {
         Aura* aura = (*iter)->GetBase();
@@ -4783,6 +4791,7 @@ void Unit::RemoveAreaAurasDueToLeaveWorld()
 
 void Unit::RemoveAllAuras()
 {
+    
     // this may be a dead loop if some events on aura remove will continiously apply aura on remove
     // we want to have all auras removed, so use your brain when linking events
     while (!m_appliedAuras.empty() || !m_ownedAuras.empty())
@@ -9316,7 +9325,10 @@ void Unit::RemoveAllMinionsByEntry(uint32 entry)
         ++itr;
         if (unit->GetEntry() == entry && unit->GetTypeId() == TYPEID_UNIT
             && unit->ToCreature()->IsSummon()) // minion, actually
+        {
+
             unit->ToTempSummon()->UnSummon();
+        }
         // i think this is safe because i have never heard that a despawned minion will trigger a same minion
     }
 }
@@ -9498,7 +9510,10 @@ void Unit::RemoveAllControlled()
         if (target->GetCharmerGUID() == GetGUID())
             target->RemoveCharmAuras();
         else if (target->GetOwnerGUID() == GetGUID() && target->IsSummon())
+        {
+
             target->ToTempSummon()->UnSummon();
+        }
         else
             TC_LOG_ERROR("entities.unit", "Unit {} is trying to release unit {} which is neither charmed nor owned by it", GetEntry(), target->GetEntry());
     }
@@ -12478,6 +12493,7 @@ void Unit::setDeathState(DeathState s)
 {
     if (s != ALIVE && s != JUST_RESPAWNED)
     {
+        
         CombatStop();
         GetThreatManager().RemoveMeFromThreatLists();
         GetThreatManager().ClearAllThreat();
@@ -13702,6 +13718,7 @@ void Unit::RemoveFromWorld()
 
     if (IsInWorld())
     {
+        
         GetMotionMaster()->Clear(false);                    // Do it here, because MovementInform may provoke casts.
 
         m_duringRemoveFromWorld = true;
@@ -14832,6 +14849,7 @@ void Unit::SendPetAIReaction(ObjectGuid UnitGUID)
 
 void Unit::StopMoving()
 {
+    
     ClearUnitState(UNIT_STATE_MOVING);
 
     // not need send any packets if not in world or not moving
@@ -16426,6 +16444,7 @@ bool Unit::SetCharmedBy(Unit* charmer, CharmType type, AuraApplication const* au
     if (!charmer)
         return false;
 
+    
     if (GetTypeId() == TYPEID_UNIT)
         TC_LOG_DEBUG("crash", "Unit::SetCharmedBy1, GUID: " "{}" ", entry: {}, charmer: " "{}" ", type: {}, aura: {}", GetGUID().GetRawValue(), GetEntry(), GetCharmerGUID().GetRawValue(), type, aurApp ? aurApp->GetBase()->GetId() : 0);
 
@@ -18159,7 +18178,10 @@ void Unit::_EnterVehicle(Vehicle* vehicle, int8 seatId, AuraApplication const* a
             return;
         }
         else
+        {
+
             ExitVehicle();
+        }
     }
 
     if (aurApp && aurApp->GetRemoveMode())
@@ -18222,6 +18244,8 @@ void Unit::ExitVehicle(Position const* /*exitPosition*/)
     //! This function can be called at upper level code to initialize an exit from the passenger's side.
     if (!m_vehicle)
         return;
+
+
 
     GetVehicleBase()->RemoveAurasByType(SPELL_AURA_CONTROL_VEHICLE, GetGUID());
     //! The following call would not even be executed successfully as the
@@ -18286,7 +18310,10 @@ void Unit::_ExitVehicle(Position const* exitPosition)
 
     if (vehicle->GetBase()->HasUnitTypeMask(UNIT_MASK_MINION) && vehicle->GetBase()->GetTypeId() == TYPEID_UNIT)
         if (((Minion*) vehicle->GetBase())->GetOwner() == this)
+        {
+
             vehicle->GetBase()->ToCreature()->DespawnOrUnsummon(1);
+        }
 
     if (HasUnitTypeMask(UNIT_MASK_ACCESSORY))
     {

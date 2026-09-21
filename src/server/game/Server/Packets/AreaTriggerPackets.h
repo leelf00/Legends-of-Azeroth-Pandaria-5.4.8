@@ -15,25 +15,27 @@
 * with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef AllPackets_h__
-#define AllPackets_h__
+#ifndef AreaTriggerPackets_h__
+#define AreaTriggerPackets_h__
 
-#include "AreaTriggerPackets.h"
-#include "AuctionHousePackets.h"
-#include "AuthenticationPackets.h"
-#include "BankPackets.h"
-#include "CharacterPackets.h"
-#include "ChatPackets.h"
-#include "ClientConfigPackets.h"
-#include "GameObjectPackets.h"
-#include "InspectPackets.h"
-#include "LFGPackets.h"
-#include "MiscPackets.h"
-#include "MovementPackets.h"
-#include "NPCPackets.h"
-#include "QueryPackets.h"
-#include "QuestPackets.h"
-#include "SpellPackets.h"
-#include "TotemPackets.h"
+#include "Packet.h"
 
-#endif // AllPackets_h__
+namespace WorldPackets
+{
+    namespace AreaTrigger
+    {
+        class AreaTrigger final : public ClientPacket
+        {
+        public:
+            explicit AreaTrigger(WorldPacket&& packet) : ClientPacket(CMSG_AREATRIGGER, std::move(packet)) { }
+
+            void Read() override;
+
+            uint32 AreaTriggerID = 0;
+            bool FromClient = false;
+            bool Entered = false;
+        };
+    }
+}
+
+#endif // AreaTriggerPackets_h__

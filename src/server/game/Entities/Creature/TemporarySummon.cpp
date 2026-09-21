@@ -169,9 +169,9 @@ void TempSummon::Update(uint32 diff)
     }
 }
 
-bool TempSummon::Create(uint32 guidlow, Map* map, uint32 phaseMask, uint32 entry, uint32 vehId, uint32 team, float x, float y, float z, float ang, CreatureData const* data)
+bool TempSummon::Create(uint32 guidlow, Map* map, uint32 phaseMask, uint32 entry, uint32 vehId, uint32 team, float x, float y, float z, float ang, CreatureData const* data, bool dynamic)
 {
-    if (!Creature::Create(guidlow, map, phaseMask, entry, vehId, team, x, y, z, ang, data))
+    if (!Creature::Create(guidlow, map, phaseMask, entry, vehId, team, x, y, z, ang, data, dynamic))
         return false;
 
 
@@ -342,6 +342,7 @@ void TempSummon::UnSummon(uint32 msTime)
 
 bool ForcedUnsummonDelayEvent::Execute(uint64 /*e_time*/, uint32 /*p_time*/)
 {
+
     m_owner.UnSummon();
     return true;
 }

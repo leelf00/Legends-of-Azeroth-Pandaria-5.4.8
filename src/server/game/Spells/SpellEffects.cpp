@@ -2686,6 +2686,7 @@ void Spell::EffectSummonType(SpellEffIndex effIndex)
             // Summoning spells (usually triggered by npc_spellclick) that spawn a vehicle and that cause the clicker
             // to cast a ride vehicle spell on the summoned unit.
             summon = m_originalCaster->GetMap()->SummonCreature(entry, *destTarget, properties, Milliseconds(duration), m_caster, m_spellInfo->Id, 0, privateObjectOwner);
+
             if (!summon || !summon->IsVehicle())
                 return;
 
@@ -2696,6 +2697,7 @@ void Spell::EffectSummonType(SpellEffIndex effIndex)
                 spellId = spellInfo->Id;
 
             // Hard coded enter vehicle spell
+
             m_originalCaster->CastSpell(summon, spellId, true);
 
             uint32 faction = properties->Faction;

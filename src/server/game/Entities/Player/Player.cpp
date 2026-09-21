@@ -22436,6 +22436,7 @@ void Player::StopCastingCharm()
     if (!charm)
         return;
 
+    
     if (charm->GetTypeId() == TYPEID_UNIT)
     {
         if (charm->ToCreature()->HasUnitTypeMask(UNIT_MASK_PUPPET))

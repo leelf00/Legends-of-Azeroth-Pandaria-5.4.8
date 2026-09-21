@@ -1850,6 +1850,7 @@ void Aura::HandleAuraSpecificMods(AuraApplication const* aurApp, Unit* caster, b
                         target->CastSpell(target, 54041, true); // Remove Haunted Memento
                         break;
                     case 75731: // Instant Statue
+
                         target->ExitVehicle();
                         target->RemoveAurasDueToSpell(74890); // Instant Statue
                         target->RemoveAurasDueToSpell(75055); // Instant Statue

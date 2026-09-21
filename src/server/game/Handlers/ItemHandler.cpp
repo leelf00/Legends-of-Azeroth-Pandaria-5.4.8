@@ -743,27 +743,9 @@ void WorldSession::HandleBuyItemOpcode(WorldPacket& recvData)
     GetPlayer()->SetSaveTimer(1);
 }
 
-void WorldSession::HandleListInventoryOpcode(WorldPacket& recvData)
+void WorldSession::HandleListInventoryOpcode(WorldPackets::NPC::ListInventory& packet)
 {
-    ObjectGuid guid;
-
-    guid[6] = recvData.ReadBit();
-    guid[7] = recvData.ReadBit();
-    guid[3] = recvData.ReadBit();
-    guid[1] = recvData.ReadBit();
-    guid[2] = recvData.ReadBit();
-    guid[0] = recvData.ReadBit();
-    guid[4] = recvData.ReadBit();
-    guid[5] = recvData.ReadBit();
-
-    recvData.ReadByteSeq(guid[0]);
-    recvData.ReadByteSeq(guid[7]);
-    recvData.ReadByteSeq(guid[1]);
-    recvData.ReadByteSeq(guid[6]);
-    recvData.ReadByteSeq(guid[4]);
-    recvData.ReadByteSeq(guid[3]);
-    recvData.ReadByteSeq(guid[5]);
-    recvData.ReadByteSeq(guid[2]);
+    ObjectGuid guid = packet.Unit;
 
     if (!GetPlayer()->IsAlive())
         return;
@@ -1019,29 +1001,11 @@ void WorldSession::HandleAutoStoreBagItemOpcode(WorldPacket& recvData)
     _player->StoreItem(dest, pItem, true);
 }
 
-void WorldSession::HandleBuyBankSlotOpcode(WorldPacket& recvData)
+void WorldSession::HandleBuyBankSlotOpcode(WorldPackets::Bank::BuyBankSlot& packet)
 {
     TC_LOG_DEBUG("network", "WORLD: CMSG_BUY_BANK_SLOT");
 
-    ObjectGuid guid;
-
-    guid[7] = recvData.ReadBit();
-    guid[6] = recvData.ReadBit();
-    guid[1] = recvData.ReadBit();
-    guid[3] = recvData.ReadBit();
-    guid[2] = recvData.ReadBit();
-    guid[0] = recvData.ReadBit();
-    guid[4] = recvData.ReadBit();
-    guid[5] = recvData.ReadBit();
-
-    recvData.ReadByteSeq(guid[3]);
-    recvData.ReadByteSeq(guid[5]);
-    recvData.ReadByteSeq(guid[1]);
-    recvData.ReadByteSeq(guid[6]);
-    recvData.ReadByteSeq(guid[7]);
-    recvData.ReadByteSeq(guid[2]);
-    recvData.ReadByteSeq(guid[0]);
-    recvData.ReadByteSeq(guid[4]);
+    ObjectGuid guid = packet.Banker;
 
     // cheating protection
     /* not critical if "cheated", and check skip allow by slots in bank windows open by .bank command.
@@ -1077,13 +1041,11 @@ void WorldSession::HandleBuyBankSlotOpcode(WorldPacket& recvData)
     _player->UpdateAchievementCriteria(ACHIEVEMENT_CRITERIA_TYPE_BUY_BANK_SLOT);
 }
 
-void WorldSession::HandleAutoBankItemOpcode(WorldPacket& recvPacket)
+void WorldSession::HandleAutoBankItemOpcode(WorldPackets::Bank::AutoBankItem& packet)
 {
     TC_LOG_DEBUG("network", "WORLD: CMSG_AUTOBANK_ITEM");
-    uint8 srcBag, srcSlot;
-
-    recvPacket >> srcSlot >> srcBag;
-    recvPacket.rfinish();
+    uint8 srcBag = packet.Bag;
+    uint8 srcSlot = packet.Slot;
 
     TC_LOG_DEBUG("network", "STORAGE: receive srcbag = {}, srcslot = {}", srcBag, srcSlot);
 
@@ -1110,12 +1072,12 @@ void WorldSession::HandleAutoBankItemOpcode(WorldPacket& recvPacket)
     _player->BankItem(dest, pItem, true);
 }
 
-void WorldSession::HandleAutoStoreBankItemOpcode(WorldPacket& recvPacket)
+void WorldSession::HandleAutoStoreBankItemOpcode(WorldPackets::Bank::AutoStoreBankItem& packet)
 {
     TC_LOG_DEBUG("network", "WORLD: CMSG_AUTOSTORE_BANK_ITEM");
-    uint8 srcBag, srcSlot;
+    uint8 srcBag = packet.Bag;
+    uint8 srcSlot = packet.Slot;
 
-    recvPacket >> srcSlot >> srcBag;
     TC_LOG_DEBUG("network", "STORAGE: receive srcbag = {}, srcslot = {}", srcBag, srcSlot);
 
     Item* pItem = _player->GetItemByPos(srcBag, srcSlot);

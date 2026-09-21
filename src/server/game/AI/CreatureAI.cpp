@@ -625,6 +625,7 @@ void VehicleAIBase::CheckConditions(uint32 const diff)
                         //if (!sConditionMgr->IsObjectMeetToConditions(player, m_vehicleBase, conditions))
                         if (!sConditionMgr->IsObjectMeetingNotGroupedConditions(CONDITION_SOURCE_TYPE_CREATURE_TEMPLATE_VEHICLE, m_vehicleBase->GetEntry(), player, m_vehicleBase))
                         {
+
                             player->ExitVehicle();
                             return;//check other pessanger in next tick
                         }
@@ -724,6 +725,8 @@ Creature* SummonablePremiumNpcAI::OpenGossip(PlayerOrChatHandler player, Creatur
     data.WriteByteSeq(guid[6]);
     data.WriteByteSeq(guid[2]);
 
-    player->GetSession()->HandleGossipHelloOpcode(data);
+    WorldPackets::NPC::GossipHello gossipHello(std::move(data));
+    gossipHello.Read();
+    player->GetSession()->HandleGossipHelloOpcode(gossipHello);
     return creature;
 }

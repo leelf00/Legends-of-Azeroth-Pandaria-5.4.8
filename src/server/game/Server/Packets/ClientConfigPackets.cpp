@@ -15,25 +15,32 @@
 * with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef AllPackets_h__
-#define AllPackets_h__
-
-#include "AreaTriggerPackets.h"
-#include "AuctionHousePackets.h"
-#include "AuthenticationPackets.h"
-#include "BankPackets.h"
-#include "CharacterPackets.h"
-#include "ChatPackets.h"
 #include "ClientConfigPackets.h"
-#include "GameObjectPackets.h"
-#include "InspectPackets.h"
-#include "LFGPackets.h"
-#include "MiscPackets.h"
-#include "MovementPackets.h"
-#include "NPCPackets.h"
-#include "QueryPackets.h"
-#include "QuestPackets.h"
-#include "SpellPackets.h"
-#include "TotemPackets.h"
 
-#endif // AllPackets_h__
+void WorldPackets::ClientConfig::RequestAccountData::Read()
+{
+    DataType = _worldPacket.ReadBits(3);
+}
+
+void WorldPackets::ClientConfig::UserClientUpdateAccountData::Read()
+{
+    _worldPacket >> DecompressedSize >> Time >> CompressedSize;
+
+    if (DecompressedSize == 0)
+    {
+        DataType = _worldPacket.ReadBits(3);
+        _worldPacket.FlushBits();
+        return;
+    }
+
+    if (DecompressedSize > 0xFFFF)
+    {
+        _worldPacket.rfinish();
+        return;
+    }
+
+    CompressedData = std::string(reinterpret_cast<char const*>(_worldPacket.contents() + _worldPacket.rpos()), CompressedSize);
+    _worldPacket.read_skip(CompressedSize);
+    DataType = _worldPacket.ReadBits(3);
+    _worldPacket.FlushBits();
+}
