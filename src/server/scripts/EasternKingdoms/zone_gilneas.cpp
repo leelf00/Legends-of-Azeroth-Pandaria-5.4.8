@@ -176,6 +176,7 @@ enum Gilneas
 
     NPC_STAGECOACH_HARNESS                  = 38755,
     NPC_HARNESS_SUMMONED                    = 43336,
+    NPC_STAGECOACH_CARRIAGE                 = 44928,
 
     EVENT_BOARD_HARNESS_OWNER               = 1,
 
@@ -2223,6 +2224,14 @@ public:
 
         void IsSummonedBy(Unit* owner) override
         {
+            if (Creature* carriage = me->FindNearestCreature(NPC_STAGECOACH_CARRIAGE, 5.0f, true))
+            {
+                carriage->EnterVehicle(me, 2);
+
+                if (owner && owner->IsAlive() && owner->IsInWorld())
+                    owner->EnterVehicle(carriage, 1);
+            }
+
             DoAction(ACTION_START_WP);
             me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_NPC | UNIT_FLAG_IMMUNE_TO_PC);
         }
