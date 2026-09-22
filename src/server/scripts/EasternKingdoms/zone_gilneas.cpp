@@ -2241,20 +2241,16 @@ struct npc_stagecoach_harnessAI : public EscortAI
 
         if (Creature* carriage = me->FindNearestCreature(NPC_STAGECOACH_CARRIAGE, 5.0f, true))
         {
+            carriage->EnterVehicle(me, 2);
+
             if (owner && owner->IsAlive() && owner->IsInWorld())
                 owner->EnterVehicle(carriage, 1);
 
             if (Creature* lorna = me->SummonCreature(NPC_LORNA_CROWLEY_STAGECOACH, me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), me->GetOrientation()))
                 lorna->EnterVehicle(carriage, 6);
-
-            carriage->EnterVehicle(me, 2);
         }
-    }
 
-    void PassengerBoarded(Unit* passenger, int8 seatId, bool apply) override
-    {
-        if (apply && seatId == 2)
-            DoAction(ACTION_START_WP);
+        DoAction(ACTION_START_WP);
     }
 
     void DoAction(int32 action) override
