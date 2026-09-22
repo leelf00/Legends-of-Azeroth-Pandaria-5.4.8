@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -177,6 +177,12 @@ enum Gilneas
     NPC_STAGECOACH_HARNESS                  = 38755,
     NPC_HARNESS_SUMMONED                    = 43336,
     NPC_STAGECOACH_CARRIAGE                 = 44928,
+    NPC_STAGECOACH_HORSE                    = 43338,
+    NPC_LORNA_CROWLEY_STAGECOACH            = 51409,
+    NPC_OGRE_AMBUSHER                       = 38762,
+
+    OGRE_AMBUSHER_COUNT                     = 3,
+    OGRE_AMBUSHER_IMMUNITY_ID               = 1,
 
     EVENT_BOARD_HARNESS_OWNER               = 1,
 
@@ -199,6 +205,8 @@ Position const alphaSummonJumpPos = { -1656.723f, 1405.647f, 52.74205f };
 Position const alpha2SummonJumpPos = { -1675.44f, 1447.495f, 52.28762f };
 
 Position const josiahJumpPos = { -1796.63f, 1427.73f, 12.4624f };
+
+float const ogreAmbusherAttackRange = 30.0f;
 
 uint32 const runtHousePathSize1 = 13;
 
@@ -2146,7 +2154,7 @@ class spell_gilneas_test_telescope : public SpellScript
 class npc_stagecoach_carriage_exodus : public CreatureScript
 {
 public:
-    npc_stagecoach_carriage_exodus(const char* ScriptName) : CreatureScript(ScriptName) { }
+    npc_stagecoach_carriage_exodus() : CreatureScript("npc_stagecoach_carriage_exodus") { }
 
     bool OnGossipHello(Player* player, Creature* creature) override
     {
@@ -2211,92 +2219,174 @@ public:
     }
 };
 
-class npc_stagecoach_harness : public CreatureScript
+struct npc_stagecoach_harnessAI : public EscortAI
 {
-public:
-    npc_stagecoach_harness(const char* ScriptName) : CreatureScript(ScriptName) { }
+    npc_stagecoach_harnessAI(Creature* creature) : EscortAI(creature) { }
 
-    struct npc_stagecoach_harnessAI : public EscortAI
+    std::vector<ObjectGuid> ogreGuids;
+
+    void OnCharmed(bool apply) override { }
+
+    void IsSummonedBy(Unit* owner) override
     {
-        npc_stagecoach_harnessAI(Creature* creature) : EscortAI(creature) { }
+        me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_NPC | UNIT_FLAG_IMMUNE_TO_PC);
 
-        void OnCharmed(bool apply) override { }
-
-        void IsSummonedBy(Unit* owner) override
+        int8 horseSeat = 0;
+        for (Creature* horse : me->FindNearestCreatures(NPC_STAGECOACH_HORSE, 5.0f))
         {
-            if (Creature* carriage = me->FindNearestCreature(NPC_STAGECOACH_CARRIAGE, 5.0f, true))
-            {
-                carriage->EnterVehicle(me, 2);
+            if (horseSeat >= 2)
+                break;
+            horse->EnterVehicle(me, horseSeat++);
+        }
 
-                if (owner && owner->IsAlive() && owner->IsInWorld())
-                    owner->EnterVehicle(carriage, 1);
-            }
+        if (Creature* carriage = me->FindNearestCreature(NPC_STAGECOACH_CARRIAGE, 5.0f, true))
+        {
+            if (owner && owner->IsAlive() && owner->IsInWorld())
+                owner->EnterVehicle(carriage, 1);
 
+            if (Creature* lorna = me->SummonCreature(NPC_LORNA_CROWLEY_STAGECOACH, me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), me->GetOrientation()))
+                lorna->EnterVehicle(carriage, 6);
+
+            carriage->EnterVehicle(me, 2);
+        }
+    }
+
+    void PassengerBoarded(Unit* passenger, int8 seatId, bool apply) override
+    {
+        if (apply && seatId == 2)
             DoAction(ACTION_START_WP);
-            me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_NPC | UNIT_FLAG_IMMUNE_TO_PC);
-        }
+    }
 
-        void DoAction(int32 action) override
+    void DoAction(int32 action) override
+    {
+        switch (action)
         {
-            switch (action)
+            case ACTION_START_WP:
             {
-                case ACTION_START_WP:
-                {
-                    SetRun(true); Start(false, ObjectGuid::Empty, NULL, false, false);
-                    SetDespawnAtEnd(true);
+                SetRun(true); Start(false, ObjectGuid::Empty, NULL, false, false);
+                SetDespawnAtEnd(true);
 
-                    if (GameObject* gate = me->FindNearestGameObject(GO_FIRST_GATE, 80.0f))
-                        gate->UseDoorOrButton(0, false, me);
+                if (GameObject* gate = me->FindNearestGameObject(GO_FIRST_GATE, 80.0f))
+                    gate->UseDoorOrButton(0, false, me);
 
-                    me->SetWalk(false);
-                    me->SetSpeed(MOVE_RUN, 1.34f, true);
-                    break;
-                }
-                default:
-                    break;
+                me->SetWalk(false);
+                me->SetSpeed(MOVE_RUN, 1.34f, true);
+                break;
             }
+            default:
+                break;
         }
+    }
 
-        void WaypointReached(uint32 waypointId, uint32 pathId) override
+    void WaypointReached(uint32 waypointId, uint32 pathId) override
+    {
+        switch (waypointId)
         {
-            switch (waypointId)
+            case 16:
             {
-                case 16:
+                if (GameObject* gate = me->FindNearestGameObject(GO_KINGS_GATE, 80.0f))
+                    gate->UseDoorOrButton(0, false, me);
+                break;
+            }
+            case 24:
+            {
+                if (Unit* caravan = me->GetVehicleKit()->GetPassenger(2))
                 {
-                    if (GameObject* gate = me->FindNearestGameObject(GO_KINGS_GATE, 80.0f))
-                        gate->UseDoorOrButton(0, false, me);
-                    break;
-                }
-                case 24:
-                {
-                    if (Unit* caravan = me->GetVehicleKit()->GetPassenger(2))
+                    if (Unit* lorna = caravan->GetVehicleKit()->GetPassenger(6))
                     {
-                        if (Unit* lorna = caravan->GetVehicleKit()->GetPassenger(6))
+                        if (lorna->ToCreature())
+                            lorna->ToCreature()->AI()->Talk(0);
+                    }
+
+                    // Ogre ambush cutscene: make the carriage attackable by NPCs but
+                    // fully damage-immune, then summon ogre ambushers that throw rocks
+                    // at it from a distance (stand in place, stop when out of range).
+                    caravan->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_NPC);
+                    caravan->ApplySpellImmune(OGRE_AMBUSHER_IMMUNITY_ID, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_ALL, true);
+
+                    float const x = me->GetPositionX();
+                    float const y = me->GetPositionY();
+                    float const z = me->GetPositionZ();
+                    float const o = me->GetOrientation();
+
+                    float const ogreOffsets[OGRE_AMBUSHER_COUNT][2] =
+                    {
+                        { 12.0f, -8.0f },
+                        { -12.0f, 10.0f },
+                        { 6.0f, -14.0f }
+                    };
+
+                    for (uint8 i = 0; i < OGRE_AMBUSHER_COUNT; ++i)
+                    {
+                        if (Creature* ogre = me->SummonCreature(NPC_OGRE_AMBUSHER, x + ogreOffsets[i][0], y + ogreOffsets[i][1], z, o, TEMPSUMMON_MANUAL_DESPAWN))
                         {
-                            if (lorna->ToCreature())
-                                lorna->ToCreature()->AI()->Talk(0);
+                            ogre->Attack(caravan, false);
+                            ogreGuids.push_back(ogre->GetGUID());
                         }
                     }
-                    break;
                 }
-                case 30:
-                {
-                    if (Unit* caravan = me->GetVehicleKit()->GetPassenger(2))
-                    {
-                        if (Unit* player = caravan->GetVehicleKit()->GetPassenger(1))
-                            player->ExitVehicle();
-                    }
-                    break;
-                }
-                default:
-                    break;
+                break;
             }
-        }
-    };
+            case 25:
+            {
+                // Ogre ambush cutscene cleanup: despawn the ambushers and restore the carriage.
+                for (ObjectGuid const& ogreGuid : ogreGuids)
+                {
+                    if (Creature* ogre = Unit::GetCreature(*me, ogreGuid))
+                        ogre->DespawnOrUnsummon(0);
+                }
+                ogreGuids.clear();
 
-    CreatureAI* GetAI(Creature* creature) const override
+                if (Unit* caravan = me->GetVehicleKit()->GetPassenger(2))
+                {
+                    caravan->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_NPC);
+                    caravan->ApplySpellImmune(OGRE_AMBUSHER_IMMUNITY_ID, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_ALL, false);
+                }
+                break;
+            }
+            case 30:
+            {
+                if (Unit* caravan = me->GetVehicleKit()->GetPassenger(2))
+                {
+                    if (Unit* player = caravan->GetVehicleKit()->GetPassenger(1))
+                        player->ExitVehicle();
+
+                    if (Unit* lorna = caravan->GetVehicleKit()->GetPassenger(6))
+                    {
+                        lorna->ExitVehicle();
+                        if (Creature* lornaCreature = lorna->ToCreature())
+                            lornaCreature->DespawnOrUnsummon(5000);
+                    }
+                }
+                break;
+            }
+            default:
+                break;
+        }
+    }
+};
+
+struct npc_ogre_ambusher_exodusAI : public ScriptedAI
+{
+    npc_ogre_ambusher_exodusAI(Creature* creature) : ScriptedAI(creature) { }
+
+    void UpdateAI(uint32 diff) override
     {
-        return new npc_stagecoach_harnessAI(creature);
+        if (!UpdateVictim())
+            return;
+
+        Unit* victim = me->GetVictim();
+        if (!victim || !victim->IsAlive())
+            return;
+
+        if (!me->IsWithinDist(victim, ogreAmbusherAttackRange))
+            return;
+
+        if (me->isAttackReady())
+        {
+            me->AttackerStateUpdate(victim);
+            me->resetAttackTimer();
+        }
     }
 };
 
@@ -2405,8 +2495,9 @@ void AddSC_gilneas()
     new npc_mountain_horse("npc_mountain_horse");
     new creature_script<npc_mountain_horse_summoned>("npc_mountain_horse_summoned");
     new spell_script<spell_gilneas_test_telescope>("spell_gilneas_test_telescope");
-    new npc_stagecoach_carriage_exodus("npc_stagecoach_carriage_exodus");
-    new npc_stagecoach_harness("npc_stagecoach_harness");
+    new npc_stagecoach_carriage_exodus();
+    RegisterCreatureAI(npc_stagecoach_harnessAI);
+    RegisterCreatureAI(npc_ogre_ambusher_exodusAI);
     new creature_script<npc_koroth_the_hillbreaker>("npc_koroth_the_hillbreaker");
     new go_koroth_banner("go_koroth_banner");
 }
