@@ -183,8 +183,10 @@ enum Gilneas
 
     OGRE_AMBUSHER_COUNT                     = 3,
     OGRE_AMBUSHER_IMMUNITY_ID               = 1,
+    SPELL_OGRE_COSMETIC_BOULDER             = 85407,
 
     EVENT_BOARD_HARNESS_OWNER               = 1,
+    EVENT_BOARD_HORSES                      = 2,
 
     ACTION_START_WP                         = 1,
 
@@ -2224,6 +2226,7 @@ struct npc_stagecoach_harnessAI : public EscortAI
     npc_stagecoach_harnessAI(Creature* creature) : EscortAI(creature) { }
 
     std::vector<ObjectGuid> ogreGuids;
+    EventMap events;
 
     void OnCharmed(bool apply) override { }
 
@@ -2250,7 +2253,48 @@ struct npc_stagecoach_harnessAI : public EscortAI
                 lorna->EnterVehicle(carriage, 6);
         }
 
+        events.ScheduleEvent(EVENT_BOARD_HORSES, 500ms);
         DoAction(ACTION_START_WP);
+    }
+
+    void UpdateEscortAI(uint32 const diff) override
+    {
+        EscortAI::UpdateEscortAI(diff);
+
+        events.Update(diff);
+        while (events.ExecuteEvent())
+        {
+            BoardHorses();
+        }
+    }
+
+    void BoardHorses()
+    {
+        // The inline horse boarding in IsSummonedBy can be undone when the
+        // carriage mounts the harness, so re-board the horses (seats 0/1) now
+        // that the vehicle chain is settled.
+        if (!me->GetVehicleKit())
+            return;
+
+        for (Creature* horse : me->FindNearestCreatures(NPC_STAGECOACH_HORSE, 5.0f))
+        {
+            if (horse->IsOnVehicle())
+                continue;
+
+            int8 seat = -1;
+            for (int8 s = 0; s < 2; ++s)
+            {
+                if (!me->GetVehicleKit()->GetPassenger(s))
+                {
+                    seat = s;
+                    break;
+                }
+            }
+            if (seat < 0)
+                break;
+
+            horse->EnterVehicle(me, seat);
+        }
     }
 
     void DoAction(int32 action) override
@@ -2294,9 +2338,11 @@ struct npc_stagecoach_harnessAI : public EscortAI
                             lorna->ToCreature()->AI()->Talk(0);
                     }
 
-                    // Ogre ambush cutscene: make the carriage attackable by NPCs but
-                    // fully damage-immune, then summon ogre ambushers that throw rocks
-                    // at it from a distance (stand in place, stop when out of range).
+                    // Ogre ambush cutscene: purely decorative. Allow the ambushers to
+                    // target the carriage (temporarily drop its NPC immunity, keep it
+                    // damage-immune) and summon them to throw cosmetic boulders from a
+                    // distance. No melee attack is used, so no threat is generated and
+                    // the vehicle chain keeps moving with passengers aboard.
                     caravan->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_NPC);
                     caravan->ApplySpellImmune(OGRE_AMBUSHER_IMMUNITY_ID, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_ALL, true);
 
@@ -2315,10 +2361,7 @@ struct npc_stagecoach_harnessAI : public EscortAI
                     for (uint8 i = 0; i < OGRE_AMBUSHER_COUNT; ++i)
                     {
                         if (Creature* ogre = me->SummonCreature(NPC_OGRE_AMBUSHER, x + ogreOffsets[i][0], y + ogreOffsets[i][1], z, o, TEMPSUMMON_MANUAL_DESPAWN))
-                        {
-                            ogre->Attack(caravan, false);
                             ogreGuids.push_back(ogre->GetGUID());
-                        }
                     }
                 }
                 break;
@@ -2364,24 +2407,27 @@ struct npc_stagecoach_harnessAI : public EscortAI
 
 struct npc_ogre_ambusher_exodusAI : public ScriptedAI
 {
-    npc_ogre_ambusher_exodusAI(Creature* creature) : ScriptedAI(creature) { }
+    npc_ogre_ambusher_exodusAI(Creature* creature) : ScriptedAI(creature), throwTimer(1500) { }
+
+    uint32 throwTimer;
 
     void UpdateAI(uint32 diff) override
     {
-        if (!UpdateVictim())
-            return;
-
-        Unit* victim = me->GetVictim();
-        if (!victim || !victim->IsAlive())
-            return;
-
-        if (!me->IsWithinDist(victim, ogreAmbusherAttackRange))
-            return;
-
-        if (me->isAttackReady())
+        // Decorative ambush: face the carriage and throw a cosmetic boulder at it.
+        // No attack, no threat, no damage — the escort keeps moving and the
+        // passengers stay aboard.
+        if (Creature* caravan = me->FindNearestCreature(NPC_STAGECOACH_CARRIAGE, ogreAmbusherAttackRange, true))
         {
-            me->AttackerStateUpdate(victim);
-            me->resetAttackTimer();
+            me->GetMotionMaster()->MoveIdle();
+            me->SetFacingToObject(caravan);
+
+            if (throwTimer > diff)
+                throwTimer -= diff;
+            else
+            {
+                throwTimer = 2000;
+                me->CastSpell(caravan, SPELL_OGRE_COSMETIC_BOULDER, true);
+            }
         }
     }
 };
