@@ -22,6 +22,7 @@
 #include "Vehicle.h"
 #include "GameObjectAI.h"
 #include "TaskScheduler.h"
+#include "ObjectAccessor.h"
 
 enum Gilneas
 {
@@ -2226,6 +2227,7 @@ struct npc_stagecoach_harnessAI : public EscortAI
     npc_stagecoach_harnessAI(Creature* creature) : EscortAI(creature) { }
 
     std::vector<ObjectGuid> ogreGuids;
+    std::vector<ObjectGuid> horseGuids;
     EventMap events;
 
     void OnCharmed(bool apply) override { }
@@ -2233,12 +2235,14 @@ struct npc_stagecoach_harnessAI : public EscortAI
     void IsSummonedBy(Unit* owner) override
     {
         me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_NPC | UNIT_FLAG_IMMUNE_TO_PC);
+        me->SetControlled(true, UNIT_STATE_ROOT);
 
         int8 horseSeat = 0;
         for (Creature* horse : me->FindNearestCreatures(NPC_STAGECOACH_HORSE, 5.0f))
         {
             if (horseSeat >= 2)
                 break;
+            horseGuids.push_back(horse->GetGUID());
             horse->EnterVehicle(me, horseSeat++);
         }
 
@@ -2253,8 +2257,7 @@ struct npc_stagecoach_harnessAI : public EscortAI
                 lorna->EnterVehicle(carriage, 6);
         }
 
-        events.ScheduleEvent(EVENT_BOARD_HORSES, 500ms);
-        DoAction(ACTION_START_WP);
+        events.ScheduleEvent(EVENT_BOARD_HORSES, 1000ms);
     }
 
     void UpdateEscortAI(uint32 const diff) override
@@ -2262,9 +2265,18 @@ struct npc_stagecoach_harnessAI : public EscortAI
         EscortAI::UpdateEscortAI(diff);
 
         events.Update(diff);
-        while (events.ExecuteEvent())
+        while (uint32 eventId = events.ExecuteEvent())
         {
-            BoardHorses();
+            switch (eventId)
+            {
+                case EVENT_BOARD_HORSES:
+                    me->SetControlled(false, UNIT_STATE_ROOT);
+                    BoardHorses();
+                    DoAction(ACTION_START_WP);
+                    break;
+                default:
+                    break;
+            }
         }
     }
 
@@ -2272,12 +2284,16 @@ struct npc_stagecoach_harnessAI : public EscortAI
     {
         // The inline horse boarding in IsSummonedBy can be undone when the
         // carriage mounts the harness, so re-board the horses (seats 0/1) now
-        // that the vehicle chain is settled.
+        // that the vehicle chain is settled. Uses stored GUIDs because the
+        // harness may have moved beyond the 5m search radius by now.
         if (!me->GetVehicleKit())
             return;
 
-        for (Creature* horse : me->FindNearestCreatures(NPC_STAGECOACH_HORSE, 5.0f))
+        for (const auto& guid : horseGuids)
         {
+            Creature* horse = ObjectAccessor::GetCreature(*me, guid);
+            if (!horse || !horse->IsInWorld())
+                continue;
             if (horse->IsOnVehicle())
                 continue;
 
