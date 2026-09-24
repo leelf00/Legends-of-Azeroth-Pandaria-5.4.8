@@ -2,14 +2,16 @@
 -- Gilneas stagecoach: align with TC 4.3.4 (world_434 reference)
 -- Remove the moving C++ escort -> static rideable vehicles
 --
--- Target = world_434:
---   38755: VehicleId=970, no ScriptName, spellclick 72767 (cf=1)
+-- Target = world_434 behavior, adjusted for 5.4.8 DBC:
+--   38755: VehicleId=970, no ScriptName, spellclick 72764 (cf=1)
 --   43336: VehicleId=0,   no ScriptName, no spellclick
 --   43338: VehicleId=0,   no ScriptName
---   44928: VehicleId=959, no ScriptName, spellclick 72767 (cf=1)
+--   44928: VehicleId=959, no ScriptName, spellclick 72764 (cf=1)
 --   no script_waypoint, no smart_scripts
 --
--- Already matching (STEP 1 applied): 38755/44928 spellclick 72767 (cf=1)
+-- Already matching:
+--   STEP 1 applied: 38755/44928 spellclick existed
+--   2026_09_25_00 applied: 38755/44928 spellclick corrected 72767 -> 72764
 --
 -- This file closes the remaining diffs:
 --   * 43336: VehicleId 958 -> 0, clear ScriptName (EscortAI)
