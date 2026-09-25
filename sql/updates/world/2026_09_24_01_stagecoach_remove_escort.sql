@@ -20,6 +20,7 @@
 --   * delete 43336's dead summon-harness spellclick (46598)
 --
 -- Backup: backup_43336_44928_stagecoach_original_escort.sql
+-- Applied to world_548 on 2026-09-25.
 -- ============================================================
 
 -- 1. 43336: non-vehicle, disable EscortAI
