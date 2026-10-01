@@ -393,7 +393,7 @@ bool ExtractSingleWmo(std::string& fname)
             strncpy(temp, fname.c_str(), 1024);
             temp[fname.length()-4] = 0;
 
-            WMOGroup fgroup(Trinity::StringFormat("{}_{}.wmo", temp, i));
+            WMOGroup fgroup(Trinity::StringFormat("{}_{:03}.wmo", temp, i));
             if (!fgroup.open(&froot))
             {
                 printf("Could not open all Group file for: %s\n", plain_name);
