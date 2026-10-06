@@ -1,5 +1,5 @@
 /*
-* This file is part of the Pandaria 5.4.8 Project. See THANKS file for Copyright information
+* This file is part of the Legends of Azeroth Pandaria Project. See THANKS file for Copyright information
 *
 * This program is free software; you can redistribute it and/or modify it
 * under the terms of the GNU General Public License as published by the
@@ -22,6 +22,7 @@
 #include "Vehicle.h"
 #include "GameObjectAI.h"
 #include "TaskScheduler.h"
+#include "ObjectAccessor.h"
 
 enum Gilneas
 {
@@ -176,8 +177,18 @@ enum Gilneas
 
     NPC_STAGECOACH_HARNESS                  = 38755,
     NPC_HARNESS_SUMMONED                    = 43336,
+    NPC_STAGECOACH_CARRIAGE                 = 44928,
+    NPC_STAGECOACH_HORSE                    = 43338,
+    NPC_LORNA_CROWLEY_STAGECOACH            = 51409,
+    NPC_OGRE_AMBUSHER                       = 38762,
+
+    OGRE_AMBUSHER_COUNT                     = 3,
+    OGRE_AMBUSHER_IMMUNITY_ID               = 1,
+    SPELL_OGRE_COSMETIC_BOULDER             = 85407,
 
     EVENT_BOARD_HARNESS_OWNER               = 1,
+    EVENT_BOARD_HORSES                      = 2,
+    EVENT_CARRIAGE_RESUMMON_PASSENGERS     = 3,
 
     ACTION_START_WP                         = 1,
 
@@ -198,6 +209,8 @@ Position const alphaSummonJumpPos = { -1656.723f, 1405.647f, 52.74205f };
 Position const alpha2SummonJumpPos = { -1675.44f, 1447.495f, 52.28762f };
 
 Position const josiahJumpPos = { -1796.63f, 1427.73f, 12.4624f };
+
+float const ogreAmbusherAttackRange = 30.0f;
 
 uint32 const runtHousePathSize1 = 13;
 
@@ -2145,34 +2158,35 @@ class spell_gilneas_test_telescope : public SpellScript
 class npc_stagecoach_carriage_exodus : public CreatureScript
 {
 public:
-    npc_stagecoach_carriage_exodus(const char* ScriptName) : CreatureScript(ScriptName) { }
-
-    bool OnGossipHello(Player* player, Creature* creature) override
-    {
-        if (player->GetQuestStatus(QUEST_ENTRY_EXODUS) == QUEST_STATUS_COMPLETE)
-        {
-            if (player->GetVehicleBase())
-                return true;
-
-            if (Creature* harness = player->FindNearestCreature(NPC_STAGECOACH_HARNESS, 30.0f, true))
-                player->SummonCreature(NPC_HARNESS_SUMMONED, harness->GetPositionX(), harness->GetPositionY(), harness->GetPositionZ(), harness->GetOrientation(), TEMPSUMMON_MANUAL_DESPAWN, 600000ms);
-            return true;
-        }
-
-        return true;
-    }
+    npc_stagecoach_carriage_exodus() : CreatureScript("npc_stagecoach_carriage_exodus") { }
 
     struct npc_stagecoach_carriage_exodusAI : public ScriptedAI
     {
         npc_stagecoach_carriage_exodusAI(Creature* creature) : ScriptedAI(creature)
         {
-            events.ScheduleEvent(EVENT_BOARD_HARNESS_OWNER, 1ms);
-            me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_NPC | UNIT_FLAG_IMMUNE_TO_PC);
         }
 
         EventMap events;
+        bool harnessSummoned = false;
 
-        void UpdateAI(uint32 diff)
+        void PassengerBoarded(Unit* passenger, int8 seatId, bool apply) override
+        {
+            if (!apply || seatId != 1 || !passenger->IsPlayer())
+                return;
+
+            if (harnessSummoned)
+                return;
+
+            if (me->GetVehicleCreatureBase())
+                return;
+
+            harnessSummoned = true;
+            me->SummonCreature(NPC_HARNESS_SUMMONED,
+                me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), me->GetOrientation());
+            events.ScheduleEvent(EVENT_CARRIAGE_RESUMMON_PASSENGERS, 2000ms);
+        }
+
+        void UpdateAI(uint32 diff) override
         {
             events.Update(diff);
 
@@ -2180,21 +2194,34 @@ public:
             {
                 switch (eventId)
                 {
-                    case EVENT_BOARD_HARNESS_OWNER:
+                    case EVENT_CARRIAGE_RESUMMON_PASSENGERS:
                     {
-                        if (Unit* harness = me->GetVehicleCreatureBase())
+                        // Re-summon NPC passengers that were kicked off when the
+                        // carriage entered the harness vehicle chain.
+                        struct PassengerDef { int8 seat; uint32 entry; };
+                        PassengerDef const passengers[] = {
+                            { 0, 38853 }, { 2, 44460 }, { 3, 36138 },
+                            { 4, 43907 }, { 5, 43907 }, { 6, 51409 },
+                        };
+                        for (auto const& p : passengers)
                         {
-                            if (Unit* harnessOwner = harness->ToTempSummon()->GetSummoner())
+                            if (Vehicle* vkit = me->GetVehicleKit())
                             {
-                                if (harnessOwner->IsAlive() && harnessOwner->IsInWorld())
+                                if (vkit->GetPassenger(p.seat))
+                                    continue; // already occupied
+                            }
+                            Creature* npc = me->SummonCreature(p.entry,
+                                me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), me->GetOrientation());
+                            if (npc)
+                            {
+                                if ((p.entry == 43907 && p.seat == 5) || p.entry == 51409)
                                 {
-                                    harnessOwner->EnterVehicle(me, 1);
-                                    events.CancelEvent(EVENT_BOARD_HARNESS_OWNER);
-                                    break;
+                                    npc->LoadEquipment(1, true);
+                                    npc->SetEmoteState(EMOTE_STATE_HOLD_RIFLE);
                                 }
+                                npc->EnterVehicle(me, p.seat);
                             }
                         }
-                        events.CancelEvent(EVENT_BOARD_HARNESS_OWNER);
                         break;
                     }
                     default:
@@ -2210,84 +2237,265 @@ public:
     }
 };
 
-class npc_stagecoach_harness : public CreatureScript
+struct npc_stagecoach_harness : public EscortAI
 {
-public:
-    npc_stagecoach_harness(const char* ScriptName) : CreatureScript(ScriptName) { }
+    npc_stagecoach_harness(Creature* creature) : EscortAI(creature) { }
 
-    struct npc_stagecoach_harnessAI : public EscortAI
+    std::vector<ObjectGuid> ogreGuids;
+    std::vector<ObjectGuid> horseGuids;
+    EventMap events;
+
+    void OnCharmed(bool apply) override { }
+
+    void IsSummonedBy(Unit* owner) override
     {
-        npc_stagecoach_harnessAI(Creature* creature) : EscortAI(creature) { }
+        me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_NPC | UNIT_FLAG_IMMUNE_TO_PC);
+        me->SetControlled(true, UNIT_STATE_ROOT);
 
-        void OnCharmed(bool apply) override { }
+        // Find the carriage first (before teleporting), so we can locate
+        // horses relative to it and save its passengers.
+        Creature* carriage = me->FindNearestCreature(NPC_STAGECOACH_CARRIAGE, 25.0f, true);
 
-        void IsSummonedBy(Unit* owner) override
+        // Save all current passengers of the carriage so we can re-seat them
+        // after the carriage enters the harness (EnterVehicle kicks them off).
+        std::vector<std::pair<int8, Unit*>> carriagePassengers;
+        if (carriage)
         {
-            DoAction(ACTION_START_WP);
-            me->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_NPC | UNIT_FLAG_IMMUNE_TO_PC);
+            if (Vehicle* vkit = carriage->GetVehicleKit())
+            {
+                for (int8 seat = 0; seat <= 7; ++seat)
+                {
+                    if (Unit* u = vkit->GetPassenger(seat))
+                        carriagePassengers.emplace_back(seat, u);
+                }
+            }
         }
 
-        void DoAction(int32 action) override
+        // Teleport the harness to the carriage's position so the horses
+        // (which stand next to the carriage) are within boarding range.
+        if (carriage)
+            me->NearTeleportTo(carriage->GetPositionX(), carriage->GetPositionY(), carriage->GetPositionZ(), me->GetOrientation());
+
+        // Summon 2 horses and board them onto the harness (seats 0, 1).
+        for (int8 horseSeat = 0; horseSeat < 2; ++horseSeat)
         {
-            switch (action)
+            Creature* horse = me->SummonCreature(NPC_STAGECOACH_HORSE,
+                me->GetPositionX(), me->GetPositionY(), me->GetPositionZ(), me->GetOrientation());
+            if (!horse)
+                continue;
+            horseGuids.push_back(horse->GetGUID());
+            horse->EnterVehicle(me, horseSeat);
+        }
+
+        if (carriage)
+        {
+            carriage->EnterVehicle(me, 2);
+
+            // Re-seat all saved passengers (player + any NPCs).
+            for (auto const& [seat, unit] : carriagePassengers)
             {
-                case ACTION_START_WP:
-                {
-                    SetRun(true); Start(false, ObjectGuid::Empty, NULL, false, false);
-                    SetDespawnAtEnd(true);
+                if (unit->IsAlive() && unit->IsInWorld())
+                    unit->EnterVehicle(carriage, seat);
+            }
+        }
 
-                    if (GameObject* gate = me->FindNearestGameObject(GO_FIRST_GATE, 80.0f))
-                        gate->UseDoorOrButton(0, false, me);
+        events.ScheduleEvent(EVENT_BOARD_HORSES, 1000ms);
+    }
 
-                    me->SetWalk(false);
-                    me->SetSpeed(MOVE_RUN, 1.34f, true);
+    void UpdateEscortAI(uint32 const diff) override
+    {
+        EscortAI::UpdateEscortAI(diff);
+
+        events.Update(diff);
+        while (uint32 eventId = events.ExecuteEvent())
+        {
+            switch (eventId)
+            {
+                case EVENT_BOARD_HORSES:
+                    me->SetControlled(false, UNIT_STATE_ROOT);
+                    BoardHorses();
+                    DoAction(ACTION_START_WP);
                     break;
-                }
                 default:
                     break;
             }
         }
+    }
 
-        void WaypointReached(uint32 waypointId, uint32 pathId) override
+    void BoardHorses()
+    {
+        // The inline horse boarding in IsSummonedBy can be undone when the
+        // carriage mounts the harness, so re-board the horses (seats 0/1) now
+        // that the vehicle chain is settled. Uses stored GUIDs because the
+        // harness may have moved beyond the 5m search radius by now.
+        if (!me->GetVehicleKit())
+            return;
+
+        for (const auto& guid : horseGuids)
         {
-            switch (waypointId)
+            Creature* horse = ObjectAccessor::GetCreature(*me, guid);
+            if (!horse || !horse->IsInWorld())
+                continue;
+            if (horse->IsOnVehicle())
+                continue;
+
+            int8 seat = -1;
+            for (int8 s = 0; s < 2; ++s)
             {
-                case 16:
+                if (!me->GetVehicleKit()->GetPassenger(s))
                 {
-                    if (GameObject* gate = me->FindNearestGameObject(GO_KINGS_GATE, 80.0f))
-                        gate->UseDoorOrButton(0, false, me);
+                    seat = s;
                     break;
                 }
-                case 24:
+            }
+            if (seat < 0)
+                break;
+
+            horse->EnterVehicle(me, seat);
+        }
+    }
+
+    void DoAction(int32 action) override
+    {
+        switch (action)
+        {
+            case ACTION_START_WP:
+            {
+                SetRun(true); Start(false, ObjectGuid::Empty, NULL, false, false);
+                SetDespawnAtEnd(true);
+
+                if (GameObject* gate = me->FindNearestGameObject(GO_FIRST_GATE, 80.0f))
+                    gate->UseDoorOrButton(0, false, me);
+
+                me->SetWalk(false);
+                me->SetSpeed(MOVE_RUN, 1.34f, true);
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
+    void WaypointReached(uint32 waypointId, uint32 pathId) override
+    {
+        switch (waypointId)
+        {
+            case 16:
+            {
+                if (GameObject* gate = me->FindNearestGameObject(GO_KINGS_GATE, 80.0f))
+                    gate->UseDoorOrButton(0, false, me);
+                break;
+            }
+            case 24:
+            {
+                if (Unit* caravan = me->GetVehicleKit()->GetPassenger(2))
                 {
-                    if (Unit* caravan = me->GetVehicleKit()->GetPassenger(2))
+                    if (Unit* lorna = caravan->GetVehicleKit()->GetPassenger(6))
                     {
-                        if (Unit* lorna = caravan->GetVehicleKit()->GetPassenger(6))
+                        if (lorna->ToCreature())
+                            lorna->ToCreature()->AI()->Talk(0);
+                    }
+
+                    // Ogre ambush cutscene: purely decorative. Allow the ambushers to
+                    // target the carriage (temporarily drop its NPC immunity, keep it
+                    // damage-immune) and summon them to throw cosmetic boulders from a
+                    // distance. No melee attack is used, so no threat is generated and
+                    // the vehicle chain keeps moving with passengers aboard.
+                    caravan->RemoveFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_NPC);
+                    caravan->ApplySpellImmune(OGRE_AMBUSHER_IMMUNITY_ID, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_ALL, true);
+
+                    float const x = me->GetPositionX();
+                    float const y = me->GetPositionY();
+                    float const z = me->GetPositionZ();
+                    float const o = me->GetOrientation();
+
+                    float const ogreOffsets[OGRE_AMBUSHER_COUNT][2] =
+                    {
+                        { 12.0f, -8.0f },
+                        { -12.0f, 10.0f },
+                        { 6.0f, -14.0f }
+                    };
+
+                    for (uint8 i = 0; i < OGRE_AMBUSHER_COUNT; ++i)
+                    {
+                        if (Creature* ogre = me->SummonCreature(NPC_OGRE_AMBUSHER, x + ogreOffsets[i][0], y + ogreOffsets[i][1], z, o, TEMPSUMMON_MANUAL_DESPAWN))
+                            ogreGuids.push_back(ogre->GetGUID());
+                    }
+                }
+                break;
+            }
+            case 25:
+            {
+                // Ogre ambush cutscene cleanup: despawn the ambushers and restore the carriage.
+                for (ObjectGuid const& ogreGuid : ogreGuids)
+                {
+                    if (Creature* ogre = Unit::GetCreature(*me, ogreGuid))
+                        ogre->DespawnOrUnsummon(0);
+                }
+                ogreGuids.clear();
+
+                if (Unit* caravan = me->GetVehicleKit()->GetPassenger(2))
+                {
+                    caravan->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_IMMUNE_TO_NPC);
+                    caravan->ApplySpellImmune(OGRE_AMBUSHER_IMMUNITY_ID, IMMUNITY_DAMAGE, SPELL_SCHOOL_MASK_ALL, false);
+                }
+                break;
+            }
+            case 30:
+            {
+                if (Unit* caravan = me->GetVehicleKit()->GetPassenger(2))
+                {
+                    // The player's seat is not guaranteed, so locate them by
+                    // scanning the carriage seats instead of assuming a fixed seat.
+                    if (Vehicle* carriageVehicle = caravan->GetVehicleKit())
+                    {
+                        for (auto const& seatPair : carriageVehicle->Seats)
                         {
-                            if (lorna->ToCreature())
-                                lorna->ToCreature()->AI()->Talk(0);
+                            VehicleSeat const& seat = seatPair.second;
+                            if (seat.IsEmpty())
+                                continue;
+                            if (Unit* passenger = ObjectAccessor::GetUnit(*me, seat.Passenger.Guid))
+                            {
+                                if (passenger->IsPlayer())
+                                    passenger->ExitVehicle();
+                            }
                         }
                     }
-                    break;
+
+
                 }
-                case 30:
-                {
-                    if (Unit* caravan = me->GetVehicleKit()->GetPassenger(2))
-                    {
-                        if (Unit* player = caravan->GetVehicleKit()->GetPassenger(1))
-                            player->ExitVehicle();
-                    }
-                    break;
-                }
-                default:
-                    break;
+                break;
+            }
+            default:
+                break;
+        }
+    }
+};
+
+struct npc_ogre_ambusher_exodus : public ScriptedAI
+{
+    npc_ogre_ambusher_exodus(Creature* creature) : ScriptedAI(creature), throwTimer(1500) { }
+
+    uint32 throwTimer;
+
+    void UpdateAI(uint32 diff) override
+    {
+        // Decorative ambush: face the carriage and throw a cosmetic boulder at it.
+        // No attack, no threat, no damage — the escort keeps moving and the
+        // passengers stay aboard.
+        if (Creature* caravan = me->FindNearestCreature(NPC_STAGECOACH_CARRIAGE, ogreAmbusherAttackRange, true))
+        {
+            me->GetMotionMaster()->MoveIdle();
+            me->SetFacingToObject(caravan);
+
+            if (throwTimer > diff)
+                throwTimer -= diff;
+            else
+            {
+                throwTimer = 2000;
+                me->CastSpell(caravan->GetPositionX(), caravan->GetPositionY(), caravan->GetPositionZ(), SPELL_OGRE_COSMETIC_BOULDER, true);
             }
         }
-    };
-
-    CreatureAI* GetAI(Creature* creature) const override
-    {
-        return new npc_stagecoach_harnessAI(creature);
     }
 };
 
@@ -2396,8 +2604,9 @@ void AddSC_gilneas()
     new npc_mountain_horse("npc_mountain_horse");
     new creature_script<npc_mountain_horse_summoned>("npc_mountain_horse_summoned");
     new spell_script<spell_gilneas_test_telescope>("spell_gilneas_test_telescope");
-    new npc_stagecoach_carriage_exodus("npc_stagecoach_carriage_exodus");
-    new npc_stagecoach_harness("npc_stagecoach_harness");
+    new npc_stagecoach_carriage_exodus();
+    RegisterCreatureAI(npc_stagecoach_harness);
+    RegisterCreatureAI(npc_ogre_ambusher_exodus);
     new creature_script<npc_koroth_the_hillbreaker>("npc_koroth_the_hillbreaker");
     new go_koroth_banner("go_koroth_banner");
 }
