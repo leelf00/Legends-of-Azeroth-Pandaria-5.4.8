@@ -69,10 +69,10 @@ namespace WorldPackets
             GameObjectStats Stats;
         };
 
-        class QueryPlayerName final : public ClientPacket
+        class QueryPlayerNames final : public ClientPacket
         {
         public:
-            QueryPlayerName(WorldPacket&& packet) : ClientPacket(CMSG_NAME_QUERY, std::move(packet)) { }
+            QueryPlayerNames(WorldPacket&& packet) : ClientPacket(CMSG_NAME_QUERY, std::move(packet)) { }
 
             void Read() override;
 
@@ -86,7 +86,7 @@ namespace WorldPackets
 
             void Read() override;
 
-            uint32 RealmId = 0;
+            uint32 VirtualRealmAddress = 0;
         };
 
         class QueryCreature final : public ClientPacket
@@ -96,13 +96,13 @@ namespace WorldPackets
 
             void Read() override;
 
-            uint32 Entry = 0;
+            uint32 CreatureID = 0;
         };
 
-        class QueryCorpse final : public ClientPacket
+        class QueryCorpseLocationFromClient final : public ClientPacket
         {
         public:
-            QueryCorpse(WorldPacket&& packet) : ClientPacket(CMSG_CORPSE_QUERY, std::move(packet)) { }
+            QueryCorpseLocationFromClient(WorldPacket&& packet) : ClientPacket(CMSG_CORPSE_QUERY, std::move(packet)) { }
 
             void Read() override { }
         };
@@ -124,7 +124,7 @@ namespace WorldPackets
 
             void Read() override;
 
-            uint32 PageID = 0;
+            uint32 PageTextID = 0;
         };
 
         class QueryCorpseTransport final : public ClientPacket
@@ -135,14 +135,14 @@ namespace WorldPackets
             void Read() override;
         };
 
-        class QuestNPCQuery final : public ClientPacket
+        class QueryQuestCompletionNPCs final : public ClientPacket
         {
         public:
-            QuestNPCQuery(WorldPacket&& packet) : ClientPacket(CMSG_QUEST_NPC_QUERY, std::move(packet)) { }
+            QueryQuestCompletionNPCs(WorldPacket&& packet) : ClientPacket(CMSG_QUEST_NPC_QUERY, std::move(packet)) { }
 
             void Read() override;
 
-            std::vector<uint32> QuestIds;
+            std::vector<uint32> QuestCompletionNPCs;
             uint32 Count = 0;
         };
 
@@ -153,17 +153,10 @@ namespace WorldPackets
 
             void Read() override;
 
-            uint32 Count = 0;
-            std::vector<uint32> QuestIds;
+            uint32 MissingQuestCount = 0;
+            std::vector<uint32> MissingQuestPOIs;
         };
 
-        class QueryCountdownTimer final : public ClientPacket
-        {
-        public:
-            QueryCountdownTimer(WorldPacket&& packet) : ClientPacket(CMSG_QUERY_COUNTDOWN_TIMER, std::move(packet)) { }
-
-            void Read() override;
-        };
     }
 }
 

@@ -131,7 +131,7 @@ void WorldSession::SendNameQueryOpcode(ObjectGuid guid)
     SendPacket(&data);
 }
 
-void WorldSession::HandleNameQueryOpcode(WorldPackets::Query::QueryPlayerName& packet)
+void WorldSession::HandleNameQueryOpcode(WorldPackets::Query::QueryPlayerNames& packet)
 {
     ObjectGuid guid = packet.Guid;
 
@@ -168,7 +168,7 @@ void WorldSession::SendRealmNameQueryOpcode(uint32 realmId)
 
 void WorldSession::HandleRealmNameQueryOpcode(WorldPackets::Query::QueryRealmName& packet)
 {
-    uint32 realmId = packet.RealmId;
+    uint32 realmId = packet.VirtualRealmAddress;
     SendRealmNameQueryOpcode(realmId);
 }
 
@@ -253,7 +253,7 @@ void WorldSession::SendServerWorldInfo()
 /// Only _static_ data is sent in this packet !!!
 void WorldSession::HandleCreatureQueryOpcode(WorldPackets::Query::QueryCreature& packet)
 {
-    uint32 entry = packet.Entry;
+    uint32 entry = packet.CreatureID;
 
     WorldPacket data(SMSG_CREATURE_QUERY_RESPONSE, 500);
 
@@ -406,7 +406,7 @@ void WorldSession::HandleGameObjectQueryOpcode(WorldPackets::Query::QueryGameObj
     SendPacket(response.Write());
 }
 
-void WorldSession::HandleCorpseQueryOpcode(WorldPackets::Query::QueryCorpse& /*packet*/)
+void WorldSession::HandleCorpseQueryOpcode(WorldPackets::Query::QueryCorpseLocationFromClient& /*packet*/)
 {
     TC_LOG_DEBUG("network", "WORLD: Received CMSG_CORPSE_QUERY");
 
@@ -536,7 +536,7 @@ void WorldSession::HandlePageTextQueryOpcode(WorldPackets::Query::QueryPageText&
 {
     TC_LOG_DEBUG("network", "WORLD: Received CMSG_PAGE_TEXT_QUERY");
 
-    uint32 pageID = packet.PageID;
+    uint32 pageID = packet.PageTextID;
 
     while (pageID)
     {
@@ -590,12 +590,12 @@ void WorldSession::HandleCorpseMapPositionQuery(WorldPackets::Query::QueryCorpse
     SendPacket(&data);
 }
 
-void WorldSession::HandleQuestNPCQuery(WorldPackets::Query::QuestNPCQuery& packet)
+void WorldSession::HandleQuestNPCQuery(WorldPackets::Query::QueryQuestCompletionNPCs& packet)
 {
     // use set to remove duplicates
     // proper fix would be inside GetCreatureQuestInvolvedRelationReverseBounds
     std::map<uint32, std::set<uint32>> quests;
-    for (uint32 questId : packet.QuestIds)
+    for (uint32 questId : packet.QuestCompletionNPCs)
     {
         if (!sObjectMgr->GetQuestTemplate(questId))
             continue;
@@ -627,7 +627,7 @@ void WorldSession::HandleQuestNPCQuery(WorldPackets::Query::QuestNPCQuery& packe
 
 void WorldSession::HandleQuestPOIQuery(WorldPackets::Query::QuestPOIQuery& packet)
 {
-    uint32 count = packet.Count;
+    uint32 count = packet.MissingQuestCount;
 
     if (count > MAX_QUEST_LOG_SIZE)
     {
@@ -636,7 +636,7 @@ void WorldSession::HandleQuestPOIQuery(WorldPackets::Query::QuestPOIQuery& packe
 
     // Read quest ids and add the in a unordered_set so we don't send POIs for the same quest multiple times
     std::unordered_set<uint32> questIds;
-    for (uint32 questId : packet.QuestIds)
+    for (uint32 questId : packet.MissingQuestPOIs)
         questIds.insert(questId);
 
     ByteBuffer poiData;
@@ -713,7 +713,7 @@ void WorldSession::HandleQuestPOIQuery(WorldPackets::Query::QuestPOIQuery& packe
     SendPacket(&data);
 }
 
-void WorldSession::HandleQueryCountdownTimer(WorldPackets::Query::QueryCountdownTimer& /*packet*/)
+void WorldSession::HandleQueryCountdownTimer(WorldPackets::Misc::QueryCountdownTimer& /*packet*/)
 {
     TC_LOG_DEBUG("network", "WORLD: CMSG_QUERY_COUNTDOWN_TIMER");
 }
